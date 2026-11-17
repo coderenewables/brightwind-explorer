@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brightwind Workflow Builder</title>
+<meta name="description" content="Explore the brightwind wind resource assessment library visually and build analysis pipelines by drag and drop. Exports runnable Python scripts and notebooks.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2315232d'/%3E%3Ccircle cx='8' cy='10' r='3.2' fill='%23c8440d'/%3E%3Ccircle cx='8' cy='22' r='3.2' fill='%231b68ad'/%3E%3Ccircle cx='24' cy='16' r='3.2' fill='%230d8266'/%3E%3Cpath d='M11 10c6 0 6 6 10 6M11 22c6 0 6-6 10-6' stroke='%23e7ecef' stroke-width='1.8' fill='none'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600&display=swap">
+<style>
+:root {
+  /* Layout idea: instrument bench. Tool shelf left, wiring board centre, spec sheet right. */
+  --bg: #e7ecef;
+  --panel: #f6f8f9;
+  --card: #ffffff;
+  --ink: #15232d;
+  --muted: #586874;
+  --line: #cbd5dc;
+  --accent: #c8440d;
+  --accent-ink: #ffffff;
+  --bad: #b3261e;
+  --good: #1f7a4d;
+  --t-df: #1b68ad;
+  --t-series: #0d8266;
+  --t-fig: #9c3590;
+  --t-path: #86680a;
+  --t-val: #56646f;
+  --t-obj: #6546c0;
+  --grid: #c3ced6;
+  --shadow: 0 1px 2px rgba(21, 35, 45, .10), 0 4px 14px rgba(21, 35, 45, .08);
+  --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-display: "IBM Plex Sans Condensed", "IBM Plex Sans", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0e161c; --panel: #141e26; --card: #1a2630; --ink: #e5ecf1; --muted: #93a4b1; --line: #2c3b47;
+    --accent: #ff7d42; --accent-ink: #1a0d05; --bad: #ff8a80; --good: #5fd39a;
+    --t-df: #62aeea; --t-series: #45cba8; --t-fig: #dc86cf; --t-path: #dcb746; --t-val: #a3b3bf; --t-obj: #ab95f2;
+    --grid: #25333e; --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 6px 18px rgba(0, 0, 0, .35);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0e161c; --panel: #141e26; --card: #1a2630; --ink: #e5ecf1; --muted: #93a4b1; --line: #2c3b47;
+  --accent: #ff7d42; --accent-ink: #1a0d05; --bad: #ff8a80; --good: #5fd39a;
+  --t-df: #62aeea; --t-series: #45cba8; --t-fig: #dc86cf; --t-path: #dcb746; --t-val: #a3b3bf; --t-obj: #ab95f2;
+  --grid: #25333e; --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 6px 18px rgba(0, 0, 0, .35);
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 14px/1.45 var(--f-body); overflow: hidden; display: flex; flex-direction: column; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.mono { font-family: var(--f-mono); }
+
+/* ---------- top bar ---------- */
+.bar { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: var(--panel); border-bottom: 1px solid var(--line); flex: none; flex-wrap: wrap; }
+.brand { display: flex; align-items: baseline; gap: 8px; margin-right: auto; min-width: 0; }
+.brand h1 { font: 600 17px/1.1 var(--f-display); letter-spacing: .01em; margin: 0; white-space: nowrap; }
+.brand .ver { font: 500 11px var(--f-mono); color: var(--muted); border: 1px solid var(--line); border-radius: 3px; padding: 1px 5px; white-space: nowrap; }
+.btn { background: var(--card); border: 1px solid var(--line); border-radius: 5px; padding: 5px 10px; font-weight: 500; white-space: nowrap; }
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.ghost { background: transparent; }
+.btn.small { padding: 2px 7px; font-size: 12px; }
+.btn.danger { color: var(--bad); }
+.btn:disabled { opacity: .45; cursor: default; }
+select.btn { padding-right: 6px; max-width: 190px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 5px; overflow: hidden; }
+.seg button { background: var(--card); border: 0; padding: 5px 12px; font-weight: 500; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--panel); }
+.status { font-size: 12px; font-weight: 500; padding: 3px 8px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); white-space: nowrap; }
+.status.ok { color: var(--good); }
+.status.bad { color: var(--bad); border-color: var(--bad); }
+
+/* ---------- main layout ---------- */
+.main { flex: 1; min-height: 0; display: grid; grid-template-columns: 290px minmax(0, 1fr) 340px; }
+.side { background: var(--panel); min-height: 0; display: flex; flex-direction: column; }
+#tools { border-right: 1px solid var(--line); }
+#details { border-left: 1px solid var(--line); overflow-y: auto; }
+.center { position: relative; min-width: 0; min-height: 0; }
+#canvasView, #codeView { position: absolute; inset: 0; }
+#codeView { display: none; flex-direction: column; background: var(--panel); }
+body[data-view="code"] #codeView { display: flex; }
+body[data-view="code"] #canvasView { display: none; }
+
+/* ---------- catalog ---------- */
+.cat-head { padding: 10px 12px 8px; display: flex; flex-direction: column; gap: 6px; border-bottom: 1px solid var(--line); flex: none; }
+.cat-head input, .cat-head select { width: 100%; background: var(--card); border: 1px solid var(--line); border-radius: 5px; padding: 6px 8px; }
+.cat-count { font-size: 12px; color: var(--muted); }
+#catList { overflow-y: auto; flex: 1; padding-bottom: 20px; }
+.grp > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 8px; padding: 7px 12px; font: 600 12px var(--f-display); letter-spacing: .07em; text-transform: uppercase; color: var(--muted); position: sticky; top: 0; background: var(--panel); z-index: 1; border-bottom: 1px solid var(--line); }
+.grp > summary::-webkit-details-marker { display: none; }
+.grp > summary::before { content: "+"; font-family: var(--f-mono); width: 10px; }
+.grp[open] > summary::before { content: "\2212"; }
+.grp > summary .n { margin-left: auto; font: 500 11px var(--f-mono); letter-spacing: 0; }
+.item { display: block; width: 100%; text-align: left; background: transparent; border: 0; border-bottom: 1px solid var(--line); padding: 7px 12px 7px 14px; border-left: 3px solid transparent; touch-action: pan-y; }
+.item:hover, .item.on { background: var(--card); border-left-color: var(--accent); }
+.item { user-select: none; -webkit-user-select: none; }
+.item .nm { font: 500 12.5px var(--f-mono); overflow-wrap: anywhere; display: flex; gap: 6px; align-items: baseline; }
+.item .sm { font-size: 12px; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-top: 1px; }
+.item.off .nm { text-decoration: line-through; color: var(--muted); }
+.flag { font: 500 10px var(--f-body); text-transform: uppercase; letter-spacing: .05em; padding: 0 4px; border-radius: 3px; border: 1px solid currentColor; color: var(--muted); white-space: nowrap; }
+.flag.warn { color: var(--t-path); }
+.flag.bad { color: var(--bad); }
+.ghost-drag { position: fixed; z-index: 50; pointer-events: none; background: var(--card); border: 1px solid var(--accent); border-radius: 5px; padding: 4px 8px; font: 500 12px var(--f-mono); box-shadow: var(--shadow); }
+
+/* ---------- type chips ---------- */
+.ty { display: inline-flex; align-items: center; gap: 4px; font: 500 11px var(--f-mono); padding: 0 5px; border-radius: 3px; border: 1px solid var(--tc); color: var(--tc); white-space: nowrap; }
+.ty::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--tc); }
+.c-df { --tc: var(--t-df); } .c-series { --tc: var(--t-series); } .c-fig { --tc: var(--t-fig); }
+.c-path { --tc: var(--t-path); } .c-val { --tc: var(--t-val); } .c-obj { --tc: var(--t-obj); }
+
+/* ---------- canvas ---------- */
+#canvas { position: absolute; inset: 0; overflow: hidden; touch-action: none; cursor: grab; background-color: var(--bg); background-image: radial-gradient(var(--grid) 1px, transparent 1.2px); }
+#canvas.panning { cursor: grabbing; }
+#world { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+#wires { position: absolute; left: 0; top: 0; width: 1px; height: 1px; overflow: visible; pointer-events: none; }
+#wires path.w { fill: none; stroke: var(--tc); stroke-width: 2.2; }
+#wires path.w.sel { stroke-width: 4; }
+#wires path.w.badw { stroke: var(--bad); stroke-dasharray: 6 4; }
+#wires path.hit { fill: none; stroke: transparent; stroke-width: 16; pointer-events: stroke; cursor: pointer; }
+#wires path.pend { fill: none; stroke: var(--accent); stroke-width: 2; stroke-dasharray: 5 4; }
+.node { position: absolute; width: 236px; background: var(--card); border: 1px solid var(--line); border-radius: 6px; box-shadow: var(--shadow); cursor: default; user-select: none; -webkit-user-select: none; }
+.node.sel { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent), var(--shadow); }
+.node.bad .nh { border-top-color: var(--bad); }
+.nh { padding: 6px 10px 6px; border-top: 3px solid var(--gc, var(--muted)); border-radius: 5px 5px 0 0; border-bottom: 1px solid var(--line); cursor: grab; position: relative; }
+.nh .ov { font: 600 10px var(--f-display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); display: flex; gap: 6px; }
+.nh .tt { font: 600 13px var(--f-mono); overflow-wrap: anywhere; }
+.nh .iss { position: absolute; right: 8px; top: 6px; min-width: 16px; height: 16px; border-radius: 8px; background: var(--bad); color: var(--card); font: 600 10px/16px var(--f-mono); text-align: center; padding: 0 4px; }
+.rows { padding: 5px 0; display: flex; flex-direction: column; gap: 1px; }
+.row { position: relative; display: flex; align-items: center; gap: 6px; padding: 2px 12px; min-height: 22px; font: 12px var(--f-mono); }
+.row.out { justify-content: flex-end; text-align: right; }
+.row .lit { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1; }
+.row .pn { white-space: nowrap; }
+.row .req { color: var(--bad); }
+.row.dim .pn { color: var(--muted); }
+.port { position: absolute; top: 50%; width: 13px; height: 13px; margin-top: -6.5px; border-radius: 50%; background: var(--card); border: 2.5px solid var(--tc); cursor: crosshair; }
+.port::after { content: ""; position: absolute; inset: -9px; border-radius: 50%; }
+.port.in { left: -7px; } .port.out { right: -7px; }
+.port.full { background: var(--tc); }
+.port.ok { box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 45%, transparent); }
+.port.no { opacity: .25; }
+.port.src { box-shadow: 0 0 0 4px var(--accent); }
+.nparams { border-top: 1px dashed var(--line); padding: 4px 10px 6px; font: 11px var(--f-mono); color: var(--muted); overflow-wrap: anywhere; }
+.g-Sources { --gc: var(--t-path); } .g-Load { --gc: var(--t-path); } .g-Clean { --gc: var(--t-series); } .g-Transform { --gc: var(--t-series); }
+.g-Statistics { --gc: var(--t-df); } .g-Distributions { --gc: var(--t-df); } .g-Turbulence { --gc: var(--t-df); } .g-Atmosphere { --gc: var(--t-df); }
+.g-Shear { --gc: var(--t-obj); } .g-Correlation { --gc: var(--t-obj); } .g-Station { --gc: var(--t-obj); } .g-BrightHub { --gc: var(--t-path); }
+.g-Plot { --gc: var(--t-fig); } .g-Export { --gc: var(--accent); } .g-Utilities { --gc: var(--t-val); } .g-Helpers { --gc: var(--t-val); }
+.edge-x { position: absolute; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%; border: 1px solid var(--bad); background: var(--card); color: var(--bad); font: 600 13px/1 var(--f-mono); padding: 0; }
+.float { position: absolute; display: flex; gap: 6px; z-index: 5; }
+.float.tl { left: 10px; top: 10px; flex-wrap: wrap; max-width: calc(100% - 20px); }
+.float.br { right: 10px; bottom: 10px; }
+.hint { position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); background: var(--ink); color: var(--panel); padding: 6px 12px; border-radius: 5px; font-size: 12.5px; max-width: min(90%, 520px); text-align: center; z-index: 6; pointer-events: none; }
+.hint:empty { display: none; }
+.selbar { display: none; }
+.empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; color: var(--muted); text-align: center; padding: 20px; }
+
+/* ---------- inspector ---------- */
+.ins { padding: 12px 14px 30px; display: flex; flex-direction: column; gap: 14px; }
+.ins h2 { font: 600 15px/1.25 var(--f-mono); margin: 0; overflow-wrap: anywhere; }
+.ins .ov { font: 600 11px var(--f-display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.ins p { margin: 0; }
+.ins .lead { color: var(--ink); }
+.sec > h3 { font: 600 11px var(--f-display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; padding-bottom: 3px; border-bottom: 1px solid var(--line); }
+.fld { display: flex; flex-direction: column; gap: 3px; padding: 5px 0; }
+.fld + .fld { border-top: 1px dotted var(--line); }
+.fld .lb { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.fld .lb label, .fld .lb .k { font: 500 12.5px var(--f-mono); }
+.fld .tt { font-size: 11px; color: var(--muted); font-family: var(--f-mono); }
+.fld .dc { font-size: 12px; color: var(--muted); }
+.fld .dc.clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; cursor: pointer; }
+.fld input[type="text"], .fld select, .ins input.var { width: 100%; background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 4px 7px; font: 12.5px var(--f-mono); }
+.fld input.miss { border-color: var(--bad); }
+.fld .conn { display: flex; align-items: center; gap: 6px; font: 12px var(--f-mono); }
+.fld .conn .src { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.chk { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--muted); }
+.chips { display: flex; gap: 4px; flex-wrap: wrap; }
+.next { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.next button { font: 500 11.5px var(--f-mono); background: var(--card); border: 1px solid var(--line); border-radius: 3px; padding: 1px 6px; }
+.next button:hover { border-color: var(--accent); }
+.note { border-left: 3px solid var(--t-path); background: var(--card); padding: 6px 9px; font-size: 12.5px; border-radius: 0 4px 4px 0; }
+.note.bad { border-left-color: var(--bad); }
+pre.doc { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: 12px/1.5 var(--f-mono); background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; max-height: 420px; overflow-y: auto; }
+.sig { font: 12px/1.5 var(--f-mono); background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 6px 9px; overflow-wrap: anywhere; }
+.acts { display: flex; gap: 6px; flex-wrap: wrap; }
+.ins a { color: var(--accent); }
+.issues { margin: 0; padding-left: 18px; color: var(--bad); font-size: 12.5px; }
+.legend { display: flex; flex-direction: column; gap: 6px; }
+.legend div { display: flex; gap: 8px; align-items: baseline; font-size: 12.5px; }
+.legend .ty { flex: none; }
+
+/* ---------- code view ---------- */
+.code-bar { display: flex; gap: 8px; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.code-bar .sp { margin-left: auto; }
+.code-opts { display: flex; gap: 14px; padding: 6px 12px; border-bottom: 1px solid var(--line); flex-wrap: wrap; align-items: center; }
+#codeIssues { padding: 6px 12px; border-bottom: 1px solid var(--line); color: var(--bad); font-size: 12.5px; }
+#codeIssues:empty { display: none; }
+#codeOut { flex: 1; margin: 0; overflow: auto; padding: 12px 14px 30px; font: 12.5px/1.6 var(--f-mono); background: var(--card); white-space: pre; tab-size: 4; -webkit-user-select: text; user-select: text; }
+.k { color: var(--t-obj); } .s { color: var(--t-series); } .c { color: var(--muted); font-style: italic; } .f { color: var(--t-df); }
+.cellmark { color: var(--muted); border-top: 1px dashed var(--line); display: block; margin-top: 6px; padding-top: 4px; font-style: normal; }
+
+/* ---------- dialog ---------- */
+.scrim { position: fixed; inset: 0; background: rgba(8, 14, 18, .5); z-index: 60; display: flex; align-items: center; justify-content: center; padding: 16px; }
+.dlg { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); width: min(560px, 100%); max-height: 90%; display: flex; flex-direction: column; gap: 10px; padding: 16px; }
+.dlg h2 { margin: 0; font: 600 16px var(--f-display); }
+.dlg textarea { width: 100%; min-height: 200px; background: var(--card); border: 1px solid var(--line); border-radius: 5px; padding: 8px; font: 12px var(--f-mono); resize: vertical; }
+.dlg .acts { justify-content: flex-end; }
+.toast { position: fixed; left: 50%; top: 56px; transform: translateX(-50%); background: var(--ink); color: var(--panel); padding: 7px 14px; border-radius: 5px; z-index: 70; font-size: 13px; max-width: 90%; }
+
+.tabs { display: none; }
+@media (max-width: 899px) {
+  .main { display: block; position: relative; }
+  .side, .center { position: absolute; inset: 0; display: none; border: 0 !important; }
+  body[data-view="tools"] #tools { display: flex; }
+  body[data-view="details"] #details { display: block; }
+  body[data-view="canvas"] .center, body[data-view="code"] .center { display: block; }
+  .tabs { display: grid; grid-template-columns: repeat(4, 1fr); flex: none; background: var(--panel); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom); }
+  .tabs button { background: transparent; border: 0; padding: 10px 4px 9px; font: 600 12px var(--f-display); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); border-top: 3px solid transparent; }
+  .tabs button[aria-pressed="true"] { color: var(--ink); border-top-color: var(--accent); }
+  .bar .seg, .bar .desk { display: none; }
+  .bar { gap: 6px; padding: 6px 10px; }
+  .brand h1 { font-size: 15px; }
+  .selbar { display: flex; position: absolute; left: 10px; right: 10px; bottom: 10px; background: var(--card); border: 1px solid var(--accent); border-radius: 6px; padding: 6px 8px; gap: 6px; align-items: center; z-index: 6; box-shadow: var(--shadow); }
+  .selbar:empty, .selbar[hidden] { display: none; }
+  .selbar .nm { flex: 1; min-width: 0; font: 600 12px var(--f-mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .float.br { bottom: 58px; }
+  .hint { bottom: 60px; }
+  .item { padding-top: 10px; padding-bottom: 10px; }
+}
+@media (prefers-reduced-motion: no-preference) { .btn, .item { transition: border-color .12s, background-color .12s; } }
+</style>
+</head>
+<body data-view="canvas">
+<header class="bar">
+  <div class="brand"><h1>Brightwind Workflow Builder</h1><span class="ver" id="ver">v2.8.0</span></div>
+  <select class="btn" id="tplSel" aria-label="Load an example pipeline"><option value="">Examples…</option></select>
+  <button class="btn desk" id="undoBtn" title="Undo (Ctrl+Z)">Undo</button>
+  <button class="btn desk" id="redoBtn" title="Redo (Ctrl+Shift+Z)">Redo</button>
+  <button class="btn" id="jsonBtn" title="Save or load the pipeline as JSON">Save / load</button>
+  <button class="btn danger" id="clearBtn">Clear</button>
+  <span class="status" id="status"></span>
+  <div class="seg" role="group" aria-label="View">
+    <button id="vCanvas" aria-pressed="true">Canvas</button><button id="vCode" aria-pressed="false">Python</button>
+  </div>
+</header>
+<div class="main">
+  <aside class="side" id="tools">
+    <div class="cat-head">
+      <input type="search" id="q" placeholder="Search tools, parameters, docs" aria-label="Search tools">
+      <select id="tf" aria-label="Filter by data type"></select>
+      <div class="cat-count" id="catCount"></div>
+    </div>
+    <div id="catList"></div>
+  </aside>
+  <section class="center">
+    <div id="canvasView">
+      <div id="canvas"><div id="world"><svg id="wires"></svg><div id="nodes"></div></div></div>
+      <div class="empty" id="empty" hidden>Drag a tool from the list onto the board,<br>or pick one of the examples above.</div>
+      <div class="float tl">
+        <button class="btn small" id="tidyBtn" title="Arrange nodes left to right">Tidy</button>
+        <button class="btn small" id="fitBtn" title="Fit the pipeline in view">Fit</button>
+        <button class="btn small" id="zoomOut" aria-label="Zoom out">&minus;</button>
+        <button class="btn small" id="zoomIn" aria-label="Zoom in">+</button>
+      </div>
+      <div class="hint" id="hint"></div>
+      <div class="selbar" id="selbar" hidden></div>
+    </div>
+    <div id="codeView">
+      <div class="code-bar">
+        <div class="seg" role="group" aria-label="Export format">
+          <button data-fmt="flat" aria-pressed="true">Flat script</button><button data-fmt="func" aria-pressed="false">run() function</button><button data-fmt="nb" aria-pressed="false">Notebook</button>
+        </div>
+        <span class="sp"></span>
+        <button class="btn" id="copyBtn">Copy</button>
+        <button class="btn primary" id="dlBtn" hidden>Download</button>
+      </div>
+      <div class="code-opts">
+        <label class="chk"><input type="checkbox" id="optShow" checked> Show figures with plt.show()</label>
+        <label class="chk"><input type="checkbox" id="optPrint" checked> Print unconnected results</label>
+      </div>
+      <div id="codeIssues"></div>
+      <pre id="codeOut"></pre>
+    </div>
+  </section>
+  <aside class="side" id="details"></aside>
+</div>
+<nav class="tabs" aria-label="Sections">
+  <button data-tab="tools">Tools</button><button data-tab="canvas">Canvas</button><button data-tab="details">Details</button><button data-tab="code">Python</button>
+</nav>

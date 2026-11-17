@@ -1,0 +1,13 @@
+{
+  "name": "brightwind-explorer",
+  "private": true,
+  "description": "Visual explorer and drag-and-drop workflow builder for the brightwind Python library",
+  "scripts": {
+    "build": "python3 scripts/build_site.py",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "4.156.2"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // Static site: everything in ./public is served as-is, no Worker script.
+  "name": "brightwind-explorer",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./public",
+    "not_found_handling": "single-page-application"
+  },
+  "routes": [
+    { "pattern": "bw-explorer.coderenewables.com", "custom_domain": true }
+  ],
+  "workers_dev": true,
+  "preview_urls": true
+}

@@ -60,7 +60,11 @@ button { cursor: pointer; }
 
 /* ---------- top bar ---------- */
 .bar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--panel); border-bottom: 1px solid var(--line); flex: none; flex-wrap: wrap; }
-.brand { display: flex; align-items: baseline; gap: 8px; margin-right: auto; min-width: 0; }
+.brand { display: flex; align-items: center; gap: 8px; margin-right: auto; min-width: 0; }
+.brand .home { display: inline-flex; flex: none; border-radius: 50%; }
+.brand .home svg { width: 24px; height: 24px; display: block; }
+.brand .home:hover svg { transform: rotate(-20deg); }
+@media (prefers-reduced-motion: no-preference) { .brand .home svg { transition: transform .3s; } }
 .brand h1 { font: 600 17px/1.1 var(--f-display); letter-spacing: .01em; margin: 0; white-space: nowrap; }
 .brand .ver { font: 500 11px var(--f-mono); color: var(--muted); border: 1px solid var(--line); border-radius: 3px; padding: 1px 5px; white-space: nowrap; }
 .btn { background: var(--card); border: 1px solid var(--line); border-radius: 5px; padding: 5px 10px; font-weight: 500; white-space: nowrap; }
@@ -280,7 +284,7 @@ a.btn, .ai-fields a.btn { text-decoration: none; display: inline-flex; align-ite
 </head>
 <body data-view="canvas">
 <header class="bar">
-  <div class="brand"><h1>Brightwind Workflow Builder</h1><span class="ver" id="ver">v2.8.0</span></div>
+  <div class="brand"><a class="home" href="https://coderenewables.com" title="CodeRenewables home" aria-label="CodeRenewables home"><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30" fill="#e8962a"/><g stroke="#163a35" stroke-width="5" stroke-linecap="round"><line x1="32" y1="32" x2="32" y2="10"/><line x1="32" y1="32" x2="51" y2="43"/><line x1="32" y1="32" x2="13" y2="43"/></g><circle cx="32" cy="32" r="4" fill="#163a35"/></svg></a><h1>Brightwind Workflow Builder</h1><span class="ver" id="ver">v2.8.0</span></div>
   <select class="btn" id="tplSel" aria-label="Load an example pipeline"><option value="">Examples…</option></select>
   <button class="btn desk" id="undoBtn" title="Undo (Ctrl+Z)">Undo</button>
   <button class="btn desk" id="redoBtn" title="Redo (Ctrl+Shift+Z)">Redo</button>

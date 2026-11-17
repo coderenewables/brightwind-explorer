@@ -2,7 +2,7 @@
 
 A browser tool for exploring the [brightwind](https://github.com/brightwind-dev/brightwind) wind resource assessment library and building analysis pipelines by drag and drop. The pipeline is exported as Python (a flat script, a `run()` function, or a Jupyter notebook) to run anywhere brightwind is installed.
 
-Live at **https://bw-explorer.coderenewables.com**
+Live at **https://bw-explorer.coderenewables.com**, one of the tools at [CodeRenewables](https://coderenewables.com).
 
 Nothing runs in the browser. The page is a static site: the catalog of tools is read from the brightwind source ahead of time, and the board only writes code.
 

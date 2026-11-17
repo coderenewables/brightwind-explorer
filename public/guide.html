@@ -53,6 +53,8 @@ pre code { border: 0; padding: 0; background: none; font-size: inherit; }
 .top { position: sticky; top: 0; z-index: 5; background: var(--panel); border-bottom: 1px solid var(--line); }
 .top-in { max-width: 1180px; margin: 0 auto; padding: 10px 20px; display: flex; align-items: center; gap: 12px; }
 .top .name { font: 600 17px var(--f-display); margin-right: auto; color: var(--ink); text-decoration: none; }
+.top .home { display: inline-flex; flex: none; border-radius: 50%; margin-right: -2px; }
+.top .home svg { width: 26px; height: 26px; display: block; }
 .top .name span { color: var(--muted); font-weight: 500; }
 .btn { display: inline-flex; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: 5px; padding: 6px 12px; font-weight: 500; color: var(--ink); text-decoration: none; font-size: 14px; white-space: nowrap; }
 .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
@@ -118,6 +120,7 @@ footer { max-width: 740px; color: var(--muted); font-size: 14px; padding-top: 18
 </head>
 <body>
 <header class="top"><div class="top-in">
+  <a class="home" href="https://coderenewables.com" title="CodeRenewables home" aria-label="CodeRenewables home"><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30" fill="#e8962a"/><g stroke="#163a35" stroke-width="5" stroke-linecap="round"><line x1="32" y1="32" x2="32" y2="10"/><line x1="32" y1="32" x2="51" y2="43"/><line x1="32" y1="32" x2="13" y2="43"/></g><circle cx="32" cy="32" r="4" fill="#163a35"/></svg></a>
   <a class="name" href="./">Brightwind Workflow Builder <span>· Guide</span></a>
   <a class="btn primary" href="./">Open the builder</a>
 </div></header>
@@ -466,8 +469,9 @@ python brightwind_workflow.py</code></pre>
 <section id="about">
   <h2><span class="n">15</span>About</h2>
   <p>The catalog is read from the brightwind v2.8.0 source without importing it: every signature, default and docstring. Port types and groups are assigned on top of that. Every signature has been checked against the installed package, and the example pipelines run end to end.</p>
+  <p>The builder is one of the free tools at <a href="https://coderenewables.com">CodeRenewables</a>, alongside WattOdds, WindNudge, SolarNudge and LossStack.</p>
   <p>Source, catalog scripts and instructions for updating to a new brightwind release: <a href="https://github.com/coderenewables/brightwind-explorer">github.com/coderenewables/brightwind-explorer</a>. brightwind itself: <a href="https://github.com/brightwind-dev/brightwind">github.com/brightwind-dev/brightwind</a> (MIT licence).</p>
-  <footer>Not affiliated with the brightwind project. Check generated code before relying on its results.</footer>
+  <footer>A <a href="https://coderenewables.com">CodeRenewables</a> tool by Nithish Seenivasagam. Not affiliated with the brightwind project. Check generated code before relying on its results.</footer>
 </section>
 </main>
 </div>

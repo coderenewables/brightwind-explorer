@@ -347,8 +347,9 @@ function fit() {
   if (!S.nodes.length || !c.width) { S.view = { x: 40, y: 60, k: 1 }; applyView(); return; }
   const x0 = Math.min(...S.nodes.map(n => n.x)), y0 = Math.min(...S.nodes.map(n => n.y));
   const x1 = Math.max(...S.nodes.map(n => n.x + 236)), y1 = Math.max(...S.nodes.map(n => n.y + nodeHeight(n)));
-  const k = Math.max(0.2, Math.min(1, (c.width - 60) / (x1 - x0), (c.height - 110) / (y1 - y0)));
-  S.view = { k, x: (c.width - (x1 - x0) * k) / 2 - x0 * k, y: Math.max(52, (c.height - (y1 - y0) * k) / 2) - y0 * k };
+  const ai = $('#ai'), cover = ai && !ai.hidden && !isNarrow() ? Math.max(0, c.right - ai.getBoundingClientRect().left) : 0, w = c.width - cover;
+  const k = Math.max(0.2, Math.min(1, (w - 60) / (x1 - x0), (c.height - 110) / (y1 - y0)));
+  S.view = { k, x: (w - (x1 - x0) * k) / 2 - x0 * k, y: Math.max(52, (c.height - (y1 - y0) * k) / 2) - y0 * k };
   applyView();
 }
 function applyView() {
@@ -638,11 +639,11 @@ function renderDetails() {
     else {
       const all = S.nodes.map(x => [x, nodeIssues(x)]).filter(([, p]) => p.length);
       ins.append(h('div', {}, h('div', { class: 'ov' }, 'Pipeline'), h('h2', { text: `${S.nodes.length} nodes, ${S.edges.length} connections` })),
-        h('p', { class: 'lead' }, 'Select a node to set its parameters, or a tool in the list to read its documentation. Ports only connect when their data types match.'),
+        h('p', { class: 'lead' }, 'Select a node to set its parameters, or a tool in the list to read its documentation. Ports only connect when their data types match. ', h('a', { href: 'guide.html', target: '_blank', rel: 'noopener' }, 'Read the guide')),
         all.length ? h('div', { class: 'sec' }, h('h3', {}, 'To fix before exporting'), h('ul', { class: 'issues' }, ...all.map(([x, p]) => h('li', {}, h('a', { href: '#canvas', onclick: ev => { ev.preventDefault(); S.sel = { kind: 'node', id: x.id }; renderAll(); } }, def(x).title), ': ' + p.join('; ')))))
           : (S.nodes.length ? h('p', { class: 'note', style: 'border-left-color:var(--good)' }, 'Every required input is set. Open Python to export the pipeline.') : null),
         h('div', { class: 'sec' }, h('h3', {}, 'Port colours'), h('div', { class: 'legend' }, ...TYPE_HELP.map(([t, txt]) => h('div', {}, t === 'Shear.Average' ? h('span', { class: 'ty c-obj', text: 'Object' }) : typeChip(t), h('span', {}, txt))))),
-        h('div', { class: 'sec' }, h('h3', {}, 'About'), h('p', { class: 'dc', style: 'font-size:12.5px;color:var(--muted)' }, `The tool list is read from the brightwind v${CAT.version} source (MIT licence, commit ${CAT.commit.slice(0, 7)}). Nothing runs here: the board only writes Python for you to run where brightwind is installed. `, h('a', { href: CAT.repo, target: '_blank', rel: 'noopener' }, 'brightwind repository'), ' · ', h('a', { href: 'https://github.com/coderenewables/brightwind-explorer', target: '_blank', rel: 'noopener' }, 'Source of this page'))));
+        h('div', { class: 'sec' }, h('h3', {}, 'About'), h('p', { class: 'dc', style: 'font-size:12.5px;color:var(--muted)' }, `The tool list is read from the brightwind v${CAT.version} source (MIT licence, commit ${CAT.commit.slice(0, 7)}). Nothing runs here: the board only writes Python for you to run where brightwind is installed. `, h('a', { href: CAT.repo, target: '_blank', rel: 'noopener' }, 'brightwind repository'), ' · ', h('a', { href: 'guide.html', target: '_blank', rel: 'noopener' }, 'How to use'), ' · ', h('a', { href: 'https://github.com/coderenewables/brightwind-explorer', target: '_blank', rel: 'noopener' }, 'Source of this page'))));
     }
     return;
   }
@@ -869,7 +870,7 @@ async function boot() {
   window.addEventListener('resize', () => { setView(document.body.dataset.view, true); });
   window.addEventListener('keydown', ev => {
     const typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
-    if (ev.key === 'Escape') { if ($('.scrim')) $('.scrim').remove(); else if (pend) { pend = null; markPorts(); renderWires(); } return; }
+    if (ev.key === 'Escape') { if ($('.scrim')) $('.scrim').remove(); else if ($('#ai') && !$('#ai').hidden) aiOpen(false); else if (pend) { pend = null; markPorts(); renderWires(); } return; }
     if (typing) return;
     if ((ev.key === 'Delete' || ev.key === 'Backspace') && S.sel) { if (S.sel.kind === 'node') removeNode(S.sel.id); else S.edges = S.edges.filter(e => e.id !== S.sel.id); S.sel = null; commit(); renderAll(); ev.preventDefault(); }
     if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 'z') { ev.shiftKey ? redo() : undo(); ev.preventDefault(); }
@@ -894,5 +895,6 @@ async function boot() {
         catch (e) { if (!e || e.code !== 'declined') toast('The file could not be saved here. Use Copy instead.'); } }); }).catch(() => {});
   }
   window.__bw = { zipStore, S, DEFS, generate, loadTemplate, TEMPLATES, addNode, connect, canConnect, nodeIssues, renderAll, commit, tidy, fit };
+  if (typeof setupAssistant === 'function') setupAssistant();
 }
 boot();

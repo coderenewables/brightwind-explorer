@@ -13,19 +13,23 @@ Nothing runs in the browser. The page is a static site: the catalog of tools is 
 - **Export**: functions that return `(plot, data)` when `return_data=True` are unpacked automatically when their data output is wired. Unconnected results are printed and figures shown. Parameters can be promoted to arguments of `run()`.
 - **Examples**: site overview with a WAsP tab file, cleaning plus shear extrapolation, long-term correlation against MERRA-2, and turbulence intensity.
 
+- **Build with AI**: describe an analysis and a model wires it on the board, using your own Anthropic, OpenAI or OpenAI-compatible API key. The browser calls the provider directly; the key never touches this site. Problems the builder finds in the model's graph go back to the model to fix, up to three rounds.
+- **Guide**: a full how-to at [/guide.html](https://bw-explorer.coderenewables.com/guide.html).
+
 Pipelines autosave in the browser and can be copied out as JSON from *Save / load*.
 
 ## Layout
 
 ```
-public/            the deployed site (index.html is generated, catalog.json is data)
-src/               page source: head.html (markup and styles) and app.js
+public/            the deployed site (index.html is generated; guide.html, guide/ and catalog.json are committed)
+src/               page source: head.html (markup and styles), app.js, assistant.js (Build with AI)
 scripts/
   build_site.py        src/ -> public/index.html
   update_catalog.sh    rebuild public/catalog.json from a brightwind git ref
   extract_api.py       static parse of the brightwind source (no import needed)
   build_catalog.py     curated port types, groups and tuple returns
   verify_catalog.py    compare catalog signatures with an installed brightwind
+  guide_screenshots.py regenerate public/guide/*.jpg from a running dev server
 wrangler.jsonc     Cloudflare Worker (static assets) and custom domain
 ```
 

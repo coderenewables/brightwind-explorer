@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brightwind Workflow Builder Guide</title>
+<meta name="description" content="How to explore brightwind, wire analysis pipelines, export runnable Python, and build pipelines from a prompt with your own AI key.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2315232d'/%3E%3Ccircle cx='8' cy='10' r='3.2' fill='%23c8440d'/%3E%3Ccircle cx='8' cy='22' r='3.2' fill='%231b68ad'/%3E%3Ccircle cx='24' cy='16' r='3.2' fill='%230d8266'/%3E%3Cpath d='M11 10c6 0 6 6 10 6M11 22c6 0 6-6 10-6' stroke='%23e7ecef' stroke-width='1.8' fill='none'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Sans+Condensed:wght@500;600&display=swap">
+<style>
+:root {
+  /* Layout idea: a reference manual. Sticky contents on the left, one readable column of text. */
+  --bg: #f6f8f9;
+  --panel: #e7ecef;
+  --card: #ffffff;
+  --ink: #15232d;
+  --muted: #586874;
+  --line: #cbd5dc;
+  --accent: #c8440d;
+  --good: #1f7a4d;
+  --bad: #b3261e;
+  --t-df: #1b68ad; --t-series: #0d8266; --t-fig: #9c3590; --t-path: #86680a; --t-val: #56646f; --t-obj: #6546c0;
+  --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-display: "IBM Plex Sans Condensed", "IBM Plex Sans", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0e161c; --panel: #141e26; --card: #1a2630; --ink: #e5ecf1; --muted: #93a4b1; --line: #2c3b47;
+    --accent: #ff7d42; --good: #5fd39a; --bad: #ff8a80;
+    --t-df: #62aeea; --t-series: #45cba8; --t-fig: #dc86cf; --t-path: #dcb746; --t-val: #a3b3bf; --t-obj: #ab95f2;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0e161c; --panel: #141e26; --card: #1a2630; --ink: #e5ecf1; --muted: #93a4b1; --line: #2c3b47;
+  --accent: #ff7d42; --good: #5fd39a; --bad: #ff8a80;
+  --t-df: #62aeea; --t-series: #45cba8; --t-fig: #dc86cf; --t-path: #dcb746; --t-val: #a3b3bf; --t-obj: #ab95f2;
+}
+* { box-sizing: border-box; }
+html { scroll-padding-top: 70px; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.62 var(--f-body); }
+a { color: var(--accent); text-underline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+code, kbd, pre { font-family: var(--f-mono); }
+code { font-size: .88em; background: var(--card); border: 1px solid var(--line); border-radius: 3px; padding: 0 4px; overflow-wrap: anywhere; }
+kbd { font-size: .82em; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; background: var(--card); white-space: nowrap; }
+pre { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; overflow-x: auto; font-size: 13.5px; line-height: 1.55; }
+pre code { border: 0; padding: 0; background: none; font-size: inherit; }
+
+.top { position: sticky; top: 0; z-index: 5; background: var(--panel); border-bottom: 1px solid var(--line); }
+.top-in { max-width: 1180px; margin: 0 auto; padding: 10px 20px; display: flex; align-items: center; gap: 12px; }
+.top .name { font: 600 17px var(--f-display); margin-right: auto; color: var(--ink); text-decoration: none; }
+.top .name span { color: var(--muted); font-weight: 500; }
+.btn { display: inline-flex; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: 5px; padding: 6px 12px; font-weight: 500; color: var(--ink); text-decoration: none; font-size: 14px; white-space: nowrap; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+.wrap { max-width: 1180px; margin: 0 auto; padding: 0 20px 80px; display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 48px; }
+nav.toc { position: sticky; top: 70px; align-self: start; max-height: calc(100vh - 90px); overflow-y: auto; padding: 28px 0 20px; font-size: 14px; }
+nav.toc h2 { font: 600 11px var(--f-display); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
+nav.toc ol { list-style: none; margin: 0; padding: 0; counter-reset: toc; }
+nav.toc li { counter-increment: toc; }
+nav.toc a { display: flex; gap: 8px; padding: 4px 0 4px 10px; color: var(--ink); text-decoration: none; border-left: 2px solid var(--line); }
+nav.toc a::before { content: counter(toc, decimal-leading-zero); font: 500 11px/2 var(--f-mono); color: var(--muted); }
+nav.toc a:hover, nav.toc a.on { border-left-color: var(--accent); color: var(--accent); }
+
+main { min-width: 0; padding-top: 24px; }
+main > section { max-width: 740px; padding: 8px 0 18px; border-bottom: 1px solid var(--line); }
+main > section:last-child { border-bottom: 0; }
+.hero { max-width: 740px; padding: 20px 0 24px; border-bottom: 1px solid var(--line); }
+.hero .ov { font: 600 12px var(--f-display); letter-spacing: .1em; text-transform: uppercase; color: var(--accent); margin: 0 0 6px; }
+.hero h1 { font: 600 clamp(28px, 4vw, 38px)/1.12 var(--f-display); margin: 0 0 12px; text-wrap: balance; }
+.hero p { margin: 0 0 10px; color: var(--muted); font-size: 17px; }
+h2 { font: 600 24px/1.25 var(--f-display); margin: 26px 0 8px; text-wrap: balance; display: flex; gap: 10px; align-items: baseline; }
+h2 .n { font: 500 13px var(--f-mono); color: var(--muted); }
+h3 { font: 600 17px/1.3 var(--f-body); margin: 22px 0 6px; }
+p { margin: 0 0 12px; }
+ul, ol { margin: 0 0 12px; padding-left: 22px; }
+li { margin: 3px 0; }
+figure { margin: 14px 0 18px; }
+figure img { width: 100%; height: auto; display: block; border: 1px solid var(--line); border-radius: 8px; background: var(--card); }
+figcaption { font-size: 13.5px; color: var(--muted); margin-top: 6px; }
+figure.phone { max-width: 300px; }
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 22px; align-items: start; }
+
+table { width: 100%; border-collapse: collapse; margin: 6px 0 16px; font-size: 14.5px; }
+.tbl { overflow-x: auto; }
+th, td { text-align: left; vertical-align: top; padding: 7px 10px 7px 0; border-bottom: 1px solid var(--line); }
+th { font: 600 11px var(--f-display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+td:first-child { white-space: nowrap; }
+.ty { display: inline-flex; align-items: center; gap: 5px; font: 500 12px var(--f-mono); padding: 0 6px; border-radius: 3px; border: 1px solid var(--tc); color: var(--tc); white-space: nowrap; }
+.ty::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--tc); }
+.c-df { --tc: var(--t-df); } .c-series { --tc: var(--t-series); } .c-fig { --tc: var(--t-fig); } .c-path { --tc: var(--t-path); } .c-val { --tc: var(--t-val); } .c-obj { --tc: var(--t-obj); }
+
+.steps { counter-reset: st; list-style: none; padding: 0; }
+.steps > li { counter-increment: st; position: relative; padding: 0 0 8px 38px; }
+.steps > li::before { content: counter(st); position: absolute; left: 0; top: 1px; width: 26px; height: 26px; border-radius: 50%; background: var(--ink); color: var(--bg); font: 600 13px/26px var(--f-mono); text-align: center; }
+.note { border-left: 3px solid var(--t-df); background: var(--card); padding: 10px 14px; border-radius: 0 6px 6px 0; margin: 12px 0 16px; font-size: 15px; }
+.note.warn { border-left-color: var(--t-path); }
+.note.key { border-left-color: var(--accent); }
+.note p:last-child, .note ul:last-child { margin-bottom: 0; }
+.note strong:first-child { display: block; font: 600 12px var(--f-display); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 2px; }
+dl.faq dt { font-weight: 600; margin-top: 14px; }
+dl.faq dd { margin: 4px 0 0; }
+footer { max-width: 740px; color: var(--muted); font-size: 14px; padding-top: 18px; }
+
+@media (max-width: 900px) {
+  .wrap { grid-template-columns: 1fr; gap: 0; }
+  nav.toc { position: static; max-height: none; padding: 18px 0 6px; border-bottom: 1px solid var(--line); }
+  nav.toc ol { columns: 2; column-gap: 18px; }
+  .cols { grid-template-columns: 1fr; }
+  .top .name span { display: none; }
+}
+@media (max-width: 480px) { nav.toc ol { columns: 1; } body { font-size: 15.5px; } }
+</style>
+</head>
+<body>
+<header class="top"><div class="top-in">
+  <a class="name" href="./">Brightwind Workflow Builder <span>· Guide</span></a>
+  <a class="btn primary" href="./">Open the builder</a>
+</div></header>
+<div class="wrap">
+<nav class="toc" aria-label="Contents">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#start">Quick start</a></li>
+    <li><a href="#screen">The screen</a></li>
+    <li><a href="#find">Finding tools</a></li>
+    <li><a href="#wire">Wiring a pipeline</a></li>
+    <li><a href="#types">Port types</a></li>
+    <li><a href="#params">Inputs and parameters</a></li>
+    <li><a href="#objects">Objects and methods</a></li>
+    <li><a href="#helpers">Helper nodes</a></li>
+    <li><a href="#examples">Examples</a></li>
+    <li><a href="#export">Exporting Python</a></li>
+    <li><a href="#save">Saving pipelines</a></li>
+    <li><a href="#ai">Build with AI</a></li>
+    <li><a href="#keys">Keyboard and touch</a></li>
+    <li><a href="#faq">Troubleshooting</a></li>
+    <li><a href="#about">About</a></li>
+  </ol>
+</nav>
+<main>
+<div class="hero">
+  <p class="ov">How to use</p>
+  <h1>Explore brightwind, wire an analysis, take home a script</h1>
+  <p>The Brightwind Workflow Builder lays out every public tool in the <a href="https://github.com/brightwind-dev/brightwind">brightwind</a> wind resource assessment library (v2.8.0) as a node you can drop on a board and wire to others. When the pipeline is ready, it writes the Python for you.</p>
+  <p>Nothing runs in the browser. Your data never leaves your machine: the page only writes code, and you run that code wherever brightwind is installed.</p>
+</div>
+
+<section id="start">
+  <h2><span class="n">01</span>Quick start</h2>
+  <ol class="steps">
+    <li>Open the <a href="./">builder</a>. The first visit opens an example: a site overview of the demo mast that ends in a WAsP tab file.</li>
+    <li>Pick another example from <strong>Examples…</strong> in the top bar, or press <strong>Clear</strong> to start empty.</li>
+    <li>Drag a tool from the list on the left onto the board. Start with <code>Demo dataset</code> or <code>File path</code>, then <code>load_csv</code>.</li>
+    <li>Drag from an output port (right edge of a node) to an input port (left edge of another). Only matching types connect.</li>
+    <li>Click a node to set its parameters in the panel on the right. Red badges mark inputs that still need a value.</li>
+    <li>Switch to <strong>Python</strong> at the top right, choose a format, then <strong>Copy</strong> or <strong>Download</strong>.</li>
+    <li>Run it: <code>pip install brightwind</code>, then <code>python brightwind_workflow.py</code>.</li>
+  </ol>
+  <p>Prefer to describe the analysis in words? <a href="#ai">Build with AI</a> wires the board from a prompt, using your own API key.</p>
+</section>
+
+<section id="screen">
+  <h2><span class="n">02</span>The screen</h2>
+  <figure>
+    <img src="guide/overview.jpg" width="1360" height="780" alt="The builder with the tool list on the left, a shear pipeline on the board in the middle, and the Shear.Average node's parameters on the right." loading="lazy">
+    <figcaption>The cleaning and shear example, with the <code>Shear.Average</code> node selected.</figcaption>
+  </figure>
+  <div class="tbl"><table>
+    <thead><tr><th>Area</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td>Top bar</td><td>Examples, Undo and Redo, Save / load, Clear, a status pill (<em>Ready to export</em> or the number of nodes to fix), this guide, Build with AI, and the Canvas / Python switch.</td></tr>
+      <tr><td>Tools (left)</td><td>The catalog: 153 brightwind tools plus 9 helpers, grouped and searchable. Click one to read its documentation; drag it to add it.</td></tr>
+      <tr><td>Board (middle)</td><td>Your pipeline. Pan by dragging empty space, zoom with the mouse wheel, a pinch, or the <kbd>−</kbd> <kbd>+</kbd> buttons. <strong>Tidy</strong> lays nodes out left to right in run order; <strong>Fit</strong> brings everything into view.</td></tr>
+      <tr><td>Details (right)</td><td>Shows the selected node's inputs, parameters, outputs and full docstring. With nothing selected, it lists what still needs fixing and explains the port colours.</td></tr>
+      <tr><td>Python</td><td>The generated code, updated live, in three formats.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="find">
+  <h2><span class="n">03</span>Finding tools</h2>
+  <p>Tools are grouped the way an analysis usually runs: Sources, Load, Clean, Helpers, Transform, Statistics, Distributions, Turbulence, Shear, Correlation, Atmosphere, Plot, Station, BrightHub, Export and Utilities.</p>
+  <ul>
+    <li><strong>Search</strong> matches tool names, summaries, parameter names and docstrings. Several words narrow the list: <code>sector ratio</code>, <code>tab file</code>, <code>coverage</code>.</li>
+    <li><strong>Data type filter</strong> lists tools that accept or return a type. <em>Accepts Series</em> shows everything you can do with one column; <em>Returns Figure</em> shows every plot.</li>
+    <li><strong>Click a tool</strong> to read it without adding it: signature, each input with the types it accepts, parameters with defaults, outputs, the full docstring, and a link to the exact line in the brightwind source.</li>
+    <li>Tags warn you about two kinds of tool. <em>Deprecated</em> tools still work but are going away; the <code>LoadBrightdata</code> functions are deprecated in favour of <code>LoadBrightHub</code>. <em>Not implemented</em> tools are listed for completeness but can't be added, because brightwind 2.8.0 raises <code>NotImplementedError</code> for them (<code>Correl.SVR</code> and <code>MultipleLinearRegression.plot</code>).</li>
+  </ul>
+</section>
+
+<section id="wire">
+  <h2><span class="n">04</span>Wiring a pipeline</h2>
+  <h3>Adding nodes</h3>
+  <ul>
+    <li><strong>Drag</strong> a tool from the list onto the board.</li>
+    <li>Or click a tool, then <strong>Add to canvas</strong>. This is the way to add tools on a phone.</li>
+    <li>Or select a node and use <strong>Outputs and next steps</strong> in the details panel. It lists every tool that accepts that output; clicking one adds it to the right, already wired.</li>
+    <li><strong>Duplicate</strong> in the details panel copies a node with its settings.</li>
+  </ul>
+  <h3>Connecting ports</h3>
+  <figure>
+    <img src="guide/wiring.jpg" width="1360" height="780" alt="A wire being dragged from load_csv's data output. Compatible inputs glow; incompatible ones fade." loading="lazy">
+    <figcaption>While you drag from <code>load_csv · data</code> (a DataFrame), the inputs that accept a DataFrame are highlighted and the rest fade.</figcaption>
+  </figure>
+  <ul>
+    <li>Drag from an output on the right edge of a node to an input on the left edge of another, or the other way round.</li>
+    <li>Or click one port, then click the other. The hint at the bottom of the board tells you what it's waiting for. Click empty space or press <kbd>Esc</kbd> to cancel.</li>
+    <li>An input takes one wire. Connecting a new one replaces the old.</li>
+    <li>An output can feed any number of inputs.</li>
+    <li>Loops are refused, and so are mismatched types. A refused connection shows a message saying what the input accepts.</li>
+    <li>To remove a wire, click it and press the <kbd>×</kbd> at its middle, press <kbd>Delete</kbd>, or use <strong>Disconnect</strong> in the details panel.</li>
+  </ul>
+  <h3>Order of execution</h3>
+  <p>You don't set an order. The export sorts nodes so every input exists before it is used. When two steps don't depend on each other, the one further left (then higher up) on the board comes first.</p>
+</section>
+
+<section id="types">
+  <h2><span class="n">05</span>Port types</h2>
+  <p>Each port is coloured by the kind of value it carries. Connections are strict: a wire is only allowed when the output's type is one the input accepts. This catches most mistakes before the script ever runs.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Type</th><th>Meaning</th><th>Typical source</th></tr></thead>
+    <tbody>
+      <tr><td><span class="ty c-df">DataFrame</span></td><td>A pandas table of timeseries columns.</td><td><code>load_csv</code>, <code>apply_cleaning</code>, <code>average_data_by_period</code></td></tr>
+      <tr><td><span class="ty c-series">Series</span></td><td>One column.</td><td><code>Select column</code>, <code>TI.calc</code>, <code>synthesize</code></td></tr>
+      <tr><td><span class="ty c-fig">Figure</span></td><td>A matplotlib plot.</td><td>every plot function, the <code>plot</code> output of analyse functions</td></tr>
+      <tr><td><span class="ty c-path">Path</span></td><td>A file or folder path.</td><td><code>File path</code>, <code>Demo dataset</code></td></tr>
+      <tr><td><span class="ty c-val">Value</span></td><td>A number or text. Lists and dicts share this colour.</td><td><code>Shear.Average.alpha</code>, <code>momm</code>, <code>List</code></td></tr>
+      <tr><td><span class="ty c-obj">Object</span></td><td>A brightwind object: a shear result, a correlation model, a measurement station.</td><td><code>Shear.TimeSeries</code>, <code>Correl.OrdinaryLeastSquares</code>, <code>MeasurementStation</code></td></tr>
+    </tbody>
+  </table></div>
+  <p>Some outputs follow their input. <code>offset_timestamps</code>, for example, returns a Series when given a Series and a DataFrame when given a DataFrame. Its output port changes type as you wire it.</p>
+  <div class="note"><strong>Most common fix</strong><p>Many brightwind functions take one column, so their input accepts only a Series. Put a <code>Select column</code> node between the loaded DataFrame and the function, and type the column name into it.</p></div>
+</section>
+
+<section id="params">
+  <h2><span class="n">06</span>Inputs and parameters</h2>
+  <figure>
+    <img src="guide/inspector.jpg" width="1360" height="780" alt="The details panel for export_tab_file, showing its connected input, typed values for lat and long, and parameters." loading="lazy">
+    <figcaption>The details panel for <code>export_tab_file</code>: one wired input, two typed values, and its parameters.</figcaption>
+  </figure>
+  <p>Each argument of a brightwind function appears in one of two places on its node.</p>
+  <ul>
+    <li><strong>Inputs</strong> are arguments that usually come from another node: data, series, objects, paths. They have a port. An unwired input also has a text box, where you can type a Python value instead, such as <code>53.4</code> for a latitude.</li>
+    <li><strong>Parameters</strong> are settings. They have no port and are set in the details panel. Anything left empty keeps brightwind's default and is left out of the code.</li>
+  </ul>
+  <h3>Typing values</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Field</th><th>What to type</th><th>Becomes</th></tr></thead>
+    <tbody>
+      <tr><td>Text (for example <code>averaging_prd</code>)</td><td><code>1M</code>. Quotes are added for you.</td><td><code>averaging_prd='1M'</code></td></tr>
+      <tr><td>Text, as an expression</td><td>Start with <code>=</code>: <code>=my_period</code></td><td><code>averaging_prd=my_period</code></td></tr>
+      <tr><td>Python value</td><td>Python as written: <code>0.9</code>, <code>[80, 60, 40]</code>, <code>None</code></td><td>exactly that</td></tr>
+      <tr><td>Checkbox</td><td>Tick or untick. The default is shown beside it.</td><td><code>True</code> / <code>False</code>, only when not the default</td></tr>
+      <tr><td><code>**kwargs</code></td><td>Extra keyword arguments passed through, for example <code>skiprows=2</code></td><td>appended to the call</td></tr>
+    </tbody>
+  </table></div>
+  <p>A <code>*</code> marks a required input or parameter. Until it has a value, the node shows a red badge with the number of open items, and the status pill counts it. You can still export: the code includes a <code>TODO</code> comment and <code>...</code> where the value belongs.</p>
+  <h3>Optional outputs and return flags</h3>
+  <p>Many analyse functions return only a plot unless you pass <code>return_data=True</code>, in which case they return <code>(plot, data)</code>. Their nodes show both outputs. Wiring the <code>data</code> output turns the flag on and unpacks the tuple in the code, so you don't need to manage it. <code>TI.twelve_by_24</code> returns the pair in the opposite order, and the export handles that too.</p>
+  <h3>Variable names and run() arguments</h3>
+  <ul>
+    <li><strong>Variable name in the script</strong> sets the name of a node's result, such as <code>lt_wspd_80m</code>. Clashes get a numeric suffix.</li>
+    <li><strong>Make this an argument of run()</strong>, under any parameter, lifts that value into the signature of the function export, with your value as the default. <code>File path</code> and <code>Demo dataset</code> nodes become arguments automatically.</li>
+  </ul>
+</section>
+
+<section id="objects">
+  <h2><span class="n">07</span>Objects and methods</h2>
+  <p>Some brightwind tools are classes. The builder splits each into a constructor node and separate nodes for its methods and attributes. A method or attribute node takes the object on its first input.</p>
+  <h3>Shear</h3>
+  <p><code>Shear.TimeSeries</code>, <code>Shear.TimeOfDay</code>, <code>Shear.Average</code> and <code>Shear.BySector</code> calculate shear from a DataFrame of anemometers and a list of heights. From the object:</p>
+  <ul>
+    <li><code>.apply</code> extrapolates a wind speed Series to a new height.</li>
+    <li><code>.alpha</code> or <code>.roughness</code> reads the result; <code>.plot</code> gives the figure; <code>.info</code> describes the inputs.</li>
+    <li><code>Shear.scale</code> scales a speed with an alpha or roughness you already have.</li>
+  </ul>
+  <h3>Correlation</h3>
+  <p>A correlation needs three steps: create the model, run it, then use it.</p>
+  <pre><code>Correl.OrdinaryLeastSquares  →  .run  →  .plot / .synthesize / .params / .data</code></pre>
+  <p>The constructor's output is an unfitted model and only fits <code>.run</code>. The output of <code>.run</code> is the fitted model, which the later steps accept. This stops you from synthesizing from a model that was never fitted. <code>MultipleLinearRegression</code> takes its reference speeds as a list: wire several Series into a <code>List</code> helper first.</p>
+  <h3>Measurement station</h3>
+  <p><code>MeasurementStation</code> reads an IEA Task 43 WRA data model (a file path or a dict). Its attributes give the name, location, the <code>measurements</code> object, and tables of properties. <code>apply_device_orientation_offset</code> and the slope and offset adjustments can take it, or its measurements, as input.</p>
+</section>
+
+<section id="helpers">
+  <h2><span class="n">08</span>Helper nodes</h2>
+  <p>Helpers are small pieces of plain Python that make brightwind tools fit together. They are not brightwind functions.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Helper</th><th>Writes</th><th>Use it to</th></tr></thead>
+    <tbody>
+      <tr><td><code>Demo dataset</code></td><td><code>bw.demo_datasets.demo_data</code></td><td>try things on the files bundled with brightwind: the demo mast, four MERRA-2 nodes, cleaning files, data models</td></tr>
+      <tr><td><code>File path</code></td><td><code>r'C:\data\mast.csv'</code></td><td>point at your own file or folder</td></tr>
+      <tr><td><code>Select column</code></td><td><code>data['Spd80mN']</code></td><td>take one column as a Series</td></tr>
+      <tr><td><code>Select columns</code></td><td><code>data[['Spd80mN', 'Spd60mN']]</code></td><td>keep several columns, for example the anemometers for shear</td></tr>
+      <tr><td><code>Slice by date</code></td><td><code>data.loc['2016-06-01':'2017-05-31']</code></td><td>keep a period</td></tr>
+      <tr><td><code>List</code></td><td><code>[a, b, c]</code></td><td>collect up to four inputs into a list</td></tr>
+      <tr><td><code>Python expression</code></td><td>your expression with <code>{a}</code> and <code>{b}</code> filled in</td><td>anything else, such as <code>{a} - {b}</code>. Choose what it returns so its output can be wired.</td></tr>
+      <tr><td><code>Print</code></td><td><code>print(value)</code></td><td>print a result that is also wired elsewhere</td></tr>
+      <tr><td><code>Save figure</code></td><td><code>fig.savefig('rose.png', dpi=150, …)</code></td><td>write a plot to an image file</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="examples">
+  <h2><span class="n">09</span>Examples</h2>
+  <p>Load any of these from <strong>Examples…</strong>. They use the demo data, so the exported scripts run as they are. Loading an example replaces the board; <strong>Undo</strong> brings your work back.</p>
+  <dl class="faq">
+    <dt>Site overview: stats, monthly means, tab file</dt>
+    <dd>Loads the demo mast, prints basic statistics, plots monthly means of the 80 m speed, builds a frequency table against the 78 m vane and exports a WAsP <code>.tab</code> file.</dd>
+    <dt>Clean the data, then shear to hub height</dt>
+    <dd>Applies the demo cleaning log, calculates average shear from the 40, 60 and 80 m anemometers, prints alpha, extrapolates the 80 m speed to 120 m and plots its monthly means.</dd>
+    <dt>Long-term correlation against MERRA-2</dt>
+    <dd>Correlates the 80 m speed with the MERRA-2 NE node using monthly ordinary least squares, plots the fit, synthesizes the long-term series and reports its mean of monthly means.</dd>
+    <dt>Turbulence intensity by speed, sector and time of day</dt>
+    <dd>TI by wind speed bin, by direction sector and as a 12×24 plot, with the by-speed table exported to CSV.</dd>
+  </dl>
+</section>
+
+<section id="export">
+  <h2><span class="n">10</span>Exporting Python</h2>
+  <figure>
+    <img src="guide/python.jpg" width="1360" height="780" alt="The Python view with format buttons, export options and the generated flat script." loading="lazy">
+    <figcaption>The Python view for the site overview example.</figcaption>
+  </figure>
+  <h3>Formats</h3>
+  <ul>
+    <li><strong>Flat script</strong>: one statement per node, top to bottom, with a comment naming each step. Best for reading and for small edits.</li>
+    <li><strong>run() function</strong>: the same steps inside <code>def run(...)</code>, which returns every result in a dict. File paths and any parameters you promoted become arguments, so you can call it from other code: <code>results = run(demo_data_path=r'D:\site\mast.csv')</code>.</li>
+    <li><strong>Notebook</strong>: a Jupyter <code>.ipynb</code> with one cell per step. Each cell ends by displaying its unconnected result.</li>
+  </ul>
+  <h3>Options</h3>
+  <ul>
+    <li><strong>Show figures with plt.show()</strong> adds <code>import matplotlib.pyplot as plt</code> and a final <code>plt.show()</code> so plot windows open when you run the script.</li>
+    <li><strong>Print unconnected results</strong> prints every result that doesn't feed another node. Figures and paths are never printed.</li>
+  </ul>
+  <h3>Getting the file</h3>
+  <p><strong>Copy</strong> puts the code on your clipboard. <strong>Download</strong> saves the selected format as <code>brightwind_workflow.py</code>, <code>brightwind_workflow_run.py</code> or <code>brightwind_workflow.ipynb</code>.</p>
+  <h3>Running it</h3>
+  <pre><code>pip install brightwind          # once, in the environment you will use
+python brightwind_workflow.py</code></pre>
+  <p>Scripts built on the demo datasets run anywhere brightwind is installed. With your own files, check that the paths exist on the machine that runs the script and that the column names match your data. The builder can't see your data, so it can't check them.</p>
+</section>
+
+<section id="save">
+  <h2><span class="n">11</span>Saving pipelines</h2>
+  <ul>
+    <li>The board saves itself in this browser after every change and comes back when you return. It isn't shared with other browsers or devices.</li>
+    <li><strong>Save / load</strong> shows the whole pipeline as JSON text. Copy it to keep it, to send it to a colleague, or to move it between devices. Paste one in and press <strong>Load pasted pipeline</strong> to restore it.</li>
+    <li><strong>Undo</strong> and <strong>Redo</strong> cover every change in the session, including loading an example and builds by the AI assistant.</li>
+  </ul>
+</section>
+
+<section id="ai">
+  <h2><span class="n">12</span>Build with AI</h2>
+  <div class="cols">
+    <div>
+      <p><strong>Build with AI</strong> turns a description such as <em>“correlate the 80 m speed with MERRA-2 using monthly least squares and synthesize the long-term series”</em> into a wired pipeline on the board. It uses a model from your own account with your own API key, so the site has no AI costs and no server in between.</p>
+      <p>The assistant follows the same type rules as manual wiring. It answers with a graph, the builder checks it, and if anything doesn't fit (an unknown tool, a wrong port, a missing required value) the problems go back to the model to fix. That repeats up to three times. What lands on the board is something you can inspect, change and export like any other pipeline.</p>
+    </div>
+    <figure class="phone">
+      <img src="guide/phone.jpg" width="390" height="760" alt="The builder on a phone, with a pipeline on the board and tabs for Tools, Canvas, Details and Python." loading="lazy">
+      <figcaption>The builder works on a phone too. Build with AI opens full screen there.</figcaption>
+    </figure>
+  </div>
+  <figure>
+    <img src="guide/assistant.jpg" width="1360" height="780" alt="The Build with AI panel showing a prompt, the model's summary, and the pipeline it built on the board." loading="lazy">
+    <figcaption>A prompt, the model's summary, and the six nodes it wired.</figcaption>
+  </figure>
+  <h3>Set it up</h3>
+  <ol class="steps">
+    <li>Press <strong>Build with AI</strong> in the top bar and open <strong>Model and API key</strong>.</li>
+    <li>Choose a provider and paste a key.</li>
+    <li>Keep the suggested model, type another, or press <strong>List models</strong> to choose from the models your key can use.</li>
+    <li>Describe the analysis and press <strong>Build</strong> (or <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd>).</li>
+  </ol>
+  <div class="tbl"><table>
+    <thead><tr><th>Provider</th><th>Key</th><th>Suggested model</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>Anthropic (Claude)</td><td><a href="https://console.anthropic.com/settings/keys">console.anthropic.com</a></td><td><code>claude-sonnet-5-5</code></td><td>Uses prompt caching, so follow-up requests within a few minutes cost much less.</td></tr>
+      <tr><td>OpenAI</td><td><a href="https://platform.openai.com/api-keys">platform.openai.com</a></td><td><code>gpt-6.1-sol</code></td><td>Uses the Responses API.</td></tr>
+      <tr><td>OpenAI-compatible</td><td>depends on the endpoint</td><td>none: type or list one</td><td>Any endpoint with <code>/chat/completions</code> and tool calling. The default is <a href="https://openrouter.ai">OpenRouter</a>, which reaches many models with one key. Pick a model that supports tool calling.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note key"><strong>Your key and your data</strong>
+    <ul>
+      <li>Your browser sends the request straight to the provider you chose. This site has no backend and never receives your key or prompts.</li>
+      <li>The key is kept in memory and is gone when you close the tab, unless you tick <strong>Remember the key in this browser</strong>. Then it is stored in this browser's local storage for this site. <strong>Forget keys</strong> removes it.</li>
+      <li>Each request sends your prompt, the tool catalog and, when you're changing the board, the current pipeline (tool names, parameters and wiring). No measurement data is sent; the builder never has any.</li>
+      <li>Use a key with a spending limit, and don't enable Remember on a shared computer.</li>
+    </ul>
+  </div>
+  <h3>New board or change the current one</h3>
+  <p>When the board has nodes, <strong>Change the current board</strong> is ticked. The model then sees your pipeline and returns an updated version. Ask for things like <em>“add a Weibull plot of the 80 m speed”</em> or <em>“switch the correlation to orthogonal least squares”</em>. Untick it to start a new pipeline from the prompt alone. The board is replaced either way, and <strong>Undo</strong> brings back the previous one.</p>
+  <h3>Writing good prompts</h3>
+  <ul>
+    <li><strong>Name the data.</strong> Without a file, the assistant uses the demo mast and knows its columns (<code>Spd80mN</code>, <code>Dir78mS</code>, <code>T2m</code> and so on) and the MERRA-2 nodes. For your own file, give the path and column names: <em>“load D:/site/mast01.csv, speeds WS_100m and WS_80m, vane WD_97m”</em>.</li>
+    <li><strong>Name the method and its settings</strong> when you have a preference: averaging period, coverage threshold, sectors, heights, output file names.</li>
+    <li><strong>Build in steps.</strong> Start with loading and cleaning, then ask for each analysis as a follow-up with <em>Change the current board</em> ticked.</li>
+    <li><strong>Check the result.</strong> Read the summary, look for red badges, and skim the Python before you run it. The model works from the catalog and the docstrings, not from your data.</li>
+  </ul>
+  <h3>Cost</h3>
+  <p>The catalog the model needs comes to roughly 11,000 input tokens per request, plus your prompt and the current board. Each correction round sends a short follow-up. A typical build is one to two requests with a few thousand output tokens. Check your provider's pricing for the model you choose.</p>
+  <h3>If something goes wrong</h3>
+  <dl class="faq">
+    <dt>“The provider refused the API key (401)”</dt>
+    <dd>The key is wrong, revoked, or for a different provider than the one selected.</dd>
+    <dt>“Not found (404). Check the model name”</dt>
+    <dd>The model ID doesn't exist for your key. Press <strong>List models</strong> and pick one.</dd>
+    <dt>“Rate limited or out of credit (429)”</dt>
+    <dd>Wait a minute, or check the billing settings in your provider's console.</dd>
+    <dt>“Could not reach …”</dt>
+    <dd>The endpoint is down, the address is wrong, or it doesn't accept requests from web pages (CORS). Local servers have to allow this site's origin. Ollama, for example, needs <code>OLLAMA_ORIGINS=https://bw-explorer.coderenewables.com</code>.</dd>
+    <dt>The model replied with text and built nothing</dt>
+    <dd>It decided the request can't be built from brightwind's tools, or it asked a question. Reply in the prompt box; recent messages are included as context.</dd>
+    <dt>Built, but with open items</dt>
+    <dd>After three rounds some values were still missing. They're marked with red badges on the board and as <code>TODO</code> in the code. Fill them in yourself or ask the assistant to fix them.</dd>
+  </dl>
+  <p>Build with AI only works on this site. In a copy of the page embedded elsewhere (for example inside Claude), the page can't reach AI providers.</p>
+</section>
+
+<section id="keys">
+  <h2><span class="n">13</span>Keyboard and touch</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Action</th><th>Mouse and keyboard</th><th>Touch</th></tr></thead>
+    <tbody>
+      <tr><td>Pan the board</td><td>drag empty space, or scroll with a trackpad</td><td>drag with one finger</td></tr>
+      <tr><td>Zoom</td><td>mouse wheel, <kbd>Ctrl</kbd> + trackpad scroll, or <kbd>−</kbd> <kbd>+</kbd></td><td>pinch</td></tr>
+      <tr><td>Connect ports</td><td>drag between ports, or click one then the other</td><td>tap one port, then the other</td></tr>
+      <tr><td>Cancel a connection</td><td><kbd>Esc</kbd> or click empty space</td><td>tap empty space</td></tr>
+      <tr><td>Delete the selected node or wire</td><td><kbd>Delete</kbd> or <kbd>Backspace</kbd></td><td><strong>Delete</strong> in the bar at the bottom</td></tr>
+      <tr><td>Undo / redo</td><td><kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Z</kbd>, <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd> or <kbd>Ctrl</kbd> + <kbd>Y</kbd></td><td>Undo / Redo buttons (wider screens)</td></tr>
+      <tr><td>Close a dialog or the AI panel</td><td><kbd>Esc</kbd></td><td>Close</td></tr>
+      <tr><td>Build with AI</td><td><kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd> in the prompt</td><td>Build</td></tr>
+    </tbody>
+  </table></div>
+  <p>On a phone the screen splits into four tabs at the bottom: <strong>Tools</strong>, <strong>Canvas</strong>, <strong>Details</strong> and <strong>Python</strong>. Tap a tool, then <strong>Add to canvas</strong>.</p>
+</section>
+
+<section id="faq">
+  <h2><span class="n">14</span>Troubleshooting</h2>
+  <dl class="faq">
+    <dt>A port won't connect</dt>
+    <dd>The types don't match; the message says what the input accepts. The usual fix is a <code>Select column</code> between a DataFrame and a function that takes a Series. For correlations, connect from <code>.run</code>, not from the constructor.</dd>
+    <dt>The code contains <code>TODO</code> and <code>...</code></dt>
+    <dd>A required input or parameter has no value. The status pill and the details panel (with nothing selected) list every one.</dd>
+    <dt><code>KeyError</code> when the script runs</dt>
+    <dd>A column name in a <code>Select column</code> node doesn't exist in your file. Column names are case sensitive.</dd>
+    <dt>Plots don't appear</dt>
+    <dd>Keep <strong>Show figures with plt.show()</strong> ticked for scripts. In a notebook, figures display without it. On a headless server, add a <code>Save figure</code> node instead.</dd>
+    <dt>BrightHub nodes fail</dt>
+    <dd>They need a BrightHub account and network access when the script runs. brightwind reads the credentials from environment variables: an API key as <code>BRIGHTHUB_CLIENT_ID</code> and <code>BRIGHTHUB_CLIENT_SECRET</code>, or <code>BRIGHTHUB_EMAIL</code> and <code>BRIGHTHUB_PASSWORD</code>. Set them before running the script.</dd>
+    <dt><code>plot_meas_station_on_gmap</code> fails</dt>
+    <dd>It needs the optional <code>gmaps</code> package and a Google Maps API key.</dd>
+    <dt>My board disappeared</dt>
+    <dd>Pipelines are saved in the browser you built them in. Private windows and cleared site data lose them. Use <strong>Save / load</strong> to keep a copy.</dd>
+    <dt>A brightwind function is missing</dt>
+    <dd>The catalog covers what brightwind 2.8.0 exposes as <code>bw.*</code>. Internal helpers that are not exported at the top level are left out. Use a <code>Python expression</code> node to call anything else.</dd>
+  </dl>
+</section>
+
+<section id="about">
+  <h2><span class="n">15</span>About</h2>
+  <p>The catalog is read from the brightwind v2.8.0 source without importing it: every signature, default and docstring. Port types and groups are assigned on top of that. Every signature has been checked against the installed package, and the example pipelines run end to end.</p>
+  <p>Source, catalog scripts and instructions for updating to a new brightwind release: <a href="https://github.com/coderenewables/brightwind-explorer">github.com/coderenewables/brightwind-explorer</a>. brightwind itself: <a href="https://github.com/brightwind-dev/brightwind">github.com/brightwind-dev/brightwind</a> (MIT licence).</p>
+  <footer>Not affiliated with the brightwind project. Check generated code before relying on its results.</footer>
+</section>
+</main>
+</div>
+<script>
+// Highlight the contents entry for the section in view.
+(function () {
+  const links = [...document.querySelectorAll('nav.toc a')];
+  const byId = new Map(links.map(a => [a.getAttribute('href').slice(1), a]));
+  if (!('IntersectionObserver' in window)) return;
+  const seen = new Set();
+  const io = new IntersectionObserver(entries => {
+    for (const e of entries) e.isIntersecting ? seen.add(e.target.id) : seen.delete(e.target.id);
+    const first = [...byId.keys()].find(id => seen.has(id));
+    links.forEach(a => a.classList.toggle('on', !!first && a === byId.get(first)));
+  }, { rootMargin: '-70px 0px -55% 0px' });
+  document.querySelectorAll('main > section').forEach(s => io.observe(s));
+})();
+</script>
+</body>
+</html>

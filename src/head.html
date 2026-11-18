@@ -64,6 +64,61 @@ button { cursor: pointer; }
 .brand .home { display: inline-flex; flex: none; border-radius: 50%; }
 .brand .home svg { width: 24px; height: 24px; display: block; }
 .brand .home:hover svg { transform: rotate(-20deg); }
+/* ---------- run in browser ---------- */
+.run-bar { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.run-status { font-size: 12.5px; color: var(--muted); flex: 1; min-width: 200px; }
+.run-status.bad { color: var(--bad); }
+.run-status.busy::before { content: ""; display: inline-block; width: 9px; height: 9px; margin-right: 7px; border-radius: 50%; border: 2px solid var(--accent); border-right-color: transparent; vertical-align: -1px; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.run-body { flex: 1; min-height: 0; overflow-y: auto; padding: 12px 14px 40px; display: flex; flex-direction: column; gap: 16px; }
+.run-sec h3, .run-files h3 { font: 600 11px var(--f-display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; display: flex; gap: 8px; align-items: center; }
+.run-sec .dc { font-size: 12.5px; color: var(--muted); margin: 0 0 8px; }
+.run-empty { background: var(--card); border: 1px dashed var(--line); border-radius: 6px; padding: 12px 14px; font-size: 13.5px; max-width: 760px; }
+.run-empty p { margin: 0 0 8px; } .run-empty p:last-child { margin: 0; }
+.run-file { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; margin-bottom: 6px; }
+.run-file.need { border-color: var(--bad); }
+.rf-name { display: flex; flex-direction: column; min-width: 0; font-size: 12.5px; }
+.rf-name .mono { overflow-wrap: anywhere; }
+.rf-pick { color: var(--good); } .rf-pick.none { color: var(--bad); }
+.run-file label.btn { cursor: pointer; }
+.run-step { background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--good); border-radius: 6px; padding: 8px 12px 10px; margin-bottom: 10px; max-width: 1100px; }
+.run-step.err { border-left-color: var(--bad); }
+.run-step.busy { border-left-color: var(--accent); }
+.run-step header { display: flex; align-items: center; gap: 8px; }
+.run-step .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--good); flex: none; }
+.run-step.err .dot { background: var(--bad); } .run-step.busy .dot { background: var(--accent); }
+.rs-title { font: 600 13px var(--f-mono); color: var(--ink); text-decoration: none; overflow-wrap: anywhere; }
+a.rs-title:hover { color: var(--accent); }
+.rs-time { margin-left: auto; font: 11.5px var(--f-mono); color: var(--muted); }
+.rs-err { margin-top: 6px; color: var(--bad); font-size: 13px; }
+.rs-err p { margin: 3px 0 0; color: var(--ink); font-size: 12.5px; }
+.rs-code { margin-top: 8px; font-size: 12px; }
+.rs-code summary { cursor: pointer; color: var(--muted); }
+.rs-code pre { margin: 4px 0 0; font: 11.5px/1.5 var(--f-mono); background: var(--panel); border-radius: 4px; padding: 6px 9px; overflow-x: auto; white-space: pre; }
+.rs-err pre { margin: 4px 0 0; font: 11.5px/1.5 var(--f-mono); color: var(--muted); white-space: pre-wrap; }
+pre.rs-out { margin: 8px 0 0; font: 12px/1.5 var(--f-mono); background: var(--panel); border-radius: 4px; padding: 6px 9px; max-height: 260px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+.rs-thead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 10px 0 4px; font-size: 12px; }
+.rs-thead .mono { font: 600 12px var(--f-mono); }
+.rs-thead .dc { color: var(--muted); }
+.rs-thead .btn { margin-left: auto; }
+.rs-table { overflow: auto; max-height: 340px; border: 1px solid var(--line); border-radius: 4px; }
+.rs-table table.df { border-collapse: collapse; font: 11.5px/1.4 var(--f-mono); font-variant-numeric: tabular-nums; }
+.rs-table table.df th, .rs-table table.df td { padding: 3px 9px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+.rs-table table.df thead th { position: sticky; top: 0; background: var(--panel); color: var(--muted); font-weight: 600; }
+.rs-table table.df tbody th { text-align: left; color: var(--muted); font-weight: 500; }
+.rs-fig { margin: 10px 0 0; }
+.rs-fig img { max-width: 100%; max-height: 520px; height: auto; display: block; border: 1px solid var(--line); border-radius: 4px; background: #fff; }
+.rs-fig figcaption { display: flex; gap: 10px; align-items: center; font-size: 12px; margin-top: 4px; }
+.rs-fig figcaption a, .run-sec a { color: var(--accent); }
+.run-files { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.run-files h3 { width: 100%; }
+.run-files a.btn { text-decoration: none; color: var(--ink); }
+.node.run-ok { box-shadow: 0 0 0 2px var(--good), var(--shadow); }
+.node.run-err { box-shadow: 0 0 0 2px var(--bad), var(--shadow); }
+.node.run-busy { box-shadow: 0 0 0 2px var(--accent), var(--shadow); }
+.node.sel.run-ok { box-shadow: 0 0 0 2px var(--accent), 0 0 0 5px var(--card), 0 0 0 7px var(--good), var(--shadow); }
+.node.sel.run-err { box-shadow: 0 0 0 2px var(--accent), 0 0 0 5px var(--card), 0 0 0 7px var(--bad), var(--shadow); }
+@media (prefers-reduced-motion: reduce) { .run-status.busy::before { animation: none; } }
 @media (prefers-reduced-motion: no-preference) { .brand .home svg { transition: transform .3s; } }
 .brand h1 { font: 600 17px/1.1 var(--f-display); letter-spacing: .01em; margin: 0; white-space: nowrap; }
 .brand .ver { font: 500 11px var(--f-mono); color: var(--muted); border: 1px solid var(--line); border-radius: 3px; padding: 1px 5px; white-space: nowrap; }
@@ -90,10 +145,13 @@ select.btn { padding-right: 6px; max-width: 150px; }
 #tools { border-right: 1px solid var(--line); }
 #details { border-left: 1px solid var(--line); overflow-y: auto; }
 .center { position: relative; min-width: 0; min-height: 0; }
-#canvasView, #codeView { position: absolute; inset: 0; }
+#canvasView, #codeView, #runView { position: absolute; inset: 0; }
 #codeView { display: none; flex-direction: column; background: var(--panel); }
 body[data-view="code"] #codeView { display: flex; }
 body[data-view="code"] #canvasView { display: none; }
+#runView { display: none; flex-direction: column; background: var(--panel); }
+body[data-view="run"] #runView { display: flex; }
+body[data-view="run"] #canvasView { display: none; }
 
 /* ---------- catalog ---------- */
 .cat-head { padding: 10px 12px 8px; display: flex; flex-direction: column; gap: 6px; border-bottom: 1px solid var(--line); flex: none; }
@@ -225,8 +283,8 @@ pre.doc { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: 12px/
   .side, .center { position: absolute; inset: 0; display: none; border: 0 !important; }
   body[data-view="tools"] #tools { display: flex; }
   body[data-view="details"] #details { display: block; }
-  body[data-view="canvas"] .center, body[data-view="code"] .center { display: block; }
-  .tabs { display: grid; grid-template-columns: repeat(4, 1fr); flex: none; background: var(--panel); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom); }
+  body[data-view="canvas"] .center, body[data-view="code"] .center, body[data-view="run"] .center { display: block; }
+  .tabs { display: grid; grid-template-columns: repeat(5, 1fr); flex: none; background: var(--panel); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom); }
   .tabs button { background: transparent; border: 0; padding: 10px 4px 9px; font: 600 12px var(--f-display); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); border-top: 3px solid transparent; }
   .tabs button[aria-pressed="true"] { color: var(--ink); border-top-color: var(--accent); }
   .bar .seg, .bar .desk { display: none; }
@@ -294,7 +352,7 @@ a.btn, .ai-fields a.btn { text-decoration: none; display: inline-flex; align-ite
   <a class="btn" href="guide.html" target="_blank" rel="noopener" id="guideLink">Guide</a>
   <button class="btn primary" id="aiBtn" aria-expanded="false" aria-controls="ai">Build with AI</button>
   <div class="seg" role="group" aria-label="View">
-    <button id="vCanvas" aria-pressed="true">Canvas</button><button id="vCode" aria-pressed="false">Python</button>
+    <button id="vCanvas" aria-pressed="true">Canvas</button><button id="vCode" aria-pressed="false">Python</button><button id="vRun" aria-pressed="false">Run</button>
   </div>
 </header>
 <div class="main">
@@ -325,6 +383,7 @@ a.btn, .ai-fields a.btn { text-decoration: none; display: inline-flex; align-ite
           <button data-fmt="flat" aria-pressed="true">Flat script</button><button data-fmt="func" aria-pressed="false">run() function</button><button data-fmt="nb" aria-pressed="false">Notebook</button>
         </div>
         <span class="sp"></span>
+        <button class="btn" id="codeRun" title="Run this pipeline in the browser">Run in browser</button>
         <button class="btn" id="copyBtn">Copy</button>
         <button class="btn primary" id="dlBtn" hidden>Download</button>
       </div>
@@ -334,6 +393,14 @@ a.btn, .ai-fields a.btn { text-decoration: none; display: inline-flex; align-ite
       </div>
       <div id="codeIssues"></div>
       <pre id="codeOut"></pre>
+    </div>
+    <div id="runView">
+      <div class="run-bar">
+        <button class="btn primary" id="runGo">Run pipeline</button>
+        <button class="btn" id="runStop" hidden>Stop</button>
+        <span class="run-status" id="runStatus" role="status"></span>
+      </div>
+      <div class="run-body" id="runBody"></div>
     </div>
   </section>
   <aside class="side" id="details"></aside>
@@ -374,5 +441,5 @@ a.btn, .ai-fields a.btn { text-decoration: none; display: inline-flex; align-ite
   </aside>
 </div>
 <nav class="tabs" aria-label="Sections">
-  <button data-tab="tools">Tools</button><button data-tab="canvas">Canvas</button><button data-tab="details">Details</button><button data-tab="code">Python</button>
+  <button data-tab="tools">Tools</button><button data-tab="canvas">Canvas</button><button data-tab="details">Details</button><button data-tab="code">Python</button><button data-tab="run">Run</button>
 </nav>

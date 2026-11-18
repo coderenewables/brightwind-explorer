@@ -161,8 +161,9 @@ def TI(name, var, outs, **kw):
 TI('calc', 'ti', [('ti', [S])], ports={'wspd': [S], 'wspd_std': [S]})
 TI('by_speed', 'ti_by_speed', plot_data(), ports={'IEC_class': [DF]}, tuple_=RD)
 TI('by_sector', 'ti_by_sector', plot_data(), tuple_=RD)
-TI('twelve_by_24', 'ti_12x24', plot_data(), ports={'wspd': [S], 'wspd_std': [S]}, tuple_=dict(flags=['return_data'], order=['data', 'plot']),
-   note='With return_data=True this function returns (table, plot), the reverse of the other analyse functions. The exported code unpacks it in that order.')
+TI('twelve_by_24', 'ti_12x24', [('data', [DF]), ('plot', [FIG], 'return_data')], ports={'wspd': [S], 'wspd_std': [S]},
+   tuple_=dict(flags=['return_data'], order=['plot', 'data']),
+   note='Without return_data this returns only the 12x24 table (a DataFrame), not the plot. Wiring the plot output sets return_data=True, which returns (plot, table).')
 # ---- Atmosphere
 F(A, 'calc_air_density', 'Atmosphere', 'air_density', [('air_density', same('temperature', [S, VAL]))])
 F(A, 'calc_rel_humidity_from_dew_point', 'Atmosphere', 'rel_humidity', [('rel_humidity', same('air_temperature_degC', [S, VAL]))])

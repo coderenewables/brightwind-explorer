@@ -2,7 +2,11 @@
 
 Usage: npm run dev (in another terminal), then python scripts/guide_screenshots.py [base_url]
 Needs: pip install playwright && playwright install chromium
+The Run screenshot needs Python to start in the browser. Without network access to jsDelivr, unpack a Pyodide 0.29.5
+release and set PYODIDE_DIST to its pyodide/ folder; requests to the CDN are then answered from there.
 """
+import mimetypes
+import os
 import json
 import sys
 from pathlib import Path
@@ -35,7 +39,15 @@ def shot(page, name):
 
 with sync_playwright() as p:
     browser = p.chromium.launch()
-    page = browser.new_page(viewport={'width': 1360, 'height': 780}, color_scheme='light')
+    context = browser.new_context(viewport={'width': 1360, 'height': 780}, color_scheme='light')
+    if os.environ.get('PYODIDE_DIST'):
+        dist, cdn = Path(os.environ['PYODIDE_DIST']), 'https://cdn.jsdelivr.net/pyodide/v0.29.5/full/'
+        def serve(route):
+            name = route.request.url[len(cdn):].split('?')[0]
+            ct = 'application/wasm' if name.endswith('.wasm') else (mimetypes.guess_type(name)[0] or 'application/octet-stream')
+            route.fulfill(status=200, body=(dist / name).read_bytes(), headers={'content-type': ct, 'access-control-allow-origin': '*'})
+        context.route(cdn + '**', serve)
+    page = context.new_page()
     page.goto(BASE)
     page.wait_for_function('window.__bw && window.__bw.ai')
     page.evaluate('localStorage.clear()')
@@ -57,6 +69,15 @@ with sync_playwright() as p:
 
     page.click('#vCode')
     shot(page, 'python')
+    page.click('#vCanvas')
+
+    page.evaluate('__bw.loadTemplate(0)')
+    page.click('#vRun')
+    page.click('#runGo')
+    page.wait_for_function('!__bw.RUN.busy && __bw.RUN.results.length', timeout=600000)
+    page.evaluate("document.querySelectorAll('.rs-step-hide').forEach(e => e.remove())")
+    page.evaluate("document.querySelector('#runBody').scrollTop = 0")
+    shot(page, 'run')
     page.click('#vCanvas')
 
     page.route('**/api.anthropic.com/**', lambda route: route.fulfill(status=200, headers={'access-control-allow-origin': '*'}, json={

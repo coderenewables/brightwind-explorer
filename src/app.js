@@ -90,6 +90,7 @@ const def = n => DEFS[n.t];
 const nodeById = id => S.nodes.find(n => n.id === id);
 const snapshot = () => JSON.stringify({ nodes: S.nodes, edges: S.edges, seq: S.seq });
 function commit() {
+  if (typeof runInvalidate === 'function') runInvalidate();
   hist.stack.length = hist.at + 1; hist.stack.push(snapshot()); if (hist.stack.length > 120) hist.stack.shift(); hist.at = hist.stack.length - 1;
   try { localStorage.setItem('bw-builder-v1', JSON.stringify({ nodes: S.nodes, edges: S.edges, seq: S.seq, view: S.view })); } catch (e) { /* storage unavailable */ }
 }
@@ -187,7 +188,7 @@ function flagOn(n, flagName) {
   return d.outputs.some(o => o.flag === flagName && edgesFrom(n.id, o.name).length);
 }
 function isTuple(n) { const t = def(n).tuple; return !!t && (t.always || t.flags.some(f => flagOn(n, f))); }
-function generate(fmt) {
+function generate(fmt, ctx = {}) {
   const order = topo(), used = new Set(['bw', 'plt', 'np', 'pd', 'run', 'results', 'print']), names = new Map(), exprs = new Map(), issues = [];
   const uniq = base => { base = (base || 'x').replace(/[^A-Za-z0-9_]/g, '_').replace(/^(\d)/, '_$1'); let nm = base, k = 2; while (used.has(nm)) nm = base + '_' + (k++); used.add(nm); return nm; };
   const args = [];          // run() arguments: {name, default}
@@ -214,6 +215,7 @@ function generate(fmt) {
 
     if (d.kind === 'helper') {
       let code = d.code(n.v, inx);
+      if (fmt === 'run' && d.id === 'File path') code = pyStr(ctx.paths && ctx.paths[n.id] || '');
       if (d.isArg && fmt === 'func') { const a = uniq(base); args.push({ name: a, def: code }); code = a; }
       if (d.stmt) { steps.push({ node: n, lines: [...todo, code] }); continue; }
       const o = d.outputs[0];
@@ -286,6 +288,7 @@ function generate(fmt) {
     if (d.kind === 'constructor' && d.group === 'Shear') anyFigure = true;
   }
 
+  if (fmt === 'run') return { issues, steps: steps.map(st => ({ id: st.node.id, title: def(st.node).title, code: st.lines.filter(l => !l.startsWith('# TODO')).join('\n'), leaf: st.leaf || [] })) };
   const body = [];
   const allText = () => steps.flatMap(s => s.lines).join('\n') + args.map(a => a.def).join('\n');
   const imports = () => { const t = allText(), im = ['import brightwind as bw'];
@@ -398,7 +401,7 @@ function renderCanvas() {
         h('span', { class: `port out ${tClass(ty[0])}${on ? ' full' : ''}`, 'data-node': n.id, 'data-port': o.name, 'data-dir': 'out', title: ty.map(tLabel).join(' or ') })));
     }
     const ps = paramSummary(n);
-    const el = h('div', { class: `node g-${d.group}${S.sel && S.sel.kind === 'node' && S.sel.id === n.id ? ' sel' : ''}${probs.length ? ' bad' : ''}`, 'data-id': n.id, style: `left:${n.x}px;top:${n.y}px` },
+    const el = h('div', { class: `node g-${d.group}${S.sel && S.sel.kind === 'node' && S.sel.id === n.id ? ' sel' : ''}${probs.length ? ' bad' : ''}${typeof RUNMARKS !== 'undefined' && RUNMARKS[n.id] ? ' run-' + RUNMARKS[n.id] : ''}`, 'data-id': n.id, style: `left:${n.x}px;top:${n.y}px` },
       h('div', { class: 'nh' }, h('div', { class: 'ov' }, t.ov), h('div', { class: 'tt', text: t.tt }),
         probs.length ? h('span', { class: 'iss', text: probs.length, title: probs.join('\n') }) : null),
       rows, ps ? h('div', { class: 'nparams', text: ps.length > 90 ? ps.slice(0, 88) + '…' : ps }) : null);
@@ -643,7 +646,7 @@ function renderDetails() {
         all.length ? h('div', { class: 'sec' }, h('h3', {}, 'To fix before exporting'), h('ul', { class: 'issues' }, ...all.map(([x, p]) => h('li', {}, h('a', { href: '#canvas', onclick: ev => { ev.preventDefault(); S.sel = { kind: 'node', id: x.id }; renderAll(); } }, def(x).title), ': ' + p.join('; ')))))
           : (S.nodes.length ? h('p', { class: 'note', style: 'border-left-color:var(--good)' }, 'Every required input is set. Open Python to export the pipeline.') : null),
         h('div', { class: 'sec' }, h('h3', {}, 'Port colours'), h('div', { class: 'legend' }, ...TYPE_HELP.map(([t, txt]) => h('div', {}, t === 'Shear.Average' ? h('span', { class: 'ty c-obj', text: 'Object' }) : typeChip(t), h('span', {}, txt))))),
-        h('div', { class: 'sec' }, h('h3', {}, 'About'), h('p', { class: 'dc', style: 'font-size:12.5px;color:var(--muted)' }, `The tool list is read from the brightwind v${CAT.version} source (MIT licence, commit ${CAT.commit.slice(0, 7)}). Nothing runs here: the board only writes Python for you to run where brightwind is installed. `, h('a', { href: CAT.repo, target: '_blank', rel: 'noopener' }, 'brightwind repository'), ' · ', h('a', { href: 'guide.html', target: '_blank', rel: 'noopener' }, 'How to use'), ' · ', h('a', { href: 'https://coderenewables.com', target: '_blank', rel: 'noopener' }, 'CodeRenewables'), ' · ', h('a', { href: 'https://github.com/coderenewables/brightwind-explorer', target: '_blank', rel: 'noopener' }, 'Source of this page'))));
+        h('div', { class: 'sec' }, h('h3', {}, 'About'), h('p', { class: 'dc', style: 'font-size:12.5px;color:var(--muted)' }, `The tool list is read from the brightwind v${CAT.version} source (MIT licence, commit ${CAT.commit.slice(0, 7)}). Export the pipeline as Python, or press Run to execute it with brightwind in this browser. Your data is never uploaded. `, h('a', { href: CAT.repo, target: '_blank', rel: 'noopener' }, 'brightwind repository'), ' · ', h('a', { href: 'guide.html', target: '_blank', rel: 'noopener' }, 'How to use'), ' · ', h('a', { href: 'https://coderenewables.com', target: '_blank', rel: 'noopener' }, 'CodeRenewables'), ' · ', h('a', { href: 'https://github.com/coderenewables/brightwind-explorer', target: '_blank', rel: 'noopener' }, 'Source of this page'))));
     }
     return;
   }
@@ -748,16 +751,17 @@ function renderSelbar() {
   bar.textContent = ''; bar.hidden = !n;
   if (n) bar.append(h('span', { class: 'nm', text: def(n).title }), h('button', { class: 'btn small', onclick: () => setView('details') }, 'Details'), h('button', { class: 'btn small danger', onclick: () => { removeNode(n.id); commit(); renderAll(); } }, 'Delete'));
 }
-function renderAll() { renderCanvas(); renderDetails(); renderStatus(); renderSelbar(); $$('#catList .item').forEach(i => i.classList.toggle('on', i.dataset.def === S.peek)); if (document.body.dataset.view === 'code') renderCode(); }
+function renderAll() { renderCanvas(); renderDetails(); renderStatus(); renderSelbar(); if (document.body.dataset.view === 'run') renderRun(); $$('#catList .item').forEach(i => i.classList.toggle('on', i.dataset.def === S.peek)); if (document.body.dataset.view === 'code') renderCode(); }
 
 /* ---------- views, dialogs ---------- */
 const isNarrow = () => window.matchMedia('(max-width: 899px)').matches;
 function setView(v, fromHash) {
   if (!isNarrow() && (v === 'tools' || v === 'details')) v = 'canvas';
   document.body.dataset.view = v;
-  $('#vCanvas').setAttribute('aria-pressed', v !== 'code'); $('#vCode').setAttribute('aria-pressed', v === 'code');
+  $('#vCanvas').setAttribute('aria-pressed', v === 'canvas' || v === 'tools' || v === 'details'); $('#vCode').setAttribute('aria-pressed', v === 'code'); $('#vRun').setAttribute('aria-pressed', v === 'run');
   for (const b of $$('.tabs button')) b.setAttribute('aria-pressed', b.dataset.tab === v);
   if (v === 'code') renderCode();
+  if (v === 'run') renderRun();
   if (v === 'canvas') { measurePorts(); renderWires(); }
   if (!fromHash) { try { history.replaceState(null, '', '#' + v); } catch (e) { location.hash = v; } }
 }
@@ -842,7 +846,7 @@ async function boot() {
   try { const saved = JSON.parse(localStorage.getItem('bw-builder-v1') || 'null');
     if (saved && saved.nodes && saved.nodes.length && saved.nodes.every(n => DEFS[n.t])) { S.nodes = saved.nodes; S.edges = saved.edges; S.seq = saved.seq; if (saved.view) S.view = saved.view; loaded = true; } } catch (e) { /* ignore */ }
   const startView = (location.hash || '').slice(1);
-  setView(['canvas', 'code', 'tools', 'details'].includes(startView) ? startView : 'canvas', true);
+  setView(['canvas', 'code', 'run', 'tools', 'details'].includes(startView) ? startView : 'canvas', true);
   if (loaded) { commit(); applyView(); renderAll(); } else loadTemplate(0);
 
   $('#tplSel').addEventListener('change', ev => { if (ev.target.value !== '') { loadTemplate(+ev.target.value); ev.target.value = ''; if (isNarrow()) setView('canvas'); } });
@@ -851,7 +855,8 @@ async function boot() {
   $('#fitBtn').addEventListener('click', fit);
   const mid = () => { const r = $('#canvas').getBoundingClientRect(); return [r.width / 2, r.height / 2]; };
   $('#zoomIn').addEventListener('click', () => zoomAt(...mid(), 1.25)); $('#zoomOut').addEventListener('click', () => zoomAt(...mid(), 0.8));
-  $('#vCanvas').addEventListener('click', () => setView('canvas')); $('#vCode').addEventListener('click', () => setView('code'));
+  $('#vCanvas').addEventListener('click', () => setView('canvas')); $('#vCode').addEventListener('click', () => setView('code')); $('#vRun').addEventListener('click', () => setView('run'));
+  $('#runGo').addEventListener('click', runStart); $('#runStop').addEventListener('click', runStop); $('#codeRun').addEventListener('click', () => { setView('run'); runStart(); });
   for (const b of $$('.tabs button')) b.addEventListener('click', () => setView(b.dataset.tab));
   for (const b of $$('#codeView [data-fmt]')) b.addEventListener('click', () => { S.fmt = b.dataset.fmt; renderCode(); });
   $('#optShow').addEventListener('change', ev => { S.opts.show = ev.target.checked; renderCode(); });
@@ -866,7 +871,7 @@ async function boot() {
         h('button', { class: 'btn primary', onclick: () => { try { const p = JSON.parse(ta.value); if (!Array.isArray(p.nodes) || !p.nodes.every(n => DEFS[n.t])) throw new Error('unknown tool');
           S.nodes = p.nodes; S.edges = (p.edges || []).filter(e => nodeById(e.from[0]) && nodeById(e.to[0])); S.seq = p.seq || 1000; S.sel = null; commit(); renderAll(); fit(); close(); }
           catch (e) { toast('That text is not a pipeline saved from this page.'); } } }, 'Load pasted pipeline'))); }));
-  window.addEventListener('hashchange', () => { const v = location.hash.slice(1); if (['canvas', 'code', 'tools', 'details'].includes(v)) setView(v, true); });
+  window.addEventListener('hashchange', () => { const v = location.hash.slice(1); if (['canvas', 'code', 'run', 'tools', 'details'].includes(v)) setView(v, true); });
   window.addEventListener('resize', () => { setView(document.body.dataset.view, true); });
   window.addEventListener('keydown', ev => {
     const typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
@@ -894,7 +899,7 @@ async function boot() {
       dl.addEventListener('click', async () => { try { await dlc.save({ filename: 'brightwind_workflow.zip', data: new Blob([bundle()]) }); }
         catch (e) { if (!e || e.code !== 'declined') toast('The file could not be saved here. Use Copy instead.'); } }); }).catch(() => {});
   }
-  window.__bw = { zipStore, S, DEFS, generate, loadTemplate, TEMPLATES, addNode, connect, canConnect, nodeIssues, renderAll, commit, tidy, fit };
+  window.__bw = { RUN, get RUNMARKS() { return RUNMARKS; }, runStart, zipStore, S, DEFS, generate, loadTemplate, TEMPLATES, addNode, connect, canConnect, nodeIssues, renderAll, commit, tidy, fit };
   if (typeof setupAssistant === 'function') setupAssistant();
 }
 boot();

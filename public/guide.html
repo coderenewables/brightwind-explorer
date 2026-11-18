@@ -138,6 +138,7 @@ footer { max-width: 740px; color: var(--muted); font-size: 14px; padding-top: 18
     <li><a href="#helpers">Helper nodes</a></li>
     <li><a href="#examples">Examples</a></li>
     <li><a href="#export">Exporting Python</a></li>
+    <li><a href="#run">Running in the browser</a></li>
     <li><a href="#save">Saving pipelines</a></li>
     <li><a href="#ai">Build with AI</a></li>
     <li><a href="#keys">Keyboard and touch</a></li>
@@ -150,7 +151,7 @@ footer { max-width: 740px; color: var(--muted); font-size: 14px; padding-top: 18
   <p class="ov">How to use</p>
   <h1>Explore brightwind, wire an analysis, take home a script</h1>
   <p>The Brightwind Workflow Builder lays out every public tool in the <a href="https://github.com/brightwind-dev/brightwind">brightwind</a> wind resource assessment library (v2.8.0) as a node you can drop on a board and wire to others. When the pipeline is ready, it writes the Python for you.</p>
-  <p>Nothing runs in the browser. Your data never leaves your machine: the page only writes code, and you run that code wherever brightwind is installed.</p>
+  <p>When the pipeline is ready, export it as Python, or press <strong>Run</strong> to execute it with brightwind right here in the browser. Either way your data stays on your computer: nothing is uploaded to a server.</p>
 </div>
 
 <section id="start">
@@ -162,7 +163,7 @@ footer { max-width: 740px; color: var(--muted); font-size: 14px; padding-top: 18
     <li>Drag from an output port (right edge of a node) to an input port (left edge of another). Only matching types connect.</li>
     <li>Click a node to set its parameters in the panel on the right. Red badges mark inputs that still need a value.</li>
     <li>Switch to <strong>Python</strong> at the top right, choose a format, then <strong>Copy</strong> or <strong>Download</strong>.</li>
-    <li>Run it: <code>pip install brightwind</code>, then <code>python brightwind_workflow.py</code>.</li>
+    <li>Run it: press <strong>Run</strong> to execute it in the browser, or <code>pip install brightwind</code> and <code>python brightwind_workflow.py</code> on your own machine.</li>
   </ol>
   <p>Prefer to describe the analysis in words? <a href="#ai">Build with AI</a> wires the board from a prompt, using your own API key.</p>
 </section>
@@ -181,6 +182,7 @@ footer { max-width: 740px; color: var(--muted); font-size: 14px; padding-top: 18
       <tr><td>Board (middle)</td><td>Your pipeline. Pan by dragging empty space, zoom with the mouse wheel, a pinch, or the <kbd>−</kbd> <kbd>+</kbd> buttons. <strong>Tidy</strong> lays nodes out left to right in run order; <strong>Fit</strong> brings everything into view.</td></tr>
       <tr><td>Details (right)</td><td>Shows the selected node's inputs, parameters, outputs and full docstring. With nothing selected, it lists what still needs fixing and explains the port colours.</td></tr>
       <tr><td>Python</td><td>The generated code, updated live, in three formats.</td></tr>
+      <tr><td>Run</td><td>Executes the pipeline with brightwind in the browser and shows each step's tables, plots and messages.</td></tr>
     </tbody>
   </table></div>
 </section>
@@ -264,7 +266,7 @@ footer { max-width: 740px; color: var(--muted); font-size: 14px; padding-top: 18
   </table></div>
   <p>A <code>*</code> marks a required input or parameter. Until it has a value, the node shows a red badge with the number of open items, and the status pill counts it. You can still export: the code includes a <code>TODO</code> comment and <code>...</code> where the value belongs.</p>
   <h3>Optional outputs and return flags</h3>
-  <p>Many analyse functions return only a plot unless you pass <code>return_data=True</code>, in which case they return <code>(plot, data)</code>. Their nodes show both outputs. Wiring the <code>data</code> output turns the flag on and unpacks the tuple in the code, so you don't need to manage it. <code>TI.twelve_by_24</code> returns the pair in the opposite order, and the export handles that too.</p>
+  <p>Many analyse functions return only a plot unless you pass <code>return_data=True</code>, in which case they return <code>(plot, data)</code>. Their nodes show both outputs. Wiring the <code>data</code> output turns the flag on and unpacks the tuple in the code, so you don't need to manage it. <code>TI.twelve_by_24</code> is the exception: on its own it returns the 12&times;24 table, so its node offers the table as the main output and the plot as the optional one.</p>
   <h3>Variable names and run() arguments</h3>
   <ul>
     <li><strong>Variable name in the script</strong> sets the name of a node's result, such as <code>lt_wspd_80m</code>. Clashes get a numeric suffix.</li>
@@ -349,8 +351,41 @@ python brightwind_workflow.py</code></pre>
   <p>Scripts built on the demo datasets run anywhere brightwind is installed. With your own files, check that the paths exist on the machine that runs the script and that the column names match your data. The builder can't see your data, so it can't check them.</p>
 </section>
 
+<section id="run">
+  <h2><span class="n">11</span>Running in the browser</h2>
+  <figure>
+    <img src="guide/run.jpg" width="1360" height="780" alt="The Run view showing finished steps: load_csv, a statistics table from basic_stats, and the start of the monthly means plot." loading="lazy">
+    <figcaption>The site overview example after a run. Each step lists its tables, plots and messages; the nodes on the board are outlined green.</figcaption>
+  </figure>
+  <p><strong>Run</strong> executes the pipeline with the real brightwind library, without installing anything. The page starts a copy of Python inside your browser tab (<a href="https://pyodide.org">Pyodide</a>, Python compiled to WebAssembly), installs brightwind 2.8.0 into it, and runs your pipeline one node at a time.</p>
+  <h3>How to run</h3>
+  <ol class="steps">
+    <li>Open <strong>Run</strong> in the top bar, or press <strong>Run in browser</strong> in the Python view.</li>
+    <li>If the pipeline has <code>File path</code> nodes, pick the matching file or folder under <strong>Your files</strong>. The path you typed in the node is kept for the exported script.</li>
+    <li>Press <strong>Run pipeline</strong>. Steps appear as they finish, and each node on the board turns green, or red if it fails.</li>
+  </ol>
+  <h3>What you see</h3>
+  <ul>
+    <li><strong>Tables</strong> show the first 200 rows. <strong>Download CSV</strong> gives the full table.</li>
+    <li><strong>Plots</strong> appear as images, with <strong>Download PNG</strong>.</li>
+    <li><strong>Messages</strong> that brightwind prints, such as fitted correlation parameters or export confirmations, appear under their step.</li>
+    <li><strong>Files the pipeline wrote</strong>, such as a WAsP <code>.tab</code> file from <code>export_tab_file</code> or an image from <code>Save figure</code>, are listed at the end for download.</li>
+    <li><strong>Code</strong> under each step shows exactly what ran.</li>
+  </ul>
+  <p>If a step fails, the run stops there, the node is selected on the board, and the error explains what went wrong. A <code>KeyError</code> usually means a column name doesn't match your data. After you change the board, old results are marked as out of date until you run again.</p>
+  <h3>Speed, size and privacy</h3>
+  <ul>
+    <li>The first run downloads Python and numpy, pandas, scipy and matplotlib, about 30 MB in all. It takes a little while; your browser keeps the files, so later visits start much faster. Within a visit, Python stays loaded between runs.</li>
+    <li>The demo datasets are fetched only when a pipeline uses them, 2 to 8 MB each.</li>
+    <li>Your files are read by the browser and passed to Python in the same tab. They are never uploaded.</li>
+    <li>Calculations run a little slower than on your own machine, and the browser limits memory. A few years of 10-minute mast data is fine; very large datasets may be better run from the exported script.</li>
+    <li><strong>Stop</strong> ends the run and restarts Python on the next one.</li>
+  </ul>
+  <div class="note warn"><strong>Not available in the browser</strong><p>The <code>LoadBrightHub</code> and <code>LoadBrightdata</code> tools need network access and credentials, and <code>plot_meas_station_on_gmap</code> needs Google Maps, so pipelines with these nodes can only be run from the exported script. Results come from the same brightwind 2.8.0 code as a local install; the versions of pandas and numpy may differ slightly from yours.</p></div>
+</section>
+
 <section id="save">
-  <h2><span class="n">11</span>Saving pipelines</h2>
+  <h2><span class="n">12</span>Saving pipelines</h2>
   <ul>
     <li>The board saves itself in this browser after every change and comes back when you return. It isn't shared with other browsers or devices.</li>
     <li><strong>Save / load</strong> shows the whole pipeline as JSON text. Copy it to keep it, to send it to a colleague, or to move it between devices. Paste one in and press <strong>Load pasted pipeline</strong> to restore it.</li>
@@ -359,7 +394,7 @@ python brightwind_workflow.py</code></pre>
 </section>
 
 <section id="ai">
-  <h2><span class="n">12</span>Build with AI</h2>
+  <h2><span class="n">13</span>Build with AI</h2>
   <div class="cols">
     <div>
       <p><strong>Build with AI</strong> turns a description such as <em>“correlate the 80 m speed with MERRA-2 using monthly least squares and synthesize the long-term series”</em> into a wired pipeline on the board. It uses a model from your own account with your own API key, so the site has no AI costs and no server in between.</p>
@@ -427,7 +462,7 @@ python brightwind_workflow.py</code></pre>
 </section>
 
 <section id="keys">
-  <h2><span class="n">13</span>Keyboard and touch</h2>
+  <h2><span class="n">14</span>Keyboard and touch</h2>
   <div class="tbl"><table>
     <thead><tr><th>Action</th><th>Mouse and keyboard</th><th>Touch</th></tr></thead>
     <tbody>
@@ -441,11 +476,11 @@ python brightwind_workflow.py</code></pre>
       <tr><td>Build with AI</td><td><kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd> in the prompt</td><td>Build</td></tr>
     </tbody>
   </table></div>
-  <p>On a phone the screen splits into four tabs at the bottom: <strong>Tools</strong>, <strong>Canvas</strong>, <strong>Details</strong> and <strong>Python</strong>. Tap a tool, then <strong>Add to canvas</strong>.</p>
+  <p>On a phone the screen splits into five tabs at the bottom: <strong>Tools</strong>, <strong>Canvas</strong>, <strong>Details</strong>, <strong>Python</strong> and <strong>Run</strong>. Tap a tool, then <strong>Add to canvas</strong>.</p>
 </section>
 
 <section id="faq">
-  <h2><span class="n">14</span>Troubleshooting</h2>
+  <h2><span class="n">15</span>Troubleshooting</h2>
   <dl class="faq">
     <dt>A port won't connect</dt>
     <dd>The types don't match; the message says what the input accepts. The usual fix is a <code>Select column</code> between a DataFrame and a function that takes a Series. For correlations, connect from <code>.run</code>, not from the constructor.</dd>
@@ -455,6 +490,8 @@ python brightwind_workflow.py</code></pre>
     <dd>A column name in a <code>Select column</code> node doesn't exist in your file. Column names are case sensitive.</dd>
     <dt>Plots don't appear</dt>
     <dd>Keep <strong>Show figures with plt.show()</strong> ticked for scripts. In a notebook, figures display without it. On a headless server, add a <code>Save figure</code> node instead.</dd>
+    <dt>Run is slow to start, or says Python could not start</dt>
+    <dd>The first run downloads about 30 MB. On a slow or filtered connection (some company networks block the cdn.jsdelivr.net download), use the exported script instead, or try again on another network.</dd>
     <dt>BrightHub nodes fail</dt>
     <dd>They need a BrightHub account and network access when the script runs. brightwind reads the credentials from environment variables: an API key as <code>BRIGHTHUB_CLIENT_ID</code> and <code>BRIGHTHUB_CLIENT_SECRET</code>, or <code>BRIGHTHUB_EMAIL</code> and <code>BRIGHTHUB_PASSWORD</code>. Set them before running the script.</dd>
     <dt><code>plot_meas_station_on_gmap</code> fails</dt>
@@ -467,7 +504,7 @@ python brightwind_workflow.py</code></pre>
 </section>
 
 <section id="about">
-  <h2><span class="n">15</span>About</h2>
+  <h2><span class="n">16</span>About</h2>
   <p>The catalog is read from the brightwind v2.8.0 source without importing it: every signature, default and docstring. Port types and groups are assigned on top of that. Every signature has been checked against the installed package, and the example pipelines run end to end.</p>
   <p>The builder is one of the free tools at <a href="https://coderenewables.com">CodeRenewables</a>, alongside WattOdds, WindNudge, SolarNudge and LossStack.</p>
   <p>Source, catalog scripts and instructions for updating to a new brightwind release: <a href="https://github.com/coderenewables/brightwind-explorer">github.com/coderenewables/brightwind-explorer</a>. brightwind itself: <a href="https://github.com/brightwind-dev/brightwind">github.com/brightwind-dev/brightwind</a> (MIT licence).</p>

@@ -4,3 +4,9 @@
 
 /catalog.json
   Cache-Control: public, max-age=3600
+
+/py/*
+  Cache-Control: public, max-age=604800
+
+/py-worker.js
+  Cache-Control: public, max-age=3600

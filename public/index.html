@@ -64,6 +64,61 @@ button { cursor: pointer; }
 .brand .home { display: inline-flex; flex: none; border-radius: 50%; }
 .brand .home svg { width: 24px; height: 24px; display: block; }
 .brand .home:hover svg { transform: rotate(-20deg); }
+/* ---------- run in browser ---------- */
+.run-bar { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.run-status { font-size: 12.5px; color: var(--muted); flex: 1; min-width: 200px; }
+.run-status.bad { color: var(--bad); }
+.run-status.busy::before { content: ""; display: inline-block; width: 9px; height: 9px; margin-right: 7px; border-radius: 50%; border: 2px solid var(--accent); border-right-color: transparent; vertical-align: -1px; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.run-body { flex: 1; min-height: 0; overflow-y: auto; padding: 12px 14px 40px; display: flex; flex-direction: column; gap: 16px; }
+.run-sec h3, .run-files h3 { font: 600 11px var(--f-display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; display: flex; gap: 8px; align-items: center; }
+.run-sec .dc { font-size: 12.5px; color: var(--muted); margin: 0 0 8px; }
+.run-empty { background: var(--card); border: 1px dashed var(--line); border-radius: 6px; padding: 12px 14px; font-size: 13.5px; max-width: 760px; }
+.run-empty p { margin: 0 0 8px; } .run-empty p:last-child { margin: 0; }
+.run-file { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; margin-bottom: 6px; }
+.run-file.need { border-color: var(--bad); }
+.rf-name { display: flex; flex-direction: column; min-width: 0; font-size: 12.5px; }
+.rf-name .mono { overflow-wrap: anywhere; }
+.rf-pick { color: var(--good); } .rf-pick.none { color: var(--bad); }
+.run-file label.btn { cursor: pointer; }
+.run-step { background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--good); border-radius: 6px; padding: 8px 12px 10px; margin-bottom: 10px; max-width: 1100px; }
+.run-step.err { border-left-color: var(--bad); }
+.run-step.busy { border-left-color: var(--accent); }
+.run-step header { display: flex; align-items: center; gap: 8px; }
+.run-step .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--good); flex: none; }
+.run-step.err .dot { background: var(--bad); } .run-step.busy .dot { background: var(--accent); }
+.rs-title { font: 600 13px var(--f-mono); color: var(--ink); text-decoration: none; overflow-wrap: anywhere; }
+a.rs-title:hover { color: var(--accent); }
+.rs-time { margin-left: auto; font: 11.5px var(--f-mono); color: var(--muted); }
+.rs-err { margin-top: 6px; color: var(--bad); font-size: 13px; }
+.rs-err p { margin: 3px 0 0; color: var(--ink); font-size: 12.5px; }
+.rs-code { margin-top: 8px; font-size: 12px; }
+.rs-code summary { cursor: pointer; color: var(--muted); }
+.rs-code pre { margin: 4px 0 0; font: 11.5px/1.5 var(--f-mono); background: var(--panel); border-radius: 4px; padding: 6px 9px; overflow-x: auto; white-space: pre; }
+.rs-err pre { margin: 4px 0 0; font: 11.5px/1.5 var(--f-mono); color: var(--muted); white-space: pre-wrap; }
+pre.rs-out { margin: 8px 0 0; font: 12px/1.5 var(--f-mono); background: var(--panel); border-radius: 4px; padding: 6px 9px; max-height: 260px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+.rs-thead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 10px 0 4px; font-size: 12px; }
+.rs-thead .mono { font: 600 12px var(--f-mono); }
+.rs-thead .dc { color: var(--muted); }
+.rs-thead .btn { margin-left: auto; }
+.rs-table { overflow: auto; max-height: 340px; border: 1px solid var(--line); border-radius: 4px; }
+.rs-table table.df { border-collapse: collapse; font: 11.5px/1.4 var(--f-mono); font-variant-numeric: tabular-nums; }
+.rs-table table.df th, .rs-table table.df td { padding: 3px 9px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+.rs-table table.df thead th { position: sticky; top: 0; background: var(--panel); color: var(--muted); font-weight: 600; }
+.rs-table table.df tbody th { text-align: left; color: var(--muted); font-weight: 500; }
+.rs-fig { margin: 10px 0 0; }
+.rs-fig img { max-width: 100%; max-height: 520px; height: auto; display: block; border: 1px solid var(--line); border-radius: 4px; background: #fff; }
+.rs-fig figcaption { display: flex; gap: 10px; align-items: center; font-size: 12px; margin-top: 4px; }
+.rs-fig figcaption a, .run-sec a { color: var(--accent); }
+.run-files { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.run-files h3 { width: 100%; }
+.run-files a.btn { text-decoration: none; color: var(--ink); }
+.node.run-ok { box-shadow: 0 0 0 2px var(--good), var(--shadow); }
+.node.run-err { box-shadow: 0 0 0 2px var(--bad), var(--shadow); }
+.node.run-busy { box-shadow: 0 0 0 2px var(--accent), var(--shadow); }
+.node.sel.run-ok { box-shadow: 0 0 0 2px var(--accent), 0 0 0 5px var(--card), 0 0 0 7px var(--good), var(--shadow); }
+.node.sel.run-err { box-shadow: 0 0 0 2px var(--accent), 0 0 0 5px var(--card), 0 0 0 7px var(--bad), var(--shadow); }
+@media (prefers-reduced-motion: reduce) { .run-status.busy::before { animation: none; } }
 @media (prefers-reduced-motion: no-preference) { .brand .home svg { transition: transform .3s; } }
 .brand h1 { font: 600 17px/1.1 var(--f-display); letter-spacing: .01em; margin: 0; white-space: nowrap; }
 .brand .ver { font: 500 11px var(--f-mono); color: var(--muted); border: 1px solid var(--line); border-radius: 3px; padding: 1px 5px; white-space: nowrap; }
@@ -90,10 +145,13 @@ select.btn { padding-right: 6px; max-width: 150px; }
 #tools { border-right: 1px solid var(--line); }
 #details { border-left: 1px solid var(--line); overflow-y: auto; }
 .center { position: relative; min-width: 0; min-height: 0; }
-#canvasView, #codeView { position: absolute; inset: 0; }
+#canvasView, #codeView, #runView { position: absolute; inset: 0; }
 #codeView { display: none; flex-direction: column; background: var(--panel); }
 body[data-view="code"] #codeView { display: flex; }
 body[data-view="code"] #canvasView { display: none; }
+#runView { display: none; flex-direction: column; background: var(--panel); }
+body[data-view="run"] #runView { display: flex; }
+body[data-view="run"] #canvasView { display: none; }
 
 /* ---------- catalog ---------- */
 .cat-head { padding: 10px 12px 8px; display: flex; flex-direction: column; gap: 6px; border-bottom: 1px solid var(--line); flex: none; }
@@ -225,8 +283,8 @@ pre.doc { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: 12px/
   .side, .center { position: absolute; inset: 0; display: none; border: 0 !important; }
   body[data-view="tools"] #tools { display: flex; }
   body[data-view="details"] #details { display: block; }
-  body[data-view="canvas"] .center, body[data-view="code"] .center { display: block; }
-  .tabs { display: grid; grid-template-columns: repeat(4, 1fr); flex: none; background: var(--panel); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom); }
+  body[data-view="canvas"] .center, body[data-view="code"] .center, body[data-view="run"] .center { display: block; }
+  .tabs { display: grid; grid-template-columns: repeat(5, 1fr); flex: none; background: var(--panel); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom); }
   .tabs button { background: transparent; border: 0; padding: 10px 4px 9px; font: 600 12px var(--f-display); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); border-top: 3px solid transparent; }
   .tabs button[aria-pressed="true"] { color: var(--ink); border-top-color: var(--accent); }
   .bar .seg, .bar .desk { display: none; }
@@ -294,7 +352,7 @@ a.btn, .ai-fields a.btn { text-decoration: none; display: inline-flex; align-ite
   <a class="btn" href="guide.html" target="_blank" rel="noopener" id="guideLink">Guide</a>
   <button class="btn primary" id="aiBtn" aria-expanded="false" aria-controls="ai">Build with AI</button>
   <div class="seg" role="group" aria-label="View">
-    <button id="vCanvas" aria-pressed="true">Canvas</button><button id="vCode" aria-pressed="false">Python</button>
+    <button id="vCanvas" aria-pressed="true">Canvas</button><button id="vCode" aria-pressed="false">Python</button><button id="vRun" aria-pressed="false">Run</button>
   </div>
 </header>
 <div class="main">
@@ -325,6 +383,7 @@ a.btn, .ai-fields a.btn { text-decoration: none; display: inline-flex; align-ite
           <button data-fmt="flat" aria-pressed="true">Flat script</button><button data-fmt="func" aria-pressed="false">run() function</button><button data-fmt="nb" aria-pressed="false">Notebook</button>
         </div>
         <span class="sp"></span>
+        <button class="btn" id="codeRun" title="Run this pipeline in the browser">Run in browser</button>
         <button class="btn" id="copyBtn">Copy</button>
         <button class="btn primary" id="dlBtn" hidden>Download</button>
       </div>
@@ -334,6 +393,14 @@ a.btn, .ai-fields a.btn { text-decoration: none; display: inline-flex; align-ite
       </div>
       <div id="codeIssues"></div>
       <pre id="codeOut"></pre>
+    </div>
+    <div id="runView">
+      <div class="run-bar">
+        <button class="btn primary" id="runGo">Run pipeline</button>
+        <button class="btn" id="runStop" hidden>Stop</button>
+        <span class="run-status" id="runStatus" role="status"></span>
+      </div>
+      <div class="run-body" id="runBody"></div>
     </div>
   </section>
   <aside class="side" id="details"></aside>
@@ -374,7 +441,7 @@ a.btn, .ai-fields a.btn { text-decoration: none; display: inline-flex; align-ite
   </aside>
 </div>
 <nav class="tabs" aria-label="Sections">
-  <button data-tab="tools">Tools</button><button data-tab="canvas">Canvas</button><button data-tab="details">Details</button><button data-tab="code">Python</button>
+  <button data-tab="tools">Tools</button><button data-tab="canvas">Canvas</button><button data-tab="details">Details</button><button data-tab="code">Python</button><button data-tab="run">Run</button>
 </nav>
 <script>
 'use strict';
@@ -469,6 +536,7 @@ const def = n => DEFS[n.t];
 const nodeById = id => S.nodes.find(n => n.id === id);
 const snapshot = () => JSON.stringify({ nodes: S.nodes, edges: S.edges, seq: S.seq });
 function commit() {
+  if (typeof runInvalidate === 'function') runInvalidate();
   hist.stack.length = hist.at + 1; hist.stack.push(snapshot()); if (hist.stack.length > 120) hist.stack.shift(); hist.at = hist.stack.length - 1;
   try { localStorage.setItem('bw-builder-v1', JSON.stringify({ nodes: S.nodes, edges: S.edges, seq: S.seq, view: S.view })); } catch (e) { /* storage unavailable */ }
 }
@@ -566,7 +634,7 @@ function flagOn(n, flagName) {
   return d.outputs.some(o => o.flag === flagName && edgesFrom(n.id, o.name).length);
 }
 function isTuple(n) { const t = def(n).tuple; return !!t && (t.always || t.flags.some(f => flagOn(n, f))); }
-function generate(fmt) {
+function generate(fmt, ctx = {}) {
   const order = topo(), used = new Set(['bw', 'plt', 'np', 'pd', 'run', 'results', 'print']), names = new Map(), exprs = new Map(), issues = [];
   const uniq = base => { base = (base || 'x').replace(/[^A-Za-z0-9_]/g, '_').replace(/^(\d)/, '_$1'); let nm = base, k = 2; while (used.has(nm)) nm = base + '_' + (k++); used.add(nm); return nm; };
   const args = [];          // run() arguments: {name, default}
@@ -593,6 +661,7 @@ function generate(fmt) {
 
     if (d.kind === 'helper') {
       let code = d.code(n.v, inx);
+      if (fmt === 'run' && d.id === 'File path') code = pyStr(ctx.paths && ctx.paths[n.id] || '');
       if (d.isArg && fmt === 'func') { const a = uniq(base); args.push({ name: a, def: code }); code = a; }
       if (d.stmt) { steps.push({ node: n, lines: [...todo, code] }); continue; }
       const o = d.outputs[0];
@@ -665,6 +734,7 @@ function generate(fmt) {
     if (d.kind === 'constructor' && d.group === 'Shear') anyFigure = true;
   }
 
+  if (fmt === 'run') return { issues, steps: steps.map(st => ({ id: st.node.id, title: def(st.node).title, code: st.lines.filter(l => !l.startsWith('# TODO')).join('\n'), leaf: st.leaf || [] })) };
   const body = [];
   const allText = () => steps.flatMap(s => s.lines).join('\n') + args.map(a => a.def).join('\n');
   const imports = () => { const t = allText(), im = ['import brightwind as bw'];
@@ -777,7 +847,7 @@ function renderCanvas() {
         h('span', { class: `port out ${tClass(ty[0])}${on ? ' full' : ''}`, 'data-node': n.id, 'data-port': o.name, 'data-dir': 'out', title: ty.map(tLabel).join(' or ') })));
     }
     const ps = paramSummary(n);
-    const el = h('div', { class: `node g-${d.group}${S.sel && S.sel.kind === 'node' && S.sel.id === n.id ? ' sel' : ''}${probs.length ? ' bad' : ''}`, 'data-id': n.id, style: `left:${n.x}px;top:${n.y}px` },
+    const el = h('div', { class: `node g-${d.group}${S.sel && S.sel.kind === 'node' && S.sel.id === n.id ? ' sel' : ''}${probs.length ? ' bad' : ''}${typeof RUNMARKS !== 'undefined' && RUNMARKS[n.id] ? ' run-' + RUNMARKS[n.id] : ''}`, 'data-id': n.id, style: `left:${n.x}px;top:${n.y}px` },
       h('div', { class: 'nh' }, h('div', { class: 'ov' }, t.ov), h('div', { class: 'tt', text: t.tt }),
         probs.length ? h('span', { class: 'iss', text: probs.length, title: probs.join('\n') }) : null),
       rows, ps ? h('div', { class: 'nparams', text: ps.length > 90 ? ps.slice(0, 88) + '…' : ps }) : null);
@@ -1022,7 +1092,7 @@ function renderDetails() {
         all.length ? h('div', { class: 'sec' }, h('h3', {}, 'To fix before exporting'), h('ul', { class: 'issues' }, ...all.map(([x, p]) => h('li', {}, h('a', { href: '#canvas', onclick: ev => { ev.preventDefault(); S.sel = { kind: 'node', id: x.id }; renderAll(); } }, def(x).title), ': ' + p.join('; ')))))
           : (S.nodes.length ? h('p', { class: 'note', style: 'border-left-color:var(--good)' }, 'Every required input is set. Open Python to export the pipeline.') : null),
         h('div', { class: 'sec' }, h('h3', {}, 'Port colours'), h('div', { class: 'legend' }, ...TYPE_HELP.map(([t, txt]) => h('div', {}, t === 'Shear.Average' ? h('span', { class: 'ty c-obj', text: 'Object' }) : typeChip(t), h('span', {}, txt))))),
-        h('div', { class: 'sec' }, h('h3', {}, 'About'), h('p', { class: 'dc', style: 'font-size:12.5px;color:var(--muted)' }, `The tool list is read from the brightwind v${CAT.version} source (MIT licence, commit ${CAT.commit.slice(0, 7)}). Nothing runs here: the board only writes Python for you to run where brightwind is installed. `, h('a', { href: CAT.repo, target: '_blank', rel: 'noopener' }, 'brightwind repository'), ' · ', h('a', { href: 'guide.html', target: '_blank', rel: 'noopener' }, 'How to use'), ' · ', h('a', { href: 'https://coderenewables.com', target: '_blank', rel: 'noopener' }, 'CodeRenewables'), ' · ', h('a', { href: 'https://github.com/coderenewables/brightwind-explorer', target: '_blank', rel: 'noopener' }, 'Source of this page'))));
+        h('div', { class: 'sec' }, h('h3', {}, 'About'), h('p', { class: 'dc', style: 'font-size:12.5px;color:var(--muted)' }, `The tool list is read from the brightwind v${CAT.version} source (MIT licence, commit ${CAT.commit.slice(0, 7)}). Export the pipeline as Python, or press Run to execute it with brightwind in this browser. Your data is never uploaded. `, h('a', { href: CAT.repo, target: '_blank', rel: 'noopener' }, 'brightwind repository'), ' · ', h('a', { href: 'guide.html', target: '_blank', rel: 'noopener' }, 'How to use'), ' · ', h('a', { href: 'https://coderenewables.com', target: '_blank', rel: 'noopener' }, 'CodeRenewables'), ' · ', h('a', { href: 'https://github.com/coderenewables/brightwind-explorer', target: '_blank', rel: 'noopener' }, 'Source of this page'))));
     }
     return;
   }
@@ -1127,16 +1197,17 @@ function renderSelbar() {
   bar.textContent = ''; bar.hidden = !n;
   if (n) bar.append(h('span', { class: 'nm', text: def(n).title }), h('button', { class: 'btn small', onclick: () => setView('details') }, 'Details'), h('button', { class: 'btn small danger', onclick: () => { removeNode(n.id); commit(); renderAll(); } }, 'Delete'));
 }
-function renderAll() { renderCanvas(); renderDetails(); renderStatus(); renderSelbar(); $$('#catList .item').forEach(i => i.classList.toggle('on', i.dataset.def === S.peek)); if (document.body.dataset.view === 'code') renderCode(); }
+function renderAll() { renderCanvas(); renderDetails(); renderStatus(); renderSelbar(); if (document.body.dataset.view === 'run') renderRun(); $$('#catList .item').forEach(i => i.classList.toggle('on', i.dataset.def === S.peek)); if (document.body.dataset.view === 'code') renderCode(); }
 
 /* ---------- views, dialogs ---------- */
 const isNarrow = () => window.matchMedia('(max-width: 899px)').matches;
 function setView(v, fromHash) {
   if (!isNarrow() && (v === 'tools' || v === 'details')) v = 'canvas';
   document.body.dataset.view = v;
-  $('#vCanvas').setAttribute('aria-pressed', v !== 'code'); $('#vCode').setAttribute('aria-pressed', v === 'code');
+  $('#vCanvas').setAttribute('aria-pressed', v === 'canvas' || v === 'tools' || v === 'details'); $('#vCode').setAttribute('aria-pressed', v === 'code'); $('#vRun').setAttribute('aria-pressed', v === 'run');
   for (const b of $$('.tabs button')) b.setAttribute('aria-pressed', b.dataset.tab === v);
   if (v === 'code') renderCode();
+  if (v === 'run') renderRun();
   if (v === 'canvas') { measurePorts(); renderWires(); }
   if (!fromHash) { try { history.replaceState(null, '', '#' + v); } catch (e) { location.hash = v; } }
 }
@@ -1221,7 +1292,7 @@ async function boot() {
   try { const saved = JSON.parse(localStorage.getItem('bw-builder-v1') || 'null');
     if (saved && saved.nodes && saved.nodes.length && saved.nodes.every(n => DEFS[n.t])) { S.nodes = saved.nodes; S.edges = saved.edges; S.seq = saved.seq; if (saved.view) S.view = saved.view; loaded = true; } } catch (e) { /* ignore */ }
   const startView = (location.hash || '').slice(1);
-  setView(['canvas', 'code', 'tools', 'details'].includes(startView) ? startView : 'canvas', true);
+  setView(['canvas', 'code', 'run', 'tools', 'details'].includes(startView) ? startView : 'canvas', true);
   if (loaded) { commit(); applyView(); renderAll(); } else loadTemplate(0);
 
   $('#tplSel').addEventListener('change', ev => { if (ev.target.value !== '') { loadTemplate(+ev.target.value); ev.target.value = ''; if (isNarrow()) setView('canvas'); } });
@@ -1230,7 +1301,8 @@ async function boot() {
   $('#fitBtn').addEventListener('click', fit);
   const mid = () => { const r = $('#canvas').getBoundingClientRect(); return [r.width / 2, r.height / 2]; };
   $('#zoomIn').addEventListener('click', () => zoomAt(...mid(), 1.25)); $('#zoomOut').addEventListener('click', () => zoomAt(...mid(), 0.8));
-  $('#vCanvas').addEventListener('click', () => setView('canvas')); $('#vCode').addEventListener('click', () => setView('code'));
+  $('#vCanvas').addEventListener('click', () => setView('canvas')); $('#vCode').addEventListener('click', () => setView('code')); $('#vRun').addEventListener('click', () => setView('run'));
+  $('#runGo').addEventListener('click', runStart); $('#runStop').addEventListener('click', runStop); $('#codeRun').addEventListener('click', () => { setView('run'); runStart(); });
   for (const b of $$('.tabs button')) b.addEventListener('click', () => setView(b.dataset.tab));
   for (const b of $$('#codeView [data-fmt]')) b.addEventListener('click', () => { S.fmt = b.dataset.fmt; renderCode(); });
   $('#optShow').addEventListener('change', ev => { S.opts.show = ev.target.checked; renderCode(); });
@@ -1245,7 +1317,7 @@ async function boot() {
         h('button', { class: 'btn primary', onclick: () => { try { const p = JSON.parse(ta.value); if (!Array.isArray(p.nodes) || !p.nodes.every(n => DEFS[n.t])) throw new Error('unknown tool');
           S.nodes = p.nodes; S.edges = (p.edges || []).filter(e => nodeById(e.from[0]) && nodeById(e.to[0])); S.seq = p.seq || 1000; S.sel = null; commit(); renderAll(); fit(); close(); }
           catch (e) { toast('That text is not a pipeline saved from this page.'); } } }, 'Load pasted pipeline'))); }));
-  window.addEventListener('hashchange', () => { const v = location.hash.slice(1); if (['canvas', 'code', 'tools', 'details'].includes(v)) setView(v, true); });
+  window.addEventListener('hashchange', () => { const v = location.hash.slice(1); if (['canvas', 'code', 'run', 'tools', 'details'].includes(v)) setView(v, true); });
   window.addEventListener('resize', () => { setView(document.body.dataset.view, true); });
   window.addEventListener('keydown', ev => {
     const typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
@@ -1273,10 +1345,204 @@ async function boot() {
       dl.addEventListener('click', async () => { try { await dlc.save({ filename: 'brightwind_workflow.zip', data: new Blob([bundle()]) }); }
         catch (e) { if (!e || e.code !== 'declined') toast('The file could not be saved here. Use Copy instead.'); } }); }).catch(() => {});
   }
-  window.__bw = { zipStore, S, DEFS, generate, loadTemplate, TEMPLATES, addNode, connect, canConnect, nodeIssues, renderAll, commit, tidy, fit };
+  window.__bw = { RUN, get RUNMARKS() { return RUNMARKS; }, runStart, zipStore, S, DEFS, generate, loadTemplate, TEMPLATES, addNode, connect, canConnect, nodeIssues, renderAll, commit, tidy, fit };
   if (typeof setupAssistant === 'function') setupAssistant();
 }
 boot();
+
+/* ============================================================
+   Run in the browser: executes the pipeline with brightwind on Pyodide,
+   in a Web Worker (public/py-worker.js). Inputs stay on this computer.
+   ============================================================ */
+const RUN = {
+  worker: null, ready: false, busy: false,
+  inputs: {},        // File path node id -> {kind:'file'|'folder', files:[File], label}
+  results: [],       // [{id, title, ok, seconds, stdout, outputs, error}]
+  outFiles: [],      // [{name, url, size}]
+  status: '', stale: false, snapshot: null, lastSeconds: null, bootSeconds: null,
+  pendingTables: {}, codes: {},
+};
+let RUNMARKS = {};    // node id -> 'busy' | 'ok' | 'err' (read by renderCanvas)
+const BLOCKED = d => d.id.startsWith('LoadBrightHub.') || d.id.startsWith('LoadBrightdata.') || d.id === 'plot_meas_station_on_gmap';
+const fmtBytes = b => b > 1e6 ? (b / 1e6).toFixed(1) + ' MB' : b > 1e3 ? Math.round(b / 1e3) + ' kB' : b + ' B';
+
+function runInvalidate() {
+  if (RUN.busy) return;
+  if (Object.keys(RUNMARKS).length) RUNMARKS = {};
+  if (RUN.results.length && RUN.snapshot !== snapshotGraph()) RUN.stale = true;
+}
+function snapshotGraph() { return JSON.stringify({ n: S.nodes.map(n => [n.id, n.t, n.v, n.lit, n.var]), e: S.edges.map(e => [e.from, e.to]) }); }
+
+function runChecks() {
+  const problems = [];
+  if (!S.nodes.length) problems.push({ text: 'The board is empty. Add tools or load an example first.' });
+  for (const n of S.nodes) {
+    const d = def(n), iss = nodeIssues(n);
+    if (iss.length) problems.push({ id: n.id, text: `${d.title}: ${iss.join('; ')}` });
+    if (BLOCKED(d)) problems.push({ id: n.id, text: `${d.title} needs network access to an outside service, which the browser runner doesn't support. Run the exported script instead.` });
+  }
+  for (const n of S.nodes) if (n.t === 'File path' && !RUN.inputs[n.id]) problems.push({ id: n.id, text: `Choose the file or folder for File path "${n.v.path || '(empty)'}".` });
+  return problems;
+}
+
+function workerFor() {
+  if (RUN.worker) return RUN.worker;
+  const w = new Worker('py-worker.js');
+  w.onmessage = ev => runMessage(ev.data);
+  w.onerror = ev => { runFail('The Python worker stopped: ' + (ev.message || 'unknown error')); };
+  RUN.worker = w;
+  return w;
+}
+function runFail(text) {
+  RUN.busy = false; RUN.status = text; RUN.statusBad = true;
+  for (const k of Object.keys(RUNMARKS)) if (RUNMARKS[k] === 'busy') delete RUNMARKS[k];
+  renderRun(); renderCanvas();
+}
+function runMessage(m) {
+  if (m.type === 'status') { RUN.status = m.text; RUN.statusBad = false; renderRunStatus(); }
+  else if (m.type === 'ready') { RUN.ready = true; RUN.bootSeconds = m.seconds; }
+  else if (m.type === 'step-start') { RUNMARKS[m.id] = 'busy'; renderCanvas(); }
+  else if (m.type === 'step') {
+    const n = nodeById(m.id);
+    RUN.results.push(Object.assign({ title: n ? def(n).title : m.id }, m));
+    RUNMARKS[m.id] = m.ok ? 'ok' : 'err';
+    renderCanvas(); renderRunResults();
+  }
+  else if (m.type === 'files') {
+    RUN.outFiles = m.files.map(f => ({ name: f.name, size: f.buffer.byteLength, url: URL.createObjectURL(new Blob([f.buffer])) }));
+  }
+  else if (m.type === 'done') {
+    RUN.busy = false; RUN.lastSeconds = m.seconds;
+    const failed = RUN.results.find(r => !r.ok);
+    RUN.status = failed ? `Stopped at ${failed.title}. Fix it and run again.` : `Finished ${RUN.results.length} step${RUN.results.length === 1 ? '' : 's'} in ${m.seconds} s.`;
+    RUN.statusBad = !!failed;
+    renderRun(); renderStatus();
+    if (failed) { S.sel = { kind: 'node', id: failed.id }; renderCanvas(); renderDetails(); }
+  }
+  else if (m.type === 'table') {
+    const cb = RUN.pendingTables[m.expr]; delete RUN.pendingTables[m.expr];
+    if (cb) cb(m);
+  }
+  else if (m.type === 'fatal') runFail('Python could not start or stopped unexpectedly: ' + m.error + ' Check your connection and press Run again.');
+}
+
+async function runStart() {
+  if (RUN.busy) return;
+  const problems = runChecks();
+  if (problems.length) { renderRun(); return; }
+  const paths = {}, files = [];
+  for (const n of S.nodes.filter(x => x.t === 'File path')) {
+    const inp = RUN.inputs[n.id], dir = '/inputs/' + n.id;
+    if (inp.kind === 'folder') {
+      paths[n.id] = dir;
+      for (const f of inp.files) files.push({ dir, name: (f.webkitRelativePath || f.name).split('/').slice(1).join('/') || f.name, file: f });
+    } else {
+      paths[n.id] = dir + '/' + inp.files[0].name;
+      files.push({ dir, name: inp.files[0].name, file: inp.files[0] });
+    }
+  }
+  const gen = generate('run', { paths });
+  RUN.codes = Object.fromEntries(gen.steps.map(s => [s.id, s.code.replace(/'\/inputs\/[^']*'/g, m => m)]));
+  const demos = [...new Set(gen.steps.flatMap(s => [...s.code.matchAll(/bw\.demo_datasets\.(\w+)/g)].map(m => m[1])))];
+  RUN.busy = true; RUN.results = []; RUN.stale = false; RUN.snapshot = snapshotGraph(); RUNMARKS = {};
+  RUN.outFiles.forEach(f => URL.revokeObjectURL(f.url)); RUN.outFiles = [];
+  RUN.status = RUN.ready ? 'Starting…' : 'Starting Python. The first run downloads about 30 MB, which your browser then keeps.';
+  RUN.statusBad = false;
+  renderRun(); renderCanvas();
+  const payload = [];
+  for (const f of files) payload.push({ dir: f.dir, name: f.name, buffer: await f.file.arrayBuffer() });
+  workerFor().postMessage({ type: 'run', steps: gen.steps, files: payload, demos }, payload.map(p => p.buffer));
+}
+function runStop() {
+  if (RUN.worker) RUN.worker.terminate();
+  RUN.worker = null; RUN.ready = false;
+  runFail('Stopped. Python will start again on the next run.');
+}
+function runTableCsv(expr, name) {
+  if (!RUN.worker || !RUN.ready) { toast('Run the pipeline again to download this table.'); return; }
+  RUN.pendingTables[expr] = m => {
+    if (m.error) { toast('Could not export the table: ' + m.error); return; }
+    saveBlob(new Blob([m.csv], { type: 'text/csv' }), (name || 'table').replace(/[^\w.-]+/g, '_') + '.csv');
+  };
+  RUN.worker.postMessage({ type: 'table', expr });
+}
+function saveBlob(blob, filename) {
+  const a = h('a', { href: URL.createObjectURL(blob), download: filename });
+  document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
+
+/* ---------- rendering ---------- */
+function renderRunStatus() {
+  const el = $('#runStatus'); if (!el) return;
+  el.textContent = RUN.status || 'Python runs inside this browser tab. Your files are read here and never uploaded.';
+  el.className = 'run-status' + (RUN.statusBad ? ' bad' : '') + (RUN.busy ? ' busy' : '');
+  $('#runGo').hidden = RUN.busy; $('#runStop').hidden = !RUN.busy;
+}
+function renderRun() {
+  const body = $('#runBody'); if (!body) return;
+  renderRunStatus();
+  body.textContent = '';
+  if (window.self !== window.top) {
+    body.append(h('p', { class: 'note', text: 'Running pipelines works on bw-explorer.coderenewables.com, where the page can start Python.' }));
+    $('#runGo').disabled = true; return;
+  }
+  const problems = runChecks();
+  $('#runGo').disabled = RUN.busy || problems.length > 0;
+  const fileNodes = S.nodes.filter(n => n.t === 'File path');
+  if (fileNodes.length) {
+    const sec = h('section', { class: 'run-sec' }, h('h3', {}, 'Your files'),
+      h('p', { class: 'dc', text: 'Choose the file or folder each File path node points to. It is read by this browser only.' }));
+    for (const n of fileNodes) {
+      const inp = RUN.inputs[n.id];
+      const fi = h('input', { type: 'file', id: 'rf-' + n.id, class: 'sr', onchange: ev => { if (ev.target.files.length) { RUN.inputs[n.id] = { kind: 'file', files: [...ev.target.files], label: ev.target.files[0].name }; renderRun(); } } });
+      const fo = h('input', { type: 'file', id: 'rd-' + n.id, class: 'sr', webkitdirectory: true, multiple: true, onchange: ev => { const fs = [...ev.target.files]; if (fs.length) { RUN.inputs[n.id] = { kind: 'folder', files: fs, label: (fs[0].webkitRelativePath || '').split('/')[0] + ` (${fs.length} files)` }; renderRun(); } } });
+      sec.append(h('div', { class: 'run-file' + (inp ? '' : ' need') },
+        h('div', { class: 'rf-name' }, h('span', { class: 'mono', text: n.v.path || 'File path' }), inp ? h('span', { class: 'rf-pick', text: '→ ' + inp.label + ' · ' + fmtBytes(inp.files.reduce((a, f) => a + f.size, 0)) }) : h('span', { class: 'rf-pick none', text: 'not chosen' })),
+        h('div', { class: 'acts' }, fi, fo, h('label', { class: 'btn small', for: 'rf-' + n.id }, 'Choose file'), h('label', { class: 'btn small', for: 'rd-' + n.id }, 'Choose folder'))));
+    }
+    body.append(sec);
+  }
+  const blocking = problems.filter(p => !(p.text.startsWith('Choose the file') && fileNodes.length));
+  if (blocking.length) {
+    body.append(h('section', { class: 'run-sec' }, h('h3', {}, 'Before you can run'),
+      h('ul', { class: 'issues' }, ...blocking.map(p => h('li', {}, p.id ? h('a', { href: '#canvas', onclick: ev => { ev.preventDefault(); S.sel = { kind: 'node', id: p.id }; setView('canvas'); renderAll(); } }, p.text) : p.text)))));
+  }
+  const res = h('section', { class: 'run-sec', id: 'runResults' });
+  body.append(res);
+  renderRunResults();
+}
+function renderRunResults() {
+  const res = $('#runResults'); if (!res) return;
+  res.textContent = '';
+  if (!RUN.results.length && !RUN.busy) {
+    res.append(h('h3', {}, 'Results'), h('div', { class: 'run-empty' },
+      h('p', {}, 'Press ', h('strong', {}, 'Run pipeline'), ' to execute every step with brightwind ' + CAT.version + ' in this browser. Tables, figures and anything printed appear here, step by step, and each node on the board turns green or red.'),
+      h('p', { class: 'dc' }, 'The first run downloads Python and the scientific libraries (about 30 MB) and takes a little while; later runs start straight away. The bundled demo datasets are fetched only when a pipeline uses them.')));
+    return;
+  }
+  res.append(h('h3', {}, 'Results', RUN.stale ? h('span', { class: 'flag warn', text: 'board changed since this run' }) : null));
+  for (const r of RUN.results) {
+    const card = h('article', { class: 'run-step ' + (r.ok ? 'ok' : 'err') },
+      h('header', {}, h('span', { class: 'dot' }), h('a', { href: '#canvas', class: 'rs-title', onclick: ev => { ev.preventDefault(); S.sel = { kind: 'node', id: r.id }; setView('canvas'); renderAll(); }, text: r.title }), h('span', { class: 'rs-time', text: r.seconds + ' s' })));
+    if (r.error) card.append(h('div', { class: 'rs-err' }, h('strong', { text: r.error.message }), r.error.hint ? h('p', { text: r.error.hint }) : null, r.error.where ? h('pre', { text: 'In brightwind:\n' + r.error.where }) : null));
+    if (r.stdout && r.stdout.trim()) card.append(h('pre', { class: 'rs-out', text: r.stdout.trim() }));
+    for (const o of r.outputs || []) {
+      if (o.kind === 'figure') card.append(h('figure', { class: 'rs-fig' }, h('img', { src: 'data:image/png;base64,' + o.png, alt: 'Figure from ' + r.title, loading: 'lazy' }),
+        h('figcaption', {}, h('span', { class: 'mono', text: o.name }), h('a', { href: 'data:image/png;base64,' + o.png, download: (o.name === 'figure' ? r.title : o.name).replace(/[^\w.-]+/g, '_') + '.png' }, 'Download PNG'))));
+      else if (o.kind === 'table') {
+        const wrap = h('div', { class: 'rs-table' }); wrap.innerHTML = o.html;
+        card.append(h('div', { class: 'rs-thead' }, h('span', { class: 'mono', text: o.name }), h('span', { class: 'dc', text: `${o.rows.toLocaleString()} rows × ${o.cols} columns${o.rows > 200 ? ', first 200 shown' : ''}` }),
+          h('button', { class: 'btn small', onclick: () => runTableCsv(o.expr, o.name) }, 'Download CSV')), wrap);
+      } else if (o.kind === 'text') card.append(h('div', { class: 'rs-thead' }, h('span', { class: 'mono', text: o.name }), h('span', { class: 'dc', text: o.type })), h('pre', { class: 'rs-out', text: o.text }));
+    }
+    if (r.ok && !(r.outputs || []).length && !(r.stdout || '').trim()) card.append(h('p', { class: 'dc', text: 'Done. Its result feeds the next step.' }));
+    if (RUN.codes[r.id]) card.append(h('details', { class: 'rs-code' }, h('summary', {}, 'Code'), h('pre', { text: RUN.codes[r.id] })));
+    res.append(card);
+  }
+  if (RUN.busy) res.append(h('div', { class: 'run-step busy' }, h('header', {}, h('span', { class: 'dot' }), h('span', { class: 'rs-title', text: RUN.status }))));
+  if (RUN.outFiles.length) res.append(h('div', { class: 'run-files' }, h('h3', {}, 'Files the pipeline wrote'),
+    ...RUN.outFiles.map(f => h('a', { class: 'btn small', href: f.url, download: f.name.split('/').pop() }, `${f.name} · ${fmtBytes(f.size)}`))));
+}
 
 /* ============================================================
    Build with AI: bring-your-own-key assistant.

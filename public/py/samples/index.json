@@ -1,0 +1,22 @@
+[
+ {
+  "file": "demo_turbine_3MW.wtg",
+  "doc": "A synthetic 3 MW turbine with power and thrust curves (WAsP .wtg)."
+ },
+ {
+  "file": "demo_mast_80m.tab",
+  "doc": "Binned wind climate at 80 m from brightwind's demo mast data (WAsP .tab)."
+ },
+ {
+  "file": "demo_elevation.tif",
+  "doc": "A synthetic 4 km by 4 km hill as an elevation raster (GeoTIFF, UTM 29N)."
+ },
+ {
+  "file": "demo_elevation.map",
+  "doc": "The same hill as 10 m elevation contours (WAsP .map)."
+ },
+ {
+  "file": "demo_roughness.map",
+  "doc": "Roughness change lines around a forest (WAsP .map)."
+ }
+]

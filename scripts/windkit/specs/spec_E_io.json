@@ -1,0 +1,620 @@
+[
+ {
+  "path": "wk.bwc_to_file",
+  "group": "Read & write",
+  "inputs": {
+   "bwc": [
+    "BWC"
+   ]
+  },
+  "outputs": [],
+  "fields": {
+   "filename": {
+    "mode": "text"
+   },
+   "file_format": {
+    "mode": "choice",
+    "choices": [
+     "infer",
+     "tab",
+     "yaml"
+    ]
+   }
+  },
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "bwc": "@BWC",
+     "filename": "TMP + '/bwc.yaml'"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.elevation_map_to_file",
+  "group": "Read & write",
+  "inputs": {
+   "elevation_map": [
+    "RasterMap"
+   ]
+  },
+  "outputs": [],
+  "fields": {
+   "filename": {
+    "mode": "text"
+   }
+  },
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "elevation_map": "@RasterMap",
+     "filename": "TMP + '/elev.nc'"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.gwc_to_file",
+  "group": "Read & write",
+  "inputs": {
+   "gwc": [
+    "GWC"
+   ]
+  },
+  "outputs": [],
+  "fields": {
+   "filename": {
+    "mode": "text"
+   }
+  },
+  "browser": "ok",
+  "note": "Writes a WAsP .lib file, which needs the same sector frequencies at every height.",
+  "probe": [
+   {
+    "args": {
+     "gwc": "S['GWC'].assign(wdfreq=S['GWC'].wdfreq.isel(gen_height=0).broadcast_like(S['GWC'].wdfreq))",
+     "filename": "TMP + '/gwc.lib'"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.landcover_map_to_file",
+  "group": "Read & write",
+  "inputs": {
+   "landcover_map": [
+    "RasterMap"
+   ]
+  },
+  "outputs": [],
+  "fields": {
+   "filename": {
+    "mode": "text"
+   }
+  },
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "landcover_map": "@RasterMap_landcover",
+     "filename": "TMP + '/lc.nc'"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.read_bwc",
+  "group": "Read & write",
+  "inputs": {
+   "filename": [
+    "Path"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "bwc",
+    "types": [
+     "BWC"
+    ]
+   }
+  ],
+  "fields": {
+   "file_format": {
+    "mode": "choice",
+    "choices": [
+     "infer",
+     "tab",
+     "owc",
+     "omwc",
+     "nc",
+     "yml",
+     "yaml"
+    ]
+   }
+  },
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "filename": "TMP + '/bwc.yaml'",
+     "crs": "'EPSG:32629'"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.read_cfdres",
+  "group": "Read & write",
+  "inputs": {
+   "path": [
+    "Path"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "raster",
+    "types": [
+     "DataArray"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "skip_probe": "Needs a .cfdres CFD archive (zip with a manifest and Surfer GRD results); no sample can create one here."
+ },
+ {
+  "path": "wk.read_elevation_map",
+  "group": "Read & write",
+  "inputs": {
+   "filename": [
+    "Path"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "elevation_map",
+    "types": [
+     "RasterMap",
+     "VectorMap"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "filename": "TMP + '/elev.nc'"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.read_gwc",
+  "group": "Read & write",
+  "inputs": {
+   "filename": [
+    "Path"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "gwc",
+    "types": [
+     "GWC"
+    ]
+   }
+  ],
+  "fields": {
+   "file_format": {
+    "mode": "choice",
+    "choices": [
+     "infer",
+     "lib",
+     "gwc",
+     "nc"
+    ]
+   }
+  },
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "filename": "[S['GWC'].to_netcdf(TMP + '/gwc.nc'), TMP + '/gwc.nc'][1]"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.read_landcover_map",
+  "group": "Read & write",
+  "inputs": {
+   "filename": [
+    "Path"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "landcover_map",
+    "types": [
+     "RasterMap",
+     "VectorMap"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "The landcover table is not returned here: windkit gives it only for change lines read with polygons=False, which this node does not expose.",
+  "probe": [
+   {
+    "args": {
+     "filename": "TMP + '/lc.nc'"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.read_mfwwc",
+  "group": "Read & write",
+  "inputs": {
+   "files": [
+    "List"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "wwc",
+    "types": [
+     "WWC"
+    ]
+   }
+  ],
+  "fields": {
+   "file_format": {
+    "mode": "choice",
+    "choices": [
+     "infer",
+     "grd"
+    ]
+   }
+  },
+  "browser": "ok",
+  "note": "",
+  "skip_probe": "Reads only .grd WWC files; wwc_to_file cannot write .grd, so no test file can be made here."
+ },
+ {
+  "path": "wk.read_roughness_map",
+  "group": "Read & write",
+  "inputs": {
+   "filename": [
+    "Path"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "roughness_map",
+    "types": [
+     "RasterMap",
+     "VectorMap"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "filename": "[wk.roughness_map_to_file(S['RasterMap_roughness'], TMP + '/rough.nc'), TMP + '/rough.nc'][1]"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.read_tswc",
+  "group": "Read & write",
+  "inputs": {
+   "filename": [
+    "Path"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "tswc",
+    "types": [
+     "TSWC"
+    ]
+   }
+  ],
+  "fields": {
+   "file_format": {
+    "mode": "choice",
+    "choices": [
+     "infer",
+     "csv",
+     "txt",
+     "nc",
+     "yaml"
+    ]
+   }
+  },
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "filename": "[wk.tswc_to_file(S['TSWC'], TMP + '/tswc.yaml'), TMP + '/tswc.yaml'][1]",
+     "crs": "'EPSG:32629'"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.read_wind_turbines",
+  "group": "Read & write",
+  "inputs": {
+   "filename": [
+    "Path"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "wind_turbines",
+    "types": [
+     "WindTurbines"
+    ]
+   }
+  ],
+  "fields": {
+   "file_format": {
+    "mode": "choice",
+    "choices": [
+     "infer",
+     "csv",
+     "yaml"
+    ]
+   },
+   "level": {
+    "mode": "choice",
+    "choices": [
+     "plant",
+     "wind_farm",
+     "layout"
+    ]
+   }
+  },
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "filename": "[wk.wind_turbines_to_file(S['WindTurbines'], TMP + '/wt.csv'), TMP + '/wt.csv'][1]",
+     "crs": "'EPSG:32629'"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.read_wtg",
+  "group": "Read & write",
+  "inputs": {
+   "wtg_file": [
+    "Path"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "wtg",
+    "types": [
+     "WTG"
+    ]
+   }
+  ],
+  "fields": {
+   "file_format": {
+    "mode": "choice",
+    "choices": [
+     "infer",
+     "nc",
+     "wtg",
+     "yml",
+     "yaml"
+    ]
+   },
+   "regulation_type": {
+    "mode": "choice",
+    "choices": [
+     "pitch",
+     "stall"
+    ]
+   }
+  },
+  "browser": "ok",
+  "note": "Auto-detect of the regulation type (None) is not offered in this list.",
+  "probe": [
+   {
+    "args": {
+     "wtg_file": "TMP + '/demo.wtg'"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.read_wwc",
+  "group": "Read & write",
+  "inputs": {
+   "filename": [
+    "Path"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "wwc",
+    "types": [
+     "WWC"
+    ]
+   }
+  ],
+  "fields": {
+   "file_format": {
+    "mode": "choice",
+    "choices": [
+     "infer",
+     "rsf",
+     "wrg",
+     "grd",
+     "nc",
+     "yaml"
+    ]
+   }
+  },
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "filename": "[wk.wwc_to_file(S['PWC'], TMP + '/wwc.rsf'), TMP + '/wwc.rsf'][1]",
+     "crs": "'EPSG:32629'"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.roughness_map_to_file",
+  "group": "Read & write",
+  "inputs": {
+   "roughness_map": [
+    "RasterMap"
+   ]
+  },
+  "outputs": [],
+  "fields": {
+   "filename": {
+    "mode": "text"
+   }
+  },
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "roughness_map": "@RasterMap_roughness",
+     "filename": "TMP + '/rough_out.nc'"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.tswc_to_file",
+  "group": "Read & write",
+  "inputs": {
+   "tswc": [
+    "TSWC"
+   ]
+  },
+  "outputs": [],
+  "fields": {
+   "filename": {
+    "mode": "text"
+   },
+   "file_format": {
+    "mode": "choice",
+    "choices": [
+     "infer",
+     "yaml"
+    ]
+   }
+  },
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "tswc": "@TSWC",
+     "filename": "TMP + '/tswc_out.yaml'"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.wind_turbines_to_file",
+  "group": "Read & write",
+  "inputs": {
+   "wind_turbines": [
+    "WindTurbines"
+   ]
+  },
+  "outputs": [],
+  "fields": {
+   "filename": {
+    "mode": "text"
+   },
+   "file_format": {
+    "mode": "choice",
+    "choices": [
+     "infer",
+     "csv"
+    ]
+   }
+  },
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "wind_turbines": "@WindTurbines",
+     "filename": "TMP + '/wt_out.csv'"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.wwc_to_file",
+  "group": "Read & write",
+  "inputs": {
+   "wwc": [
+    "WWC"
+   ]
+  },
+  "outputs": [],
+  "fields": {
+   "filename": {
+    "mode": "text"
+   },
+   "file_format": {
+    "mode": "choice",
+    "choices": [
+     "infer",
+     "rsf",
+     "wrg",
+     "yaml"
+    ]
+   }
+  },
+  "browser": "ok",
+  "note": "RSF files need site elevation, which a plain WWC lacks; write such a WWC as YAML.",
+  "probe": [
+   {
+    "args": {
+     "wwc": "@WWC",
+     "filename": "TMP + '/wwc_out.yaml'"
+    }
+   },
+   {
+    "args": {
+     "wwc": "@PWC",
+     "filename": "TMP + '/pwc_out.rsf'"
+    }
+   }
+  ]
+ }
+]

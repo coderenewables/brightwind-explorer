@@ -1,0 +1,218 @@
+[
+ {
+  "path": "wk.add_landcover_table",
+  "group": "Topography",
+  "inputs": {"gdf": ["GeoDataFrame"], "lctable": ["Dict"]},
+  "outputs": [{"name": "gdf", "types": ["GeoDataFrame"], "same": "gdf"}],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {"args": {
+     "gdf": "__import__('geopandas').GeoDataFrame({'id': list(S['LandCoverTable'].keys())[:2]}, geometry=[__import__('shapely.geometry', fromlist=['box']).box(0, 0, 1, 1), __import__('shapely.geometry', fromlist=['box']).box(1, 0, 2, 1)], crs='EPSG:32629')",
+     "lctable": "@LandCoverTable"}}
+  ]
+ },
+ {
+  "path": "wk.create_raster_map",
+  "group": "Topography",
+  "inputs": {"output_locs": ["Locations"]},
+  "outputs": [{"name": "raster_da", "types": ["RasterMap"]}],
+  "fields": {"map_type": {"mode": "choice", "choices": ["elevation", "roughness", "landcover"]}},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {"args": {"output_locs": "@Raster", "resolution": "100.0", "map_type": "'elevation'"}},
+   {"args": {"output_locs": "@Raster", "resolution": "100.0", "map_type": "'landcover'"}}
+  ]
+ },
+ {
+  "path": "wk.create_vector_map",
+  "group": "Topography",
+  "inputs": {"bbox": ["BBox"]},
+  "outputs": [{"name": "vector_map", "types": ["VectorMap"]}],
+  "fields": {"map_type": {"mode": "choice", "choices": ["elevation", "roughness"]}},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {"args": {"bbox": "@BBox", "map_type": "'elevation'", "elevation": "100.0"}},
+   {"args": {"bbox": "@BBox", "map_type": "'roughness'", "roughness_change": "(0.03, 0.4)"}}
+  ]
+ },
+ {
+  "path": "wk.create_wasp_site_effects",
+  "group": "Topography",
+  "inputs": {"output_locs": ["Locations"]},
+  "outputs": [{"name": "site_effects", "types": ["SiteEffects"]}],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {"args": {"output_locs": "@Point"}},
+   {"args": {"output_locs": "@Raster", "n_sectors": "8"}}
+  ]
+ },
+ {
+  "path": "wk.create_wind_turbines_from_arrays",
+  "group": "Wind farm",
+  "inputs": {},
+  "outputs": [{"name": "wind_turbines", "types": ["WindTurbines"]}],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {"args": {
+     "west_east": "[500000.0, 500400.0]",
+     "south_north": "[5900000.0, 5900000.0]",
+     "height": "[94.0, 94.0]",
+     "wtg_keys": "[1, 1]",
+     "crs": "'EPSG:32629'"}}
+  ]
+ },
+ {
+  "path": "wk.create_wind_turbines_from_dataframe",
+  "group": "Wind farm",
+  "inputs": {"location_df": ["DataFrame", "GeoDataFrame"]},
+  "outputs": [{"name": "wind_turbines", "types": ["WindTurbines"]}],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {"args": {
+     "location_df": "pd.DataFrame({'west_east': [500000.0, 500400.0], 'south_north': [5900000.0, 5900000.0], 'height': [94.0, 94.0], 'wtg_key': [1, 1]})",
+     "crs": "'EPSG:32629'"}}
+  ]
+ },
+ {
+  "path": "wk.estimate_regulation_type",
+  "group": "Wind farm",
+  "inputs": {"wtg": ["WTG"]},
+  "outputs": [{"name": "regulation_type", "types": ["Value"]}],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {"args": {"wtg": "@WTG"}}
+  ]
+ },
+ {
+  "path": "wk.fill_elevation_nodata",
+  "group": "Topography",
+  "inputs": {"da": ["RasterMap"]},
+  "outputs": [{"name": "da", "types": ["RasterMap"], "same": "da"}],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {"args": {"da": "@RasterMap", "max_fill_fraction": "0.05"}},
+   {"args": {"da": "S['RasterMap'].where(S['RasterMap'].west_east > S['RasterMap'].west_east[0])", "max_fill_fraction": "None"}}
+  ]
+ },
+ {
+  "path": "wk.get_cross_predictions",
+  "group": "Wind climates",
+  "inputs": {"wcs": ["BWC", "WWC"], "wcs_src": ["BWC", "WWC"]},
+  "outputs": [
+   {"name": "from_locs", "types": ["BWC", "WWC"], "same": "wcs"},
+   {"name": "to_locs", "types": ["BWC", "WWC"], "same": "wcs"}
+  ],
+  "tuple": true,
+  "fields": {
+   "include_self_predictions": {"mode": "bool"},
+   "only_upward_extrapolations": {"mode": "bool"}
+  },
+  "browser": "ok",
+  "note": "Can raise an InvalidIndexError on some multi-height inputs, where windkit creates duplicate target points.",
+  "probe": [
+   {"args": {"wcs": "wk.bwc_from_tswc(wk.create_tswc(S['StackedPoint'], date_range=pd.date_range('2020-01-01', periods=24 * 60, freq='h')))", "include_self_predictions": "False"}},
+   {"args": {"wcs": "@WWC"}}
+  ]
+ },
+ {
+  "path": "wk.get_era5",
+  "group": "Data download",
+  "inputs": {"bbox": ["BBox"]},
+  "outputs": [{"name": "era5", "types": ["Dataset"]}],
+  "fields": {"source": {"mode": "choice", "choices": ["planetary_computer"]}},
+  "browser": "blocked",
+  "note": "Needs internet access; not available in the browser runner.",
+  "skip_probe": "Downloads ERA5 data from the Planetary Computer over the internet."
+ },
+ {
+  "path": "wk.get_landcover_table",
+  "group": "Topography",
+  "inputs": {},
+  "outputs": [{"name": "landcover_table", "types": ["LandCoverTable"]}],
+  "fields": {
+   "dataset": {"mode": "choice", "choices": ["CGLS-LC100", "CORINE", "GlobCover", "MODIS", "WorldCover", "ESA_CCI"]},
+   "table": {"mode": "choice", "choices": ["default"]}
+  },
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {"args": {"dataset": "'CORINE'", "table": "'default'"}},
+   {"args": {"dataset": "'MODIS'"}}
+  ]
+ },
+ {
+  "path": "wk.get_loss_table",
+  "group": "Wind farm",
+  "inputs": {},
+  "outputs": [{"name": "loss_table", "types": ["LossTable"]}],
+  "fields": {"table_name": {"mode": "choice", "choices": ["dtu_default"]}},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {"args": {"table_name": "'dtu_default'"}}
+  ]
+ },
+ {
+  "path": "wk.get_raster_map",
+  "group": "Data download",
+  "inputs": {"bbox": ["BBox"]},
+  "outputs": [{"name": "raster_map", "types": ["RasterMap"]}],
+  "fields": {
+   "dataset": {"mode": "choice", "choices": ["NASADEM", "ALOS", "CDEM_GLO30", "CDEM_GLO90", "ESRI_10M9CLC", "ESRI_10M10CLC", "ESA_CCI", "WorldCover", "Viewfinder", "CGLS-LC100", "CORINE", "MODIS", "SRTM", "Globcover"]},
+   "band": {"mode": "text"},
+   "source": {"mode": "choice", "choices": ["planetary_computer", "dtu", "earth_engine"]}
+  },
+  "browser": "blocked",
+  "note": "Needs internet access; not available in the browser runner.",
+  "skip_probe": "Downloads a raster map from DTU, Planetary Computer or Google Earth Engine over the internet."
+ },
+ {
+  "path": "wk.get_tutorial_data",
+  "group": "Data download",
+  "inputs": {},
+  "outputs": [{"name": "folder", "types": ["Value"]}],
+  "fields": {"name": {"mode": "choice", "choices": ["serra_santa_luzia"]}},
+  "browser": "blocked",
+  "note": "Needs internet access; not available in the browser runner.",
+  "skip_probe": "Downloads tutorial data from Zenodo over the internet."
+ },
+ {
+  "path": "wk.get_uncertainty_table",
+  "group": "Wind farm",
+  "inputs": {},
+  "outputs": [{"name": "uncertainty_table", "types": ["UncertaintyTable"]}],
+  "fields": {"table_name": {"mode": "choice", "choices": ["dtu_default"]}},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {"args": {"table_name": "'dtu_default'"}}
+  ]
+ },
+ {
+  "path": "wk.get_vector_map",
+  "group": "Data download",
+  "inputs": {"bbox": ["BBox"]},
+  "outputs": [{"name": "vector_map", "types": ["GeoDataFrame"]}],
+  "fields": {
+   "dataset": {"mode": "choice", "choices": ["CORINE"]},
+   "source": {"mode": "choice", "choices": ["dtu"]}
+  },
+  "browser": "blocked",
+  "note": "Needs internet access; not available in the browser runner.",
+  "skip_probe": "Downloads vector map features from the GWA map API over the internet."
+ }
+]

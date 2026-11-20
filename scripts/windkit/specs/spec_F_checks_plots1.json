@@ -1,0 +1,532 @@
+[
+ {
+  "path": "wk.check_dead_ends",
+  "group": "Checks",
+  "inputs": {
+   "lines_out": [
+    "GeoDataFrame"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "lines",
+    "types": [
+     "GeoDataFrame"
+    ],
+    "same": "lines_out"
+   }
+  ],
+  "fields": {
+   "errors": {
+    "mode": "choice",
+    "choices": [
+     "raise",
+     "warn",
+     "ignore"
+    ]
+   }
+  },
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "lines_out": "@VectorMap",
+     "errors": "'ignore'",
+     "add_errors": "True"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.check_lines_cross",
+  "group": "Checks",
+  "inputs": {
+   "lines_out": [
+    "GeoDataFrame"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "lines",
+    "types": [
+     "GeoDataFrame"
+    ],
+    "same": "lines_out"
+   }
+  ],
+  "fields": {
+   "errors": {
+    "mode": "choice",
+    "choices": [
+     "raise",
+     "warn",
+     "ignore"
+    ]
+   }
+  },
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "lines_out": "@VectorMap",
+     "errors": "'ignore'",
+     "add_errors": "True"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.check_wtg_keys",
+  "group": "Checks",
+  "inputs": {
+   "wind_turbines": [
+    "WindTurbines"
+   ],
+   "wtg_dict": [
+    "Dict"
+   ]
+  },
+  "outputs": [],
+  "fields": {},
+  "browser": "ok",
+  "note": "Raises an error when a turbine key has no matching generator in the dictionary.",
+  "probe": [
+   {
+    "args": {
+     "wind_turbines": "@WindTurbines",
+     "wtg_dict": "{k: S['WTG'] for k in np.unique(S['WindTurbines'].wtg_key.values)}"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.is_bwc",
+  "group": "Checks",
+  "inputs": {
+   "obj": [
+    "Dataset",
+    "DataArray"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "valid",
+    "types": [
+     "Value"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "obj": "@BWC"
+    }
+   },
+   {
+    "args": {
+     "obj": "@DataArray"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.is_geowc",
+  "group": "Checks",
+  "inputs": {
+   "obj": [
+    "Dataset",
+    "DataArray"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "valid",
+    "types": [
+     "Value"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "obj": "@GeoWC"
+    }
+   },
+   {
+    "args": {
+     "obj": "@DataArray"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.is_gwc",
+  "group": "Checks",
+  "inputs": {
+   "obj": [
+    "Dataset",
+    "DataArray"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "valid",
+    "types": [
+     "Value"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "obj": "@GWC"
+    }
+   },
+   {
+    "args": {
+     "obj": "@DataArray"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.is_tswc",
+  "group": "Checks",
+  "inputs": {
+   "obj": [
+    "Dataset",
+    "DataArray"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "valid",
+    "types": [
+     "Value"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "obj": "@TSWC"
+    }
+   },
+   {
+    "args": {
+     "obj": "@DataArray"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.is_windturbines",
+  "group": "Checks",
+  "inputs": {
+   "obj": [
+    "Dataset",
+    "DataArray"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "valid",
+    "types": [
+     "Value"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "obj": "@WindTurbines"
+    }
+   },
+   {
+    "args": {
+     "obj": "@DataArray"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.is_wtg",
+  "group": "Checks",
+  "inputs": {
+   "obj": [
+    "Dataset",
+    "DataArray"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "valid",
+    "types": [
+     "Value"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "obj": "@WTG"
+    }
+   },
+   {
+    "args": {
+     "obj": "@DataArray"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.is_wwc",
+  "group": "Checks",
+  "inputs": {
+   "obj": [
+    "Dataset",
+    "DataArray"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "valid",
+    "types": [
+     "Value"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "obj": "@WWC"
+    }
+   },
+   {
+    "args": {
+     "obj": "@DataArray"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.plot.elevation_map",
+  "group": "Plots",
+  "inputs": {
+   "gdf": [
+    "VectorMap"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "axes",
+    "types": [
+     "Axes"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "gdf": "@VectorMap"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.plot.histogram",
+  "group": "Plots",
+  "inputs": {
+   "ds": [
+    "BWC"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "figure",
+    "types": [
+     "Plotly",
+     "List"
+    ]
+   }
+  ],
+  "fields": {
+   "style": {
+    "mode": "choice",
+    "choices": [
+     "faceted",
+     "combined",
+     "list"
+    ]
+   }
+  },
+  "browser": "plotly",
+  "note": "The interactive Dash style is not offered; it returns a Dash app rather than a figure.",
+  "probe": [
+   {
+    "args": {
+     "ds": "@BWC"
+    }
+   },
+   {
+    "args": {
+     "ds": "@BWC",
+     "style": "'list'"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.plot.histogram_lines",
+  "group": "Plots",
+  "inputs": {
+   "ds": [
+    "BWC",
+    "WWC"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "figure",
+    "types": [
+     "Plotly"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "plotly",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "ds": "@BWC"
+    }
+   },
+   {
+    "args": {
+     "ds": "@WWC"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.plot.landcover_map",
+  "group": "Plots",
+  "inputs": {
+   "gdf": [
+    "GeoDataFrame"
+   ],
+   "ax": [
+    "Axes"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "axes",
+    "types": [
+     "Axes"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "gdf": "__import__('geopandas').GeoDataFrame({'z0': [0.03, 0.4]}, geometry=[__import__('shapely.geometry', fromlist=['box']).box(500000, 5900000, 500500, 5900500), __import__('shapely.geometry', fromlist=['box']).box(500600, 5900000, 501000, 5900500)], crs='EPSG:32629')"
+    }
+   },
+   {
+    "args": {
+     "gdf": "__import__('geopandas').GeoDataFrame({'z0': [0.03, 0.4]}, geometry=[__import__('shapely.geometry', fromlist=['box']).box(500000, 5900000, 500500, 5900500), __import__('shapely.geometry', fromlist=['box']).box(500600, 5900000, 501000, 5900500)], crs='EPSG:32629')",
+     "ax": "__import__('matplotlib.pyplot', fromlist=['x']).subplots()[1]"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.plot.plot_wind_turbine_locations",
+  "group": "Plots",
+  "inputs": {
+   "wts": [
+    "WindTurbines"
+   ],
+   "ax": [
+    "Axes"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "axes",
+    "types": [
+     "Axes"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "exclude": "Broken in windkit 2.2.0: it reads wts.coords.west_east, which xarray does not support.",
+  "skip_probe": "Broken in windkit 2.2.0: it reads wts.coords.west_east, which xarray does not support."
+ },
+ {
+  "path": "wk.plot.power_ct_curves",
+  "group": "Plots",
+  "inputs": {
+   "ds": [
+    "WTG"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "figure",
+    "types": [
+     "Plotly"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "plotly",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "ds": "@WTG"
+    }
+   },
+   {
+    "args": {
+     "ds": "@WTG",
+     "mark_rated": "0"
+    }
+   }
+  ]
+ }
+]

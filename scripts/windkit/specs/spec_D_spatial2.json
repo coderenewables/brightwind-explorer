@@ -1,0 +1,748 @@
+[
+ {
+  "path": "wk.spatial.get_spatial_struct",
+  "group": "Spatial",
+  "inputs": {
+   "obj": [
+    "Dataset",
+    "DataArray"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "structure",
+    "types": [
+     "Value"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "Returns the structure name as text, or None when the object has no spatial structure.",
+  "probe": [
+   {
+    "args": {
+     "obj": "@Point"
+    }
+   },
+   {
+    "args": {
+     "obj": "@Raster"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.spatial.grid_convergence",
+  "group": "Spatial",
+  "inputs": {
+   "ds": [
+    "Dataset",
+    "DataArray"
+   ],
+   "source": [
+    "Dataset",
+    "DataArray",
+    "GeoDataFrame",
+    "BBox"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "convergence",
+    "types": [
+     "DataArray"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "Leave source empty to get grid convergence relative to the grid's own north.",
+  "probe": [
+   {
+    "args": {
+     "ds": "@Point"
+    }
+   },
+   {
+    "args": {
+     "ds": "@Point",
+     "source": "@GeoDataFrame"
+    }
+   },
+   {
+    "args": {
+     "ds": "@Raster",
+     "source": "@BBox"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.spatial.interp_structured_like",
+  "group": "Spatial",
+  "inputs": {
+   "source": [
+    "Dataset",
+    "DataArray"
+   ],
+   "target": [
+    "Dataset",
+    "DataArray"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "interpolated",
+    "types": [
+     "Dataset",
+     "DataArray"
+    ],
+    "same": "target"
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "Source must be a cuboid; the result takes the spatial structure of the target.",
+  "probe": [
+   {
+    "args": {
+     "source": "@Cuboid",
+     "target": "@StackedPoint"
+    }
+   },
+   {
+    "args": {
+     "source": "@Cuboid",
+     "target": "@Point"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.spatial.interp_unstructured",
+  "group": "Spatial",
+  "inputs": {
+   "obj": [
+    "Dataset",
+    "DataArray"
+   ],
+   "west_east": [
+    "DataArray"
+   ],
+   "south_north": [
+    "DataArray"
+   ],
+   "height": [
+    "DataArray"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "interpolated",
+    "types": [
+     "Dataset",
+     "DataArray"
+    ],
+    "same": "obj"
+   }
+  ],
+  "fields": {
+   "method": {
+    "mode": "choice",
+    "choices": [
+     "nearest",
+     "linear",
+     "cubic",
+     "natural",
+     "rbf"
+    ]
+   }
+  },
+  "browser": "ok",
+  "note": "Interpolates to the coordinates given by the west_east, south_north and height inputs.",
+  "probe": [
+   {
+    "args": {
+     "obj": "@Cuboid",
+     "west_east": "S['StackedPoint']['west_east']",
+     "south_north": "S['StackedPoint']['south_north']",
+     "height": "S['StackedPoint']['height']"
+    }
+   },
+   {
+    "args": {
+     "obj": "@Cuboid",
+     "west_east": "S['StackedPoint']['west_east']",
+     "south_north": "S['StackedPoint']['south_north']",
+     "height": "S['StackedPoint']['height']",
+     "method": "'nearest'"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.spatial.interp_unstructured_like",
+  "group": "Spatial",
+  "inputs": {
+   "source": [
+    "Dataset",
+    "DataArray"
+   ],
+   "target": [
+    "Dataset",
+    "DataArray"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "interpolated",
+    "types": [
+     "Dataset",
+     "DataArray"
+    ],
+    "same": "target"
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "Interpolates the source onto the locations of the target; the result takes the target's structure.",
+  "probe": [
+   {
+    "args": {
+     "source": "@Cuboid",
+     "target": "@StackedPoint"
+    }
+   },
+   {
+    "args": {
+     "source": "@Cuboid",
+     "target": "@Point"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.spatial.is_cuboid",
+  "group": "Checks",
+  "inputs": {
+   "obj": [
+    "Dataset",
+    "DataArray"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "result",
+    "types": [
+     "Value"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "obj": "@Cuboid"
+    }
+   },
+   {
+    "args": {
+     "obj": "@Point"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.spatial.is_point",
+  "group": "Checks",
+  "inputs": {
+   "obj": [
+    "Dataset",
+    "DataArray"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "result",
+    "types": [
+     "Value"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "obj": "@Point"
+    }
+   },
+   {
+    "args": {
+     "obj": "@Raster"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.spatial.is_raster",
+  "group": "Checks",
+  "inputs": {
+   "obj": [
+    "Dataset",
+    "DataArray"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "result",
+    "types": [
+     "Value"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "obj": "@Raster"
+    }
+   },
+   {
+    "args": {
+     "obj": "@Point"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.spatial.is_stacked_point",
+  "group": "Checks",
+  "inputs": {
+   "obj": [
+    "Dataset",
+    "DataArray"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "result",
+    "types": [
+     "Value"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "obj": "@StackedPoint"
+    }
+   },
+   {
+    "args": {
+     "obj": "@Point"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.spatial.mask",
+  "group": "Spatial",
+  "inputs": {
+   "obj": [
+    "Dataset",
+    "DataArray"
+   ],
+   "mask": [
+    "GeoDataFrame",
+    "BBox"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "masked",
+    "types": [
+     "Dataset",
+     "DataArray"
+    ],
+    "same": "obj"
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "Values outside the mask are set to NaN unless invert is on.",
+  "probe": [
+   {
+    "args": {
+     "obj": "@Raster",
+     "mask": "@BBox"
+    }
+   },
+   {
+    "args": {
+     "obj": "@Raster",
+     "mask": "__import__('geopandas').GeoDataFrame({'geometry': [__import__('shapely').geometry.box(500000, 5900000, 500250, 5900250)]}, crs='EPSG:32629')"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.spatial.nearest_points",
+  "group": "Spatial",
+  "inputs": {
+   "ds_ref": [
+    "Dataset"
+   ],
+   "ds_target": [
+    "Dataset"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "nearest",
+    "types": [
+     "Dataset"
+    ],
+    "same": "ds_target"
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "For each target location, selects the nearest source location(s); more than one nearest point needs a point target.",
+  "probe": [
+   {
+    "args": {
+     "ds_ref": "@Cuboid",
+     "ds_target": "@StackedPoint"
+    }
+   },
+   {
+    "args": {
+     "ds_ref": "@Cuboid",
+     "ds_target": "@Point",
+     "n_nearest": "2",
+     "return_distance": "True"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.spatial.reproject",
+  "group": "Spatial",
+  "inputs": {
+   "obj": [
+    "GeoDataFrame",
+    "DataArray",
+    "Dataset",
+    "BBox"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "reprojected",
+    "types": [
+     "GeoDataFrame",
+     "DataArray",
+     "Dataset",
+     "BBox"
+    ],
+    "same": "obj"
+   }
+  ],
+  "fields": {
+   "to_crs": {
+    "mode": "text"
+   }
+  },
+  "browser": "ok",
+  "note": "Changes the coordinate system of the data; the values are not changed.",
+  "probe": [
+   {
+    "args": {
+     "obj": "@Point",
+     "to_crs": "'EPSG:4326'"
+    }
+   },
+   {
+    "args": {
+     "obj": "@DataArray",
+     "to_crs": "'EPSG:4326'"
+    }
+   },
+   {
+    "args": {
+     "obj": "@BBox",
+     "to_crs": "'EPSG:4326'"
+    }
+   },
+   {
+    "args": {
+     "obj": "@GeoDataFrame",
+     "to_crs": "'EPSG:4326'"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.spatial.set_crs",
+  "group": "Spatial",
+  "inputs": {
+   "obj": [
+    "GeoDataFrame",
+    "DataArray",
+    "Dataset",
+    "BBox"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "with_crs",
+    "types": [
+     "GeoDataFrame",
+     "DataArray",
+     "Dataset",
+     "BBox"
+    ],
+    "same": "obj"
+   }
+  ],
+  "fields": {
+   "crs": {
+    "mode": "text"
+   }
+  },
+  "browser": "ok",
+  "note": "Assigns a coordinate system without moving any coordinates.",
+  "probe": [
+   {
+    "args": {
+     "obj": "@Point",
+     "crs": "'EPSG:32629'"
+    }
+   },
+   {
+    "args": {
+     "obj": "@BBox",
+     "crs": "'EPSG:4326'"
+    }
+   },
+   {
+    "args": {
+     "obj": "@GeoDataFrame",
+     "crs": "'EPSG:4326'"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.spatial.to_cuboid",
+  "group": "Spatial",
+  "inputs": {
+   "obj": [
+    "Dataset",
+    "DataArray"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "cuboid",
+    "types": [
+     "Cuboid",
+     "Raster",
+     "DataArray"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "Same conversion as to_raster: needs grid-like data, or ignore_raster_check on for point data.",
+  "probe": [
+   {
+    "args": {
+     "obj": "@Raster"
+    }
+   },
+   {
+    "args": {
+     "obj": "@Point",
+     "ignore_raster_check": "True"
+    }
+   },
+   {
+    "args": {
+     "obj": "@StackedPoint",
+     "ignore_raster_check": "True"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.spatial.to_point",
+  "group": "Spatial",
+  "inputs": {
+   "obj": [
+    "Dataset",
+    "DataArray"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "point",
+    "types": [
+     "Point",
+     "DataArray"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "obj": "@Cuboid"
+    }
+   },
+   {
+    "args": {
+     "obj": "@StackedPoint"
+    }
+   },
+   {
+    "args": {
+     "obj": "@Raster"
+    }
+   },
+   {
+    "args": {
+     "obj": "@DataArray"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.spatial.to_raster",
+  "group": "Spatial",
+  "inputs": {
+   "obj": [
+    "Dataset",
+    "DataArray"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "raster",
+    "types": [
+     "Raster",
+     "DataArray"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "Converts data to a raster grid; non-grid data is rejected unless ignore_raster_check is on.",
+  "probe": [
+   {
+    "args": {
+     "obj": "@Raster"
+    }
+   },
+   {
+    "args": {
+     "obj": "@Point",
+     "ignore_raster_check": "True"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.spatial.to_stacked_point",
+  "group": "Spatial",
+  "inputs": {
+   "obj_in": [
+    "Dataset",
+    "DataArray"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "stacked_point",
+    "types": [
+     "StackedPoint",
+     "DataArray"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "obj_in": "@Point"
+    }
+   },
+   {
+    "args": {
+     "obj_in": "@Raster"
+    }
+   },
+   {
+    "args": {
+     "obj_in": "@Cuboid"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.spatial.warp",
+  "group": "Spatial",
+  "inputs": {
+   "obj": [
+    "Dataset",
+    "DataArray"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "warped",
+    "types": [
+     "Cuboid",
+     "Raster",
+     "DataArray"
+    ],
+    "same": "obj"
+   }
+  ],
+  "fields": {
+   "to_crs": {
+    "mode": "text"
+   }
+  },
+  "browser": "ok",
+  "note": "Interpolates grid data into a new coordinate system; grid data (cuboid or raster) is expected.",
+  "probe": [
+   {
+    "args": {
+     "obj": "@Cuboid",
+     "to_crs": "'EPSG:4326'"
+    }
+   },
+   {
+    "args": {
+     "obj": "@Raster",
+     "to_crs": "'EPSG:4326'"
+    }
+   }
+  ]
+ }
+]

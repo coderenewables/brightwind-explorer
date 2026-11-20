@@ -1,0 +1,40 @@
+<!doctype html><html><body><pre id="log"></pre>
+<script src="https://cdn.jsdelivr.net/pyodide/v0.29.5/full/pyodide.js"></script>
+<script>
+const log = t => { document.getElementById('log').textContent += t + '\n'; };
+window.OUT = {};
+(async () => {
+  try {
+    const py = await loadPyodide({ indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.29.5/full/' });
+    await py.loadPackage(['numpy','pandas','scipy','matplotlib','requests','python-dateutil','six','packaging','micropip']);
+    await py.loadPackage(['pyproj']);
+    await py.loadPackage(['xarray','geopandas','shapely','rasterio','netcdf4','lxml','fiona','pyyaml','platformdirs','attrs','narwhals']);
+    py.globals.set('w', py.toPy(['windkit-2.2.0-py3-none-any.whl','rioxarray-0.20.0-py3-none-any.whl','plotly-6.3.1-py3-none-any.whl'].map(x => location.origin + '/' + x)));
+    await py.runPythonAsync(`import micropip\nawait micropip.install(w, deps=False)\nawait micropip.install('${location.origin}/affine-3.0.1-py3-none-any.whl', deps=False, reinstall=True)`);
+    py.FS.mkdir('/wkp');
+    const files = ['probe.py','samples.py','raw_windkit.json', ...(await (await fetch('wkp/list.txt')).text()).trim().split('\n')];
+    for (const f of files) py.FS.writeFile('/wkp/' + f, new Uint8Array(await (await fetch('wkp/' + f)).arrayBuffer()));
+    const specs = files.filter(f => f.startsWith('spec_'));
+    for (const sp of specs) {
+      const out = await py.runPythonAsync(`
+import sys, io, os, signal, runpy, contextlib
+os.environ['MPLBACKEND'] = 'Agg'
+signal.signal = lambda *a, **k: None
+signal.alarm = lambda *a, **k: 0
+sys.path.insert(0, '/wkp')
+buf = io.StringIO()
+sys.argv = ['probe.py', '/wkp/${sp}', '--quiet']
+with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(io.StringIO()):
+    try:
+        runpy.run_path('/wkp/probe.py', run_name='__main__')
+    except SystemExit:
+        pass
+    except BaseException as e:
+        print('CRASH', type(e).__name__, e)
+buf.getvalue()`);
+      window.OUT[sp] = out; log(sp + ': ' + out.trim().split('\n').slice(-1)[0]);
+    }
+    window.DONE = true;
+  } catch (e) { log('ERR ' + e); window.DONE = true; window.ERR = String(e).slice(-2000); }
+})();
+</script></body></html>

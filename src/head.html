@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Brightwind Workflow Builder</title>
-<meta name="description" content="Explore the brightwind wind resource assessment library visually and build analysis pipelines by drag and drop. Exports runnable Python scripts and notebooks.">
+<meta name="description" content="Explore the brightwind and windkit wind resource libraries visually and build analysis pipelines by drag and drop. Exports runnable Python scripts and notebooks, and runs them in the browser.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2315232d'/%3E%3Ccircle cx='8' cy='10' r='3.2' fill='%23c8440d'/%3E%3Ccircle cx='8' cy='22' r='3.2' fill='%231b68ad'/%3E%3Ccircle cx='24' cy='16' r='3.2' fill='%230d8266'/%3E%3Cpath d='M11 10c6 0 6 6 10 6M11 22c6 0 6-6 10-6' stroke='%23e7ecef' stroke-width='1.8' fill='none'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600&display=swap">
@@ -27,6 +27,7 @@
   --t-path: #86680a;
   --t-val: #56646f;
   --t-obj: #6546c0;
+  --t-wc: #00808c; --t-loc: #64760c; --t-map: #8a5526; --t-wtg: #b82d64; --t-xr: #4a5788;
   --grid: #c3ced6;
   --shadow: 0 1px 2px rgba(21, 35, 45, .10), 0 4px 14px rgba(21, 35, 45, .08);
   --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -39,6 +40,7 @@
     --bg: #0e161c; --panel: #141e26; --card: #1a2630; --ink: #e5ecf1; --muted: #93a4b1; --line: #2c3b47;
     --accent: #ff7d42; --accent-ink: #1a0d05; --bad: #ff8a80; --good: #5fd39a;
     --t-df: #62aeea; --t-series: #45cba8; --t-fig: #dc86cf; --t-path: #dcb746; --t-val: #a3b3bf; --t-obj: #ab95f2;
+    --t-wc: #4fd0dc; --t-loc: #bccf4e; --t-map: #e0a26a; --t-wtg: #f483b0; --t-xr: #a3b2ec;
     --grid: #25333e; --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 6px 18px rgba(0, 0, 0, .35);
   }
 }
@@ -47,6 +49,7 @@
   --bg: #0e161c; --panel: #141e26; --card: #1a2630; --ink: #e5ecf1; --muted: #93a4b1; --line: #2c3b47;
   --accent: #ff7d42; --accent-ink: #1a0d05; --bad: #ff8a80; --good: #5fd39a;
   --t-df: #62aeea; --t-series: #45cba8; --t-fig: #dc86cf; --t-path: #dcb746; --t-val: #a3b3bf; --t-obj: #ab95f2;
+    --t-wc: #4fd0dc; --t-loc: #bccf4e; --t-map: #e0a26a; --t-wtg: #f483b0; --t-xr: #a3b2ec;
   --grid: #25333e; --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 6px 18px rgba(0, 0, 0, .35);
 }
 * { box-sizing: border-box; }
@@ -109,6 +112,8 @@ pre.rs-out { margin: 8px 0 0; font: 12px/1.5 var(--f-mono); background: var(--pa
 .rs-fig { margin: 10px 0 0; }
 .rs-fig img { max-width: 100%; max-height: 520px; height: auto; display: block; border: 1px solid var(--line); border-radius: 4px; background: #fff; }
 .rs-fig figcaption { display: flex; gap: 10px; align-items: center; font-size: 12px; margin-top: 4px; }
+.rs-plotly { width: 100%; height: 460px; background: #fff; border: 1px solid var(--line); border-radius: 4px; color: #333; font-size: 12.5px; display: flex; align-items: center; justify-content: center; }
+.rs-plotly.js-plotly-plot { display: block; }
 .rs-fig figcaption a, .run-sec a { color: var(--accent); }
 .run-files { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .run-files h3 { width: 100%; }
@@ -179,6 +184,7 @@ body[data-view="run"] #canvasView { display: none; }
 .ty::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--tc); }
 .c-df { --tc: var(--t-df); } .c-series { --tc: var(--t-series); } .c-fig { --tc: var(--t-fig); }
 .c-path { --tc: var(--t-path); } .c-val { --tc: var(--t-val); } .c-obj { --tc: var(--t-obj); }
+.c-wc { --tc: var(--t-wc); } .c-loc { --tc: var(--t-loc); } .c-map { --tc: var(--t-map); } .c-wtg { --tc: var(--t-wtg); } .c-xr { --tc: var(--t-xr); }
 
 /* ---------- canvas ---------- */
 #canvas { position: absolute; inset: 0; overflow: hidden; touch-action: none; cursor: grab; background-color: var(--bg); background-image: radial-gradient(var(--grid) 1px, transparent 1.2px); }
@@ -216,6 +222,26 @@ body[data-view="run"] #canvasView { display: none; }
 .g-Statistics { --gc: var(--t-df); } .g-Distributions { --gc: var(--t-df); } .g-Turbulence { --gc: var(--t-df); } .g-Atmosphere { --gc: var(--t-df); }
 .g-Shear { --gc: var(--t-obj); } .g-Correlation { --gc: var(--t-obj); } .g-Station { --gc: var(--t-obj); } .g-BrightHub { --gc: var(--t-path); }
 .g-Plot { --gc: var(--t-fig); } .g-Export { --gc: var(--accent); } .g-Utilities { --gc: var(--t-val); } .g-Helpers { --gc: var(--t-val); }
+.g-Wind-climates { --gc: var(--t-wc); } .g-Wind { --gc: var(--t-wc); } .g-Weibull { --gc: var(--t-wc); } .g-Long-term { --gc: var(--t-obj); }
+.g-Spatial { --gc: var(--t-loc); } .g-Topography { --gc: var(--t-map); } .g-Wind-farm { --gc: var(--t-wtg); } .g-Read-write { --gc: var(--t-path); }
+.g-WAsP-workspace { --gc: var(--t-path); } .g-Checks { --gc: var(--t-val); } .g-Plots { --gc: var(--t-fig); } .g-Data-download { --gc: var(--t-path); }
+
+/* ---------- libraries ---------- */
+.libs { display: flex; align-items: center; gap: 4px; flex-wrap: nowrap; }
+.libs .lb { font: 600 10px var(--f-display); letter-spacing: .07em; text-transform: uppercase; color: var(--muted); margin-right: 1px; }
+.lib-btn { font: 500 11.5px var(--f-mono); padding: 2px 7px; border-radius: 12px; border: 1px solid var(--line); background: transparent; color: var(--muted); cursor: pointer; }
+.lib-btn[aria-pressed="true"] { background: var(--card); color: var(--ink); border-color: var(--accent); }
+.lib-btn[aria-pressed="true"]::before { content: "\2713\00a0"; color: var(--accent); }
+.lib-btn:disabled { opacity: .45; cursor: not-allowed; }
+.lib-more { margin-left: auto; width: 20px; height: 20px; flex: none; border-radius: 50%; border: 1px solid var(--line); background: transparent; color: var(--muted); font: 600 12px var(--f-body); cursor: pointer; }
+.lib-head { display: flex; align-items: baseline; gap: 8px; padding: 10px 12px 4px; font: 700 13px var(--f-display); color: var(--ink); border-top: 2px solid var(--accent); }
+.lib-head .n { font: 500 11px var(--f-mono); color: var(--muted); }
+.lib-choice { display: grid; gap: 8px; }
+.lib-card { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; align-items: baseline; text-align: left; background: var(--card); border: 1px solid var(--line); border-radius: 7px; padding: 10px 12px; cursor: pointer; color: var(--ink); }
+.lib-card:hover, .lib-card:focus-visible, .lib-card.on { border-color: var(--accent); }
+.lib-card strong { font: 600 14px var(--f-display); }
+.lib-card .v { font: 500 11px var(--f-mono); color: var(--muted); }
+.lib-card .tx { grid-column: 1 / -1; font-size: 12.5px; color: var(--muted); }
 .edge-x { position: absolute; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%; border: 1px solid var(--bad); background: var(--card); color: var(--bad); font: 600 13px/1 var(--f-mono); padding: 0; }
 .float { position: absolute; display: flex; gap: 6px; z-index: 5; }
 .float.tl { left: 10px; top: 10px; flex-wrap: wrap; max-width: calc(100% - 20px); }
@@ -358,6 +384,7 @@ a.btn, .ai-fields a.btn { text-decoration: none; display: inline-flex; align-ite
 <div class="main">
   <aside class="side" id="tools">
     <div class="cat-head">
+      <div class="libs" id="libs" role="group" aria-label="Libraries"></div>
       <input type="search" id="q" placeholder="Search tools, parameters, docs" aria-label="Search tools">
       <select id="tf" aria-label="Filter by data type"></select>
       <div class="cat-count" id="catCount"></div>

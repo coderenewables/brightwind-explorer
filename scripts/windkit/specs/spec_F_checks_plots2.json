@@ -1,0 +1,514 @@
+[
+ {
+  "path": "wk.plot.raster_plot",
+  "group": "Plots",
+  "inputs": {
+   "da": [
+    "DataArray"
+   ],
+   "contour": [
+    "DataArray",
+    "GeoDataFrame"
+   ],
+   "pts": [
+    "Point"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "figure",
+    "types": [
+     "Figure"
+    ]
+   }
+  ],
+  "fields": {
+   "colormap": {
+    "mode": "text"
+   },
+   "plot_title": {
+    "mode": "text"
+   }
+  },
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "da": "@RasterMap"
+    }
+   },
+   {
+    "args": {
+     "da": "@RasterMap",
+     "contour": "@VectorMap",
+     "pts": "@Point",
+     "plot_title": "'Test'"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.plot.roughness_rose",
+  "group": "Plots",
+  "inputs": {
+   "ds": [
+    "Dataset"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "figure",
+    "types": [
+     "Plotly"
+    ]
+   }
+  ],
+  "fields": {
+   "style": {
+    "mode": "choice",
+    "choices": [
+     "rose",
+     "bar"
+    ]
+   }
+  },
+  "browser": "plotly",
+  "note": "Takes one point's roughness rose dataset (sector, roughness-change dimensions, z0, dist, nrch).",
+  "probe": [
+   {
+    "args": {
+     "ds": "xr.Dataset({'z0': (('point', 'sector', 'max_rou_changes1'), np.full((1, 12, 3), 0.03), {'long_name': 'Roughness length', 'units': 'm'}), 'dist': (('point', 'sector', 'max_rou_changes'), np.full((1, 12, 2), 1000.0), {'long_name': 'Distance to roughness change', 'units': 'm'}), 'nrch': (('point', 'sector'), np.full((1, 12), 2))}, coords={'west_east': ('point', [500000.0], {'long_name': 'West-east', 'units': 'm'}), 'south_north': ('point', [5900000.0], {'long_name': 'South-north', 'units': 'm'}), 'sector': ('sector', np.arange(12), {'long_name': 'Sector', 'units': '-'})})"
+    }
+   },
+   {
+    "args": {
+     "ds": "xr.Dataset({'z0': (('point', 'sector', 'max_rou_changes1'), np.full((1, 12, 3), 0.03), {'long_name': 'Roughness length', 'units': 'm'}), 'dist': (('point', 'sector', 'max_rou_changes'), np.full((1, 12, 2), 1000.0), {'long_name': 'Distance to roughness change', 'units': 'm'}), 'nrch': (('point', 'sector'), np.full((1, 12), 2))}, coords={'west_east': ('point', [500000.0], {'long_name': 'West-east', 'units': 'm'}), 'south_north': ('point', [5900000.0], {'long_name': 'South-north', 'units': 'm'}), 'sector': ('sector', np.arange(12), {'long_name': 'Sector', 'units': '-'})})",
+     "style": "'bar'"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.plot.single_curve",
+  "group": "Plots",
+  "inputs": {
+   "da": [
+    "DataArray"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "figure",
+    "types": [
+     "Plotly"
+    ]
+   }
+  ],
+  "fields": {
+   "style": {
+    "mode": "choice",
+    "choices": [
+     "faceted",
+     "combined"
+    ]
+   },
+   "title": {
+    "mode": "text"
+   }
+  },
+  "browser": "plotly",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "da": "S['WTG']['power_output']"
+    }
+   },
+   {
+    "args": {
+     "da": "S['WTG']['power_output']",
+     "style": "'combined'"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.plot.spatial_structure_2d",
+  "group": "Plots",
+  "inputs": {
+   "ds": [
+    "Locations"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "axes",
+    "types": [
+     "Axes"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "ds": "@Point"
+    }
+   },
+   {
+    "args": {
+     "ds": "@StackedPoint"
+    }
+   },
+   {
+    "args": {
+     "ds": "@Cuboid"
+    }
+   },
+   {
+    "args": {
+     "ds": "@Raster"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.plot.spatial_structure_3d",
+  "group": "Plots",
+  "inputs": {
+   "ds": [
+    "Locations"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "axes",
+    "types": [
+     "Axes"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "ds": "@Cuboid"
+    }
+   },
+   {
+    "args": {
+     "ds": "@StackedPoint"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.plot.time_series",
+  "group": "Plots",
+  "inputs": {
+   "ds": [
+    "TSWC",
+    "DataArray"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "figure",
+    "types": [
+     "Plotly"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "plotly",
+  "note": "The time coordinate needs long_name and units attributes to be plotted.",
+  "probe": [
+   {
+    "args": {
+     "ds": "S['TSWC'].assign_coords(time=S['TSWC'].time.assign_attrs(long_name='Time', units='hours since 2020-01-01'))"
+    }
+   },
+   {
+    "args": {
+     "ds": "S['TSWC'].assign_coords(time=S['TSWC'].time.assign_attrs(long_name='Time', units='hours since 2020-01-01'))['wind_speed']"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.plot.vertical_profile",
+  "group": "Plots",
+  "inputs": {
+   "da_meas": [
+    "DataArray"
+   ],
+   "da_pred": [
+    "DataArray"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "figure",
+    "types": [
+     "Plotly"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "plotly",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "da_meas": "S['TSWC_2heights']['wind_speed'].mean('time')"
+    }
+   },
+   {
+    "args": {
+     "da_pred": "wk.mean_wind_speed(S['GWC'])"
+    }
+   },
+   {
+    "args": {
+     "da_meas": "S['TSWC_2heights']['wind_speed'].mean('time')",
+     "da_pred": "wk.mean_wind_speed(S['GWC'])"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.plot.wind_rose",
+  "group": "Plots",
+  "inputs": {
+   "ds": [
+    "BWC",
+    "WWC"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "figure",
+    "types": [
+     "Plotly"
+    ]
+   }
+  ],
+  "fields": {
+   "style": {
+    "mode": "choice",
+    "choices": [
+     "rose",
+     "radar"
+    ]
+   },
+   "cmap": {
+    "mode": "text"
+   }
+  },
+  "browser": "plotly",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "ds": "@BWC"
+    }
+   },
+   {
+    "args": {
+     "ds": "@WWC"
+    }
+   },
+   {
+    "args": {
+     "ds": "@BWC",
+     "wind_speed_bins": "[0.0, 5.0, 10.0, 30.0]"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.validate_bwc",
+  "group": "Checks",
+  "inputs": {
+   "obj": [
+    "BWC"
+   ]
+  },
+  "outputs": [],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "obj": "@BWC"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.validate_geowc",
+  "group": "Checks",
+  "inputs": {
+   "obj": [
+    "GeoWC"
+   ]
+  },
+  "outputs": [],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "obj": "@GeoWC"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.validate_gwc",
+  "group": "Checks",
+  "inputs": {
+   "obj": [
+    "GWC"
+   ]
+  },
+  "outputs": [],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "obj": "@GWC"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.validate_loss_table",
+  "group": "Checks",
+  "inputs": {
+   "loss_table": [
+    "LossTable"
+   ]
+  },
+  "outputs": [],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "loss_table": "@LossTable"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.validate_tswc",
+  "group": "Checks",
+  "inputs": {
+   "obj": [
+    "TSWC"
+   ]
+  },
+  "outputs": [],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "obj": "@TSWC"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.validate_uncertainty_table",
+  "group": "Checks",
+  "inputs": {
+   "uncertainty_table": [
+    "UncertaintyTable"
+   ]
+  },
+  "outputs": [],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "uncertainty_table": "@UncertaintyTable"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.validate_windturbines",
+  "group": "Checks",
+  "inputs": {
+   "obj": [
+    "WindTurbines"
+   ]
+  },
+  "outputs": [],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "obj": "@WindTurbines"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.validate_wtg",
+  "group": "Checks",
+  "inputs": {
+   "obj": [
+    "WTG"
+   ]
+  },
+  "outputs": [],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "obj": "@WTG"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.validate_wwc",
+  "group": "Checks",
+  "inputs": {
+   "obj": [
+    "WWC"
+   ]
+  },
+  "outputs": [],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "obj": "@WWC"
+    }
+   }
+  ]
+ }
+]

@@ -1,0 +1,491 @@
+[
+ {
+  "path": "wk.landcover_to_roughness",
+  "group": "Topography",
+  "inputs": {
+   "lc": [
+    "RasterMap",
+    "VectorMap"
+   ],
+   "lctable": [
+    "LandCoverTable"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "map",
+    "types": [
+     "RasterMap",
+     "VectorMap"
+    ],
+    "same": "lc"
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "lc": "@RasterMap_landcover",
+     "lctable": "@LandCoverTable"
+    }
+   },
+   {
+    "args": {
+     "lc": "wk.roughness_to_landcover(S['VectorMap_roughness'])[0]",
+     "lctable": "wk.roughness_to_landcover(S['VectorMap_roughness'])[1]"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.lines_to_polygons",
+  "group": "Topography",
+  "inputs": {
+   "lines": [
+    "VectorMap"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "polygons",
+    "types": [
+     "GeoDataFrame"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "lines": "@VectorMap_roughness"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.load_tutorial_data",
+  "group": "Data download",
+  "inputs": {},
+  "outputs": [
+   {
+    "name": "data",
+    "types": [
+     "Dict"
+    ]
+   }
+  ],
+  "fields": {
+   "name": {
+    "mode": "choice",
+    "choices": [
+     "serra_santa_luzia"
+    ]
+   }
+  },
+  "browser": "blocked",
+  "note": "Needs internet access; not available in the browser runner. Returns a SimpleNamespace of datasets, which the Dict port type only approximates.",
+  "skip_probe": "Downloads tutorial data from the internet; cannot be probed offline."
+ },
+ {
+  "path": "wk.loss_table_summary",
+  "group": "Wind farm",
+  "inputs": {
+   "loss_table": [
+    "LossTable"
+   ]
+  },
+  "outputs": [],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "loss_table": "@LossTable"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.polygons_to_lines",
+  "group": "Topography",
+  "inputs": {
+   "gdf": [
+    "GeoDataFrame"
+   ],
+   "lctable": [
+    "LandCoverTable"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "lines",
+    "types": [
+     "VectorMap"
+    ]
+   },
+   {
+    "name": "lctable",
+    "types": [
+     "Dict"
+    ],
+    "flag": "return_lctable"
+   }
+  ],
+  "order": [
+   "lines",
+   "lctable"
+  ],
+  "fields": {
+   "map_type": {
+    "mode": "choice",
+    "choices": [
+     "roughness",
+     "landcover"
+    ]
+   }
+  },
+  "browser": "ok",
+  "note": "The landcover table comes back as a plain dict, not a LandCoverTable object.",
+  "probe": [
+   {
+    "args": {
+     "gdf": "wk.lines_to_polygons(S['VectorMap_roughness'])",
+     "lctable": "@LandCoverTable"
+    }
+   },
+   {
+    "args": {
+     "gdf": "wk.lines_to_polygons(S['VectorMap_roughness']).assign(z0=0.03, d=0.0)",
+     "lctable": "@LandCoverTable",
+     "map_type": "'landcover'",
+     "return_lctable": "True"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.roughness_to_landcover",
+  "group": "Topography",
+  "inputs": {
+   "rgh": [
+    "RasterMap",
+    "VectorMap"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "map",
+    "types": [
+     "RasterMap",
+     "VectorMap"
+    ],
+    "same": "rgh"
+   },
+   {
+    "name": "lctable",
+    "types": [
+     "LandCoverTable"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "rgh": "@RasterMap_roughness"
+    }
+   },
+   {
+    "args": {
+     "rgh": "@VectorMap_roughness"
+    }
+   }
+  ],
+  "tuple": true
+ },
+ {
+  "path": "wk.snap_to_layer",
+  "group": "Topography",
+  "inputs": {
+   "gdf": [
+    "GeoDataFrame"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "gdf",
+    "types": [
+     "GeoDataFrame"
+    ],
+    "same": "gdf"
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "gdf": "wk.lines_to_polygons(S['VectorMap_roughness'])"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.total_loss",
+  "group": "Wind farm",
+  "inputs": {
+   "loss_table": [
+    "LossTable"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "total_loss",
+    "types": [
+     "Value"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "loss_table": "@LossTable"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.total_loss_factor",
+  "group": "Wind farm",
+  "inputs": {
+   "loss_table": [
+    "LossTable"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "loss_factor",
+    "types": [
+     "Value"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "loss_table": "@LossTable"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.total_uncertainty",
+  "group": "Wind farm",
+  "inputs": {
+   "uncertainty_table": [
+    "UncertaintyTable"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "total_uncertainty",
+    "types": [
+     "Value"
+    ]
+   },
+   {
+    "name": "wind_uncertainty",
+    "types": [
+     "Value"
+    ]
+   },
+   {
+    "name": "energy_uncertainty",
+    "types": [
+     "Value"
+    ]
+   }
+  ],
+  "tuple": true,
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "uncertainty_table": "@UncertaintyTable"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.total_uncertainty_factor",
+  "group": "Wind farm",
+  "inputs": {
+   "uncertainty_table": [
+    "UncertaintyTable"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "uncertainty_factor",
+    "types": [
+     "Value"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "Returns one float for one percentile; a list of percentiles returns a numpy array, which no port type describes.",
+  "probe": [
+   {
+    "args": {
+     "uncertainty_table": "@UncertaintyTable"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.uncertainty_table_summary",
+  "group": "Wind farm",
+  "inputs": {
+   "uncertainty_table": [
+    "UncertaintyTable"
+   ]
+  },
+  "outputs": [],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "uncertainty_table": "@UncertaintyTable"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.wind_turbines_to_geodataframe",
+  "group": "Wind farm",
+  "inputs": {
+   "ds": [
+    "WindTurbines"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "turbines",
+    "types": [
+     "GeoDataFrame"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "ds": "@WindTurbines"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.wtg_cp",
+  "group": "Wind farm",
+  "inputs": {
+   "wtg": [
+    "WTG"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "cp",
+    "types": [
+     "DataArray"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "Without use_power, the WTG dataset must contain a power_coefficient variable.",
+  "probe": [
+   {
+    "args": {
+     "wtg": "@WTG",
+     "use_power": "True"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.wtg_ct",
+  "group": "Wind farm",
+  "inputs": {
+   "wtg": [
+    "WTG"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "ct",
+    "types": [
+     "DataArray"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "wtg": "@WTG"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.wtg_power",
+  "group": "Wind farm",
+  "inputs": {
+   "wtg": [
+    "WTG"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "power",
+    "types": [
+     "DataArray"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "wtg": "@WTG"
+    }
+   }
+  ]
+ }
+]

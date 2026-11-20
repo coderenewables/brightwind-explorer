@@ -1,5 +1,5 @@
 /* ============================================================
-   Run in the browser: executes the pipeline with brightwind on Pyodide,
+   Run in the browser: executes the pipeline with brightwind and windkit on Pyodide,
    in a Web Worker (public/py-worker.js). Inputs stay on this computer.
    ============================================================ */
 const RUN = {
@@ -8,10 +8,10 @@ const RUN = {
   results: [],       // [{id, title, ok, seconds, stdout, outputs, error}]
   outFiles: [],      // [{name, url, size}]
   status: '', stale: false, snapshot: null, lastSeconds: null, bootSeconds: null,
-  pendingTables: {}, codes: {},
+  pendingTables: {}, pendingNc: {}, codes: {}, libsLoaded: [],
 };
 let RUNMARKS = {};    // node id -> 'busy' | 'ok' | 'err' (read by renderCanvas)
-const BLOCKED = d => d.id.startsWith('LoadBrightHub.') || d.id.startsWith('LoadBrightdata.') || d.id === 'plot_meas_station_on_gmap';
+const BLOCKED = d => d.blocked || d.id.startsWith('LoadBrightHub.') || d.id.startsWith('LoadBrightdata.') || d.id === 'plot_meas_station_on_gmap';
 const fmtBytes = b => b > 1e6 ? (b / 1e6).toFixed(1) + ' MB' : b > 1e3 ? Math.round(b / 1e3) + ' kB' : b + ' B';
 
 function runInvalidate() {
@@ -48,7 +48,7 @@ function runFail(text) {
 }
 function runMessage(m) {
   if (m.type === 'status') { RUN.status = m.text; RUN.statusBad = false; renderRunStatus(); }
-  else if (m.type === 'ready') { RUN.ready = true; RUN.bootSeconds = m.seconds; }
+  else if (m.type === 'ready') { RUN.ready = true; RUN.bootSeconds = m.seconds; RUN.libsLoaded = m.libs || []; }
   else if (m.type === 'step-start') { RUNMARKS[m.id] = 'busy'; renderCanvas(); }
   else if (m.type === 'step') {
     const n = nodeById(m.id);
@@ -69,6 +69,10 @@ function runMessage(m) {
   }
   else if (m.type === 'table') {
     const cb = RUN.pendingTables[m.expr]; delete RUN.pendingTables[m.expr];
+    if (cb) cb(m);
+  }
+  else if (m.type === 'netcdf') {
+    const cb = RUN.pendingNc[m.expr]; delete RUN.pendingNc[m.expr];
     if (cb) cb(m);
   }
   else if (m.type === 'fatal') runFail('Python could not start or stopped unexpectedly: ' + m.error + ' Check your connection and press Run again.');
@@ -92,18 +96,22 @@ async function runStart() {
   const gen = generate('run', { paths });
   RUN.codes = Object.fromEntries(gen.steps.map(s => [s.id, s.code.replace(/'\/inputs\/[^']*'/g, m => m)]));
   const demos = [...new Set(gen.steps.flatMap(s => [...s.code.matchAll(/bw\.demo_datasets\.(\w+)/g)].map(m => m[1])))];
+  const samples = [...new Set(gen.steps.flatMap(s => [...s.code.matchAll(/'\/samples\/([\w.-]+)'/g)].map(m => m[1])))];
+  const libs = gen.libs.length ? gen.libs : S.libs.slice(0, 1);
+  const newLibs = [...libs, ...(gen.plotly ? ['plotly'] : [])].filter(l => !RUN.libsLoaded.includes(l));
   RUN.busy = true; RUN.results = []; RUN.stale = false; RUN.snapshot = snapshotGraph(); RUNMARKS = {};
   RUN.outFiles.forEach(f => URL.revokeObjectURL(f.url)); RUN.outFiles = [];
-  RUN.status = RUN.ready ? 'Starting…' : 'Starting Python. The first run downloads about 30 MB, which your browser then keeps.';
+  const mb = (RUN.ready ? 0 : 25) + (newLibs.includes('bw') ? 5 : 0) + (newLibs.includes('wk') ? 40 : 0) + (newLibs.includes('plotly') ? 6 : 0);
+  RUN.status = !newLibs.length ? 'Starting…' : `${RUN.ready ? 'Loading ' + newLibs.map(l => ({ bw: 'brightwind', wk: 'windkit', plotly: 'plotly' })[l]).join(' and ') : 'Starting Python'}. This downloads about ${mb} MB the first time, which your browser then keeps.`;
   RUN.statusBad = false;
   renderRun(); renderCanvas();
   const payload = [];
   for (const f of files) payload.push({ dir: f.dir, name: f.name, buffer: await f.file.arrayBuffer() });
-  workerFor().postMessage({ type: 'run', steps: gen.steps, files: payload, demos }, payload.map(p => p.buffer));
+  workerFor().postMessage({ type: 'run', libs, plotly: gen.plotly, steps: gen.steps, files: payload, demos, samples }, payload.map(p => p.buffer));
 }
 function runStop() {
   if (RUN.worker) RUN.worker.terminate();
-  RUN.worker = null; RUN.ready = false;
+  RUN.worker = null; RUN.ready = false; RUN.libsLoaded = [];
   runFail('Stopped. Python will start again on the next run.');
 }
 function runTableCsv(expr, name) {
@@ -113,6 +121,32 @@ function runTableCsv(expr, name) {
     saveBlob(new Blob([m.csv], { type: 'text/csv' }), (name || 'table').replace(/[^\w.-]+/g, '_') + '.csv');
   };
   RUN.worker.postMessage({ type: 'table', expr });
+}
+function runNetcdf(expr, name) {
+  if (!RUN.worker || !RUN.ready) { toast('Run the pipeline again to download this result.'); return; }
+  RUN.pendingNc[expr] = m => {
+    if (m.error) { toast('Could not write netCDF: ' + m.error); return; }
+    saveBlob(new Blob([m.buffer], { type: 'application/x-netcdf' }), (name || 'result').replace(/[^\w.-]+/g, '_') + '.nc');
+  };
+  RUN.worker.postMessage({ type: 'netcdf', expr });
+}
+// plotly.js (4.8 MB) is fetched the first time a run returns an interactive figure
+let plotlyJs = null;
+function loadPlotly() {
+  if (window.Plotly) return Promise.resolve(window.Plotly);
+  plotlyJs = plotlyJs || new Promise((ok, bad) => { const sc = h('script', { src: 'py/plotly.min.js' }); sc.onload = () => ok(window.Plotly); sc.onerror = () => { plotlyJs = null; bad(new Error('plotly.js did not load')); }; document.head.append(sc); });
+  return plotlyJs;
+}
+function plotlyCard(o, title) {
+  const box = h('div', { class: 'rs-plotly', role: 'img', 'aria-label': 'Interactive figure from ' + title, text: 'Loading the interactive figure…' });
+  const fname = (o.name === 'figure' ? title : o.name).replace(/[^\w.-]+/g, '_');
+  const dl = h('button', { class: 'btn small', disabled: true, onclick: () => window.Plotly && window.Plotly.downloadImage(box, { format: 'png', filename: fname, width: 1100, height: 700 }) }, 'Download PNG');
+  loadPlotly().then(P => {
+    const fig = JSON.parse(o.json); box.textContent = '';
+    const layout = Object.assign({}, fig.layout, { autosize: true, margin: Object.assign({ t: 40, r: 20, b: 40, l: 50 }, (fig.layout || {}).margin) });
+    P.newPlot(box, fig.data, layout, { responsive: true, displaylogo: false }); dl.disabled = false;
+  }).catch(e => { box.textContent = 'The interactive figure could not be drawn: ' + e.message; });
+  return h('figure', { class: 'rs-fig' }, box, h('figcaption', {}, h('span', { class: 'mono', text: o.name }), dl));
 }
 function saveBlob(blob, filename) {
   const a = h('a', { href: URL.createObjectURL(blob), download: filename });
@@ -164,24 +198,27 @@ function renderRunResults() {
   res.textContent = '';
   if (!RUN.results.length && !RUN.busy) {
     res.append(h('h3', {}, 'Results'), h('div', { class: 'run-empty' },
-      h('p', {}, 'Press ', h('strong', {}, 'Run pipeline'), ' to execute every step with brightwind ' + CAT.version + ' in this browser. Tables, figures and anything printed appear here, step by step, and each node on the board turns green or red.'),
-      h('p', { class: 'dc' }, 'The first run downloads Python and the scientific libraries (about 30 MB) and takes a little while; later runs start straight away. The bundled demo datasets are fetched only when a pipeline uses them.')));
+      h('p', {}, 'Press ', h('strong', {}, 'Run pipeline'), ` to execute every step with ${S.libs.map(l => l === 'bw' ? 'brightwind ' + CAT.version : 'windkit ' + WKCAT.version).join(' and ')} in this browser. Tables, figures and anything printed appear here, step by step, and each node on the board turns green or red.`),
+      h('p', { class: 'dc' }, 'The first run downloads Python and the scientific libraries and takes a little while: about 30 MB for brightwind, and about 40 MB more the first time a pipeline uses windkit. Later runs start straight away. Demo datasets and sample files are fetched only when a pipeline uses them.')));
     return;
   }
   res.append(h('h3', {}, 'Results', RUN.stale ? h('span', { class: 'flag warn', text: 'board changed since this run' }) : null));
   for (const r of RUN.results) {
     const card = h('article', { class: 'run-step ' + (r.ok ? 'ok' : 'err') },
       h('header', {}, h('span', { class: 'dot' }), h('a', { href: '#canvas', class: 'rs-title', onclick: ev => { ev.preventDefault(); S.sel = { kind: 'node', id: r.id }; setView('canvas'); renderAll(); }, text: r.title }), h('span', { class: 'rs-time', text: r.seconds + ' s' })));
-    if (r.error) card.append(h('div', { class: 'rs-err' }, h('strong', { text: r.error.message }), r.error.hint ? h('p', { text: r.error.hint }) : null, r.error.where ? h('pre', { text: 'In brightwind:\n' + r.error.where }) : null));
+    if (r.error) card.append(h('div', { class: 'rs-err' }, h('strong', { text: r.error.message }), r.error.hint ? h('p', { text: r.error.hint }) : null, r.error.where ? h('pre', { text: 'Where:\n' + r.error.where }) : null));
     if (r.stdout && r.stdout.trim()) card.append(h('pre', { class: 'rs-out', text: r.stdout.trim() }));
     for (const o of r.outputs || []) {
       if (o.kind === 'figure') card.append(h('figure', { class: 'rs-fig' }, h('img', { src: 'data:image/png;base64,' + o.png, alt: 'Figure from ' + r.title, loading: 'lazy' }),
         h('figcaption', {}, h('span', { class: 'mono', text: o.name }), h('a', { href: 'data:image/png;base64,' + o.png, download: (o.name === 'figure' ? r.title : o.name).replace(/[^\w.-]+/g, '_') + '.png' }, 'Download PNG'))));
       else if (o.kind === 'table') {
         const wrap = h('div', { class: 'rs-table' }); wrap.innerHTML = o.html;
-        card.append(h('div', { class: 'rs-thead' }, h('span', { class: 'mono', text: o.name }), h('span', { class: 'dc', text: `${o.rows.toLocaleString()} rows × ${o.cols} columns${o.rows > 200 ? ', first 200 shown' : ''}` }),
+        card.append(h('div', { class: 'rs-thead' }, h('span', { class: 'mono', text: o.name }), h('span', { class: 'dc', text: `${o.note ? o.note + ', ' : ''}${o.rows.toLocaleString()} rows × ${o.cols} columns${o.rows > 200 ? ', first 200 shown' : ''}` }),
           h('button', { class: 'btn small', onclick: () => runTableCsv(o.expr, o.name) }, 'Download CSV')), wrap);
-      } else if (o.kind === 'text') card.append(h('div', { class: 'rs-thead' }, h('span', { class: 'mono', text: o.name }), h('span', { class: 'dc', text: o.type })), h('pre', { class: 'rs-out', text: o.text }));
+      } else if (o.kind === 'plotly') card.append(plotlyCard(o, r.title));
+      else if (o.kind === 'xarray') card.append(h('div', { class: 'rs-thead' }, h('span', { class: 'mono', text: o.name }), h('span', { class: 'dc', text: 'xarray ' + o.type }),
+          h('button', { class: 'btn small', onclick: () => runNetcdf(o.expr, o.name) }, 'Download netCDF'), h('button', { class: 'btn small', onclick: () => runTableCsv(o.expr, o.name) }, 'Download CSV')), h('pre', { class: 'rs-out', text: o.text }));
+      else if (o.kind === 'text') card.append(h('div', { class: 'rs-thead' }, h('span', { class: 'mono', text: o.name }), h('span', { class: 'dc', text: o.type })), h('pre', { class: 'rs-out', text: o.text }));
     }
     if (r.ok && !(r.outputs || []).length && !(r.stdout || '').trim()) card.append(h('p', { class: 'dc', text: 'Done. Its result feeds the next step.' }));
     if (RUN.codes[r.id]) card.append(h('details', { class: 'rs-code' }, h('summary', {}, 'Code'), h('pre', { text: RUN.codes[r.id] })));

@@ -1,0 +1,179 @@
+[
+ {
+  "path": "wk.spatial.add_crs",
+  "group": "Spatial",
+  "inputs": {"obj": ["Dataset", "DataArray", "GeoDataFrame"]},
+  "outputs": [{"name": "obj_with_crs", "types": ["Dataset", "DataArray", "GeoDataFrame"], "same": "obj"}],
+  "fields": {"crs": {"mode": "text"}},
+  "browser": "ok",
+  "note": "Deprecated in windkit 1.0; set_crs is the replacement.",
+  "probe": [{"args": {"obj": "@Raster", "crs": "'EPSG:32629'"}}]
+ },
+ {
+  "path": "wk.spatial.add_projected_wrf_coordinates",
+  "group": "Spatial",
+  "inputs": {"ds": ["Dataset"]},
+  "outputs": [{"name": "ds", "types": ["Dataset"]}],
+  "fields": {},
+  "browser": "ok",
+  "note": "Needs a WRF output dataset with MAP_PROJ 1 or 3 and the TRUELAT, MOAD_CEN_LAT, STAND_LON, CEN_LON, CEN_LAT and DX/DY attributes.",
+  "probe": [{"args": {"ds": "xr.Dataset({'v': (('south_north', 'west_east'), np.zeros((4, 5)))}, attrs={'MAP_PROJ': 3, 'TRUELAT1': 30.0, 'TRUELAT2': 60.0, 'MOAD_CEN_LAT': 45.0, 'STAND_LON': 0.0, 'CEN_LON': 10.0, 'CEN_LAT': 50.0, 'DX': 3000.0, 'DY': 3000.0})"}}]
+ },
+ {
+  "path": "wk.spatial.are_spatially_equal",
+  "group": "Spatial",
+  "inputs": {"obj_a": ["Dataset", "DataArray"], "obj_b": ["Dataset", "DataArray"]},
+  "outputs": [{"name": "equal", "types": ["Value"]}],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [{"args": {"obj_a": "@Point", "obj_b": "@Point"}}, {"args": {"obj_a": "@Raster", "obj_b": "@Raster"}}]
+ },
+ {
+  "path": "wk.spatial.clip",
+  "group": "Spatial",
+  "inputs": {"obj": ["Dataset", "DataArray", "GeoDataFrame"], "mask": ["GeoDataFrame", "BBox"]},
+  "outputs": [{"name": "clipped", "types": ["Dataset", "DataArray", "GeoDataFrame"], "same": "obj"}],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [{"args": {"obj": "@Raster", "mask": "@BBox"}}, {"args": {"obj": "@RasterMap", "mask": "@BBox"}}, {"args": {"obj": "@VectorMap", "mask": "@BBox"}}]
+ },
+ {
+  "path": "wk.spatial.clip_with_margin",
+  "group": "Spatial",
+  "inputs": {"obj_to_clip": ["Dataset", "DataArray"], "obj_clipper": ["Dataset", "DataArray"]},
+  "outputs": [{"name": "clipped", "types": ["Dataset", "DataArray"], "same": "obj_to_clip"}],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [{"args": {"obj_to_clip": "@Raster", "obj_clipper": "@Cuboid"}}]
+ },
+ {
+  "path": "wk.spatial.count_spatial_points",
+  "group": "Spatial",
+  "inputs": {"obj": ["Dataset", "DataArray"]},
+  "outputs": [{"name": "count", "types": ["Value"]}],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [{"args": {"obj": "@Raster"}}, {"args": {"obj": "@Point"}}]
+ },
+ {
+  "path": "wk.spatial.covers",
+  "group": "Spatial",
+  "inputs": {"obj_a": ["Dataset", "DataArray"], "obj_b": ["Dataset", "DataArray"]},
+  "outputs": [{"name": "covered", "types": ["DataArray"]}],
+  "fields": {},
+  "browser": "ok",
+  "note": "The first object must be a cuboid grid. Returns a true/false DataArray, not a Python bool.",
+  "probe": [{"args": {"obj_a": "@Cuboid", "obj_b": "@Point"}}]
+ },
+ {
+  "path": "wk.spatial.create_cuboid",
+  "group": "Spatial",
+  "inputs": {},
+  "outputs": [{"name": "cuboid", "types": ["Cuboid"]}],
+  "fields": {"crs": {"mode": "text"}},
+  "browser": "ok",
+  "note": "",
+  "probe": [{"args": {"west_east": "[500000.0, 500200.0, 500400.0]", "south_north": "[5900000.0, 5900200.0, 5900400.0]", "height": "[50.0, 100.0]", "crs": "'EPSG:32629'"}}]
+ },
+ {
+  "path": "wk.spatial.create_dataset",
+  "group": "Spatial",
+  "inputs": {},
+  "outputs": [{"name": "dataset", "types": ["Point", "StackedPoint", "Cuboid", "Raster"]}],
+  "fields": {"crs": {"mode": "text"}, "struct": {"mode": "choice", "choices": ["auto", "cuboid", "point", "stacked_point"]}},
+  "browser": "ok",
+  "note": "The output structure depends on struct; auto picks cuboid and falls back to point.",
+  "probe": [
+   {"args": {"west_east": "[500000.0, 500200.0, 500400.0]", "south_north": "[5900000.0, 5900200.0, 5900400.0]", "height": "[50.0, 100.0]", "crs": "'EPSG:32629'", "struct": "'auto'"}},
+   {"args": {"west_east": "[500000.0]", "south_north": "[5900000.0]", "height": "[80.0]", "crs": "'EPSG:32629'", "struct": "'point'"}},
+   {"args": {"west_east": "[500000.0, 500500.0]", "south_north": "[5900000.0, 5900500.0]", "height": "[40.0, 80.0]", "crs": "'EPSG:32629'", "struct": "'stacked_point'"}}
+  ]
+ },
+ {
+  "path": "wk.spatial.create_point",
+  "group": "Spatial",
+  "inputs": {},
+  "outputs": [{"name": "point", "types": ["Point"]}],
+  "fields": {"crs": {"mode": "text"}},
+  "browser": "ok",
+  "note": "",
+  "probe": [{"args": {"west_east": "[500000.0, 500500.0]", "south_north": "[5900000.0, 5900500.0]", "height": "[80.0, 80.0]", "crs": "'EPSG:32629'"}}]
+ },
+ {
+  "path": "wk.spatial.create_raster",
+  "group": "Spatial",
+  "inputs": {},
+  "outputs": [{"name": "raster", "types": ["Raster"]}],
+  "fields": {"crs": {"mode": "text"}},
+  "browser": "ok",
+  "note": "",
+  "probe": [{"args": {"west_east": "[500000.0, 500100.0, 500200.0, 500300.0, 500400.0, 500500.0]", "south_north": "[5900000.0, 5900100.0, 5900200.0, 5900300.0, 5900400.0]", "crs": "'EPSG:32629'"}}]
+ },
+ {
+  "path": "wk.spatial.create_stacked_point",
+  "group": "Spatial",
+  "inputs": {},
+  "outputs": [{"name": "stacked_point", "types": ["StackedPoint"]}],
+  "fields": {"crs": {"mode": "text"}},
+  "browser": "ok",
+  "note": "",
+  "probe": [{"args": {"west_east": "[500000.0, 500500.0]", "south_north": "[5900000.0, 5900500.0]", "height": "[50.0, 100.0]", "crs": "'EPSG:32629'"}}]
+ },
+ {
+  "path": "wk.spatial.crs_are_equal",
+  "group": "Spatial",
+  "inputs": {"obj_a": ["Dataset", "DataArray", "GeoDataFrame"], "obj_b": ["Dataset", "DataArray", "GeoDataFrame"]},
+  "outputs": [{"name": "equal", "types": ["Value"]}],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [{"args": {"obj_a": "@Raster", "obj_b": "@Point"}}, {"args": {"obj_a": "@GeoDataFrame", "obj_b": "@VectorMap"}}]
+ },
+ {
+  "path": "wk.spatial.ds_to_gdf",
+  "group": "Spatial",
+  "inputs": {"ds": ["Dataset", "DataArray"]},
+  "outputs": [{"name": "gdf", "types": ["GeoDataFrame"]}],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [{"args": {"ds": "@Point", "include_height": "True"}}, {"args": {"ds": "@Raster"}}]
+ },
+ {
+  "path": "wk.spatial.equal_spatial_shape",
+  "group": "Spatial",
+  "inputs": {"obj_a": ["Dataset", "DataArray"], "obj_b": ["Dataset", "DataArray"]},
+  "outputs": [{"name": "equal", "types": ["Value"]}],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [{"args": {"obj_a": "@Raster", "obj_b": "@Raster"}}]
+ },
+ {
+  "path": "wk.spatial.gdf_to_ds",
+  "group": "Spatial",
+  "inputs": {"gdf": ["GeoDataFrame"]},
+  "outputs": [{"name": "ds", "types": ["Point", "StackedPoint", "Cuboid", "Raster"]}],
+  "fields": {"struct": {"mode": "choice", "choices": ["point", "stacked_point", "cuboid"]}},
+  "browser": "ok",
+  "note": "Leave struct empty to detect the structure from the geometry.",
+  "probe": [
+   {"args": {"gdf": "wk.spatial.ds_to_gdf(S['Point'])", "height": "80.0"}},
+   {"args": {"gdf": "wk.spatial.ds_to_gdf(S['StackedPoint'], include_height=True)", "struct": "'stacked_point'"}}
+  ]
+ },
+ {
+  "path": "wk.spatial.get_crs",
+  "group": "Spatial",
+  "inputs": {"obj": ["GeoDataFrame", "DataArray", "Dataset", "BBox"]},
+  "outputs": [{"name": "crs", "types": ["Value"]}],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [{"args": {"obj": "@Raster"}}, {"args": {"obj": "@BBox"}}]
+ }
+]

@@ -1,0 +1,866 @@
+[
+ {
+  "path": "wk.create_wwc",
+  "group": "Wind climates",
+  "inputs": {
+   "output_locs": [
+    "Locations"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "wwc",
+    "types": [
+     "WWC"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "output_locs": "@Point"
+    }
+   },
+   {
+    "args": {
+     "output_locs": "@Raster"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.ltc.calc_scores",
+  "group": "Long-term",
+  "inputs": {
+   "ds_target": [
+    "TSWC"
+   ],
+   "ds_pred": [
+    "TSWC"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "scores",
+    "types": [
+     "DataFrame"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "ds_target": "@TSWC",
+     "ds_pred": "@TSWC"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.rotor_equivalent_wind_speed",
+  "group": "Wind",
+  "inputs": {
+   "wind_speed": [
+    "DataArray"
+   ],
+   "wind_direction": [
+    "DataArray"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "rews",
+    "types": [
+     "DataArray"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "wind_speed": "S['TSWC_2heights']['wind_speed']",
+     "wind_direction": "S['TSWC_2heights']['wind_direction']",
+     "hub_height": "60.0",
+     "rotor_diameter": "100.0"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.shear_exponent",
+  "group": "Wind",
+  "inputs": {
+   "da": [
+    "DataArray"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "shear_exponent",
+    "types": [
+     "DataArray"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "da": "S['TSWC_2heights']['wind_speed']"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.shear_extrapolate",
+  "group": "Wind",
+  "inputs": {
+   "wind_speed": [
+    "DataArray"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "wind_speed",
+    "types": [
+     "DataArray"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "wind_speed": "S['TSWC_2heights']['wind_speed']",
+     "height": "100.0"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.tswc_resample",
+  "group": "Wind climates",
+  "inputs": {
+   "ds": [
+    "TSWC"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "resampled",
+    "types": [
+     "TSWC"
+    ],
+    "same": "ds"
+   }
+  ],
+  "fields": {
+   "freq": {
+    "mode": "text"
+   }
+  },
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "ds": "@TSWC",
+     "freq": "'1D'"
+    }
+   },
+   {
+    "args": {
+     "ds": "@SurfaceFields",
+     "freq": "'1D'"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.veer_extrapolate",
+  "group": "Wind",
+  "inputs": {
+   "wind_direction": [
+    "DataArray"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "wind_direction",
+    "types": [
+     "DataArray"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "wind_direction": "S['TSWC_2heights']['wind_direction']",
+     "height": "100.0"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.vinterp_wind_direction",
+  "group": "Wind",
+  "inputs": {
+   "wind_direction": [
+    "DataArray"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "wind_direction",
+    "types": [
+     "DataArray"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "wind_direction": "S['TSWC_2heights']['wind_direction']",
+     "height": "60.0"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.vinterp_wind_speed",
+  "group": "Wind",
+  "inputs": {
+   "wind_speed": [
+    "DataArray"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "wind_speed",
+    "types": [
+     "DataArray"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "With log_height on, a plain number for height fails inside windkit; turn log_height off for a number.",
+  "probe": [
+   {
+    "args": {
+     "wind_speed": "S['TSWC_2heights']['wind_speed']",
+     "height": "60.0",
+     "log_height": "False"
+    }
+   },
+   {
+    "args": {
+     "wind_speed": "S['TSWC_2heights']['wind_speed']",
+     "height": "xr.DataArray(60.0)"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.wd_to_sector",
+  "group": "Wind",
+  "inputs": {
+   "wd": [
+    "DataArray"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "sector_centers",
+    "types": [
+     "DataArray"
+    ]
+   },
+   {
+    "name": "sector_coords",
+    "types": [
+     "DataArray"
+    ]
+   }
+  ],
+  "tuple": true,
+  "fields": {
+   "output_type": {
+    "mode": "choice",
+    "choices": [
+     "centers",
+     "indices"
+    ]
+   }
+  },
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "wd": "S['TSWC']['wind_direction']"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.weibull.fit_weibull_k_sumlogm",
+  "group": "Weibull",
+  "inputs": {
+   "sumlogm": [
+    "DataArray"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "k",
+    "types": [
+     "DataArray"
+    ],
+    "same": "sumlogm"
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "sumlogm": "xr.DataArray([0.05, 0.1])"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.weibull.fit_weibull_wasp_m1_m3",
+  "group": "Weibull",
+  "inputs": {
+   "m1": [
+    "DataArray"
+   ],
+   "m3": [
+    "DataArray"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "A",
+    "types": [
+     "DataArray"
+    ]
+   },
+   {
+    "name": "k",
+    "types": [
+     "DataArray"
+    ]
+   }
+  ],
+  "tuple": true,
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "m1": "xr.DataArray([7.0, 8.0])",
+     "m3": "xr.DataArray([700.0, 800.0])"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.weibull.fit_weibull_wasp_m1_m3_fgtm",
+  "group": "Weibull",
+  "inputs": {
+   "m1": [
+    "DataArray"
+   ],
+   "m3": [
+    "DataArray"
+   ],
+   "freq_gt_mean": [
+    "DataArray"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "A",
+    "types": [
+     "DataArray"
+    ]
+   },
+   {
+    "name": "k",
+    "types": [
+     "DataArray"
+    ]
+   }
+  ],
+  "tuple": true,
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "m1": "xr.DataArray([7.0])",
+     "m3": "xr.DataArray([700.0])",
+     "freq_gt_mean": "xr.DataArray([0.4])"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.weibull.get_weibull_probability",
+  "group": "Weibull",
+  "inputs": {},
+  "outputs": [
+   {
+    "name": "speeds",
+    "types": [
+     "List"
+    ]
+   },
+   {
+    "name": "prob",
+    "types": [
+     "List"
+    ]
+   }
+  ],
+  "tuple": true,
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "A": "7.0",
+     "k": "2.0",
+     "speed_range": "[0.0, 25.0]"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.weibull.weibull_cdf",
+  "group": "Weibull",
+  "inputs": {
+   "A": [
+    "DataArray"
+   ],
+   "k": [
+    "DataArray"
+   ],
+   "x": [
+    "DataArray"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "cdf",
+    "types": [
+     "DataArray"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "A": "S['WWC']['A']",
+     "k": "S['WWC']['k']",
+     "x": "xr.DataArray([5.0, 10.0])"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.weibull.weibull_freq_gt_mean",
+  "group": "Weibull",
+  "inputs": {
+   "A": [
+    "DataArray"
+   ],
+   "k": [
+    "DataArray"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "freq_gt_mean",
+    "types": [
+     "DataArray"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "A": "S['WWC']['A']",
+     "k": "S['WWC']['k']"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.weibull.weibull_moment",
+  "group": "Weibull",
+  "inputs": {
+   "A": [
+    "DataArray"
+   ],
+   "k": [
+    "DataArray"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "moment",
+    "types": [
+     "DataArray"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "A": "S['WWC']['A']",
+     "k": "S['WWC']['k']",
+     "n": "1"
+    }
+   },
+   {
+    "args": {
+     "A": "S['WWC']['A']",
+     "k": "S['WWC']['k']",
+     "n": "3"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.weibull.weibull_pdf",
+  "group": "Weibull",
+  "inputs": {
+   "A": [
+    "DataArray"
+   ],
+   "k": [
+    "DataArray"
+   ],
+   "x": [
+    "DataArray"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "pdf",
+    "types": [
+     "DataArray"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "A": "S['WWC']['A']",
+     "k": "S['WWC']['k']",
+     "x": "xr.DataArray([5.0, 10.0])"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.weibull_combined",
+  "group": "Weibull",
+  "inputs": {
+   "wwc": [
+    "WWC"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "A_combined",
+    "types": [
+     "DataArray"
+    ]
+   },
+   {
+    "name": "k_combined",
+    "types": [
+     "DataArray"
+    ]
+   }
+  ],
+  "tuple": true,
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "wwc": "@WWC"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.wind_direction",
+  "group": "Wind",
+  "inputs": {
+   "u": [
+    "DataArray"
+   ],
+   "v": [
+    "DataArray"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "wind_direction",
+    "types": [
+     "DataArray"
+    ],
+    "same": "u"
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "u": "S['TSWC']['wind_speed']",
+     "v": "S['TSWC']['wind_speed'] * 0.5"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.wind_direction_difference",
+  "group": "Wind",
+  "inputs": {
+   "wd_obs": [
+    "DataArray"
+   ],
+   "wd_mod": [
+    "DataArray"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "wind_direction_difference",
+    "types": [
+     "DataArray"
+    ],
+    "same": "wd_obs"
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "wd_obs": "S['TSWC']['wind_direction']",
+     "wd_mod": "S['TSWC']['wind_direction'] + 10.0"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.wind_speed",
+  "group": "Wind",
+  "inputs": {
+   "u": [
+    "DataArray"
+   ],
+   "v": [
+    "DataArray"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "wind_speed",
+    "types": [
+     "DataArray"
+    ],
+    "same": "u"
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "u": "S['TSWC']['wind_speed']",
+     "v": "S['TSWC']['wind_speed'] * 0.5"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.wind_speed_and_direction",
+  "group": "Wind",
+  "inputs": {
+   "u": [
+    "DataArray"
+   ],
+   "v": [
+    "DataArray"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "speed",
+    "types": [
+     "DataArray"
+    ]
+   },
+   {
+    "name": "direction",
+    "types": [
+     "DataArray"
+    ]
+   }
+  ],
+  "tuple": true,
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "u": "S['TSWC']['wind_speed']",
+     "v": "S['TSWC']['wind_speed'] * 0.5"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.wind_vectors",
+  "group": "Wind",
+  "inputs": {
+   "ws": [
+    "DataArray"
+   ],
+   "wd": [
+    "DataArray"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "u",
+    "types": [
+     "DataArray"
+    ]
+   },
+   {
+    "name": "v",
+    "types": [
+     "DataArray"
+    ]
+   }
+  ],
+  "tuple": true,
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "ws": "S['TSWC']['wind_speed']",
+     "wd": "S['TSWC']['wind_direction']"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.wind_veer",
+  "group": "Wind",
+  "inputs": {
+   "da": [
+    "DataArray"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "veer",
+    "types": [
+     "DataArray"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "da": "S['TSWC_2heights']['wind_direction']"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.wwc_to_bwc",
+  "group": "Wind climates",
+  "inputs": {
+   "wwc": [
+    "WWC"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "bwc",
+    "types": [
+     "BWC"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "wwc": "@WWC",
+     "ws_bins": "np.arange(0.0, 31.0, 1.0)"
+    }
+   }
+  ]
+ }
+]

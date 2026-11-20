@@ -1,0 +1,730 @@
+[
+ {
+  "path": "wk.bwc_from_tswc",
+  "group": "Wind climates",
+  "inputs": {
+   "ts": [
+    "TSWC"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "bwc",
+    "types": [
+     "BWC"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "Always normalised: raw counts (normalize=False) are not a binned wind climate.",
+  "probe": [
+   {
+    "args": {
+     "ts": "@TSWC"
+    }
+   },
+   {
+    "args": {
+     "ts": "@TSWC",
+     "n_sectors": "6"
+    }
+   }
+  ],
+  "hide": [
+   "normalize"
+  ]
+ },
+ {
+  "path": "wk.combine_bwcs",
+  "group": "Wind climates",
+  "inputs": {
+   "bwc_list": [
+    "List"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "bwc",
+    "types": [
+     "BWC"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "bwc_list": "[S['BWC'], S['BWC']]"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.create_bwc",
+  "group": "Wind climates",
+  "inputs": {
+   "output_locs": [
+    "Locations"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "bwc",
+    "types": [
+     "BWC"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "output_locs": "@Point"
+    }
+   },
+   {
+    "args": {
+     "output_locs": "@Raster",
+     "n_sectors": "8"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.create_geowc",
+  "group": "Wind climates",
+  "inputs": {
+   "output_locs": [
+    "Locations"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "geowc",
+    "types": [
+     "GeoWC"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "output_locs": "@Point"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.create_gewc",
+  "group": "Wind climates",
+  "inputs": {
+   "output_locs": [
+    "Locations"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "gewc",
+    "types": [
+     "GEWC"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "output_locs": "@Point"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.create_gwc",
+  "group": "Wind climates",
+  "inputs": {
+   "output_locs": [
+    "Locations"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "gwc",
+    "types": [
+     "GWC"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "output_locs": "@Point"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.create_met_fields",
+  "group": "Wind climates",
+  "inputs": {
+   "output_locs": [
+    "Locations"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "met_fields",
+    "types": [
+     "MetFields"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "output_locs": "@Point"
+    }
+   },
+   {
+    "args": {
+     "output_locs": "@Point",
+     "met_fields": "['wspd']"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.create_pewc",
+  "group": "Wind climates",
+  "inputs": {
+   "output_locs": [
+    "Locations"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "pewc",
+    "types": [
+     "PEWC"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "output_locs": "@Point"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.create_pwc",
+  "group": "Wind climates",
+  "inputs": {
+   "output_locs": [
+    "Locations"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "pwc",
+    "types": [
+     "PWC"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "output_locs": "@Point"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.create_sector_coords",
+  "group": "Wind climates",
+  "inputs": {},
+  "outputs": [
+   {
+    "name": "sector_coords",
+    "types": [
+     "DataArray"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "bins": "12"
+    }
+   },
+   {
+    "args": {
+     "bins": "[-30.0, 0.0, 30.0, 60.0]"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.create_surface_fields",
+  "group": "Wind climates",
+  "inputs": {
+   "output_locs": [
+    "Locations"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "surface_fields",
+    "types": [
+     "SurfaceFields"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "output_locs": "@Point"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.create_tswc",
+  "group": "Wind climates",
+  "inputs": {
+   "output_locs": [
+    "Locations"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "tswc",
+    "types": [
+     "TSWC"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "output_locs": "@Point"
+    }
+   },
+   {
+    "args": {
+     "output_locs": "@StackedPoint"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.create_tswc_pair",
+  "group": "Wind climates",
+  "inputs": {
+   "output_locs": [
+    "Locations"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "tswc_1",
+    "types": [
+     "TSWC"
+    ]
+   },
+   {
+    "name": "tswc_2",
+    "types": [
+     "TSWC"
+    ]
+   }
+  ],
+  "tuple": true,
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "output_locs": "@Point",
+     "date_range": "pd.date_range('2020-01-01', periods=24 * 60, freq='h')"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.create_v50_lut",
+  "group": "Wind climates",
+  "inputs": {
+   "output_locs": [
+    "Locations"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "v50_lut",
+    "types": [
+     "V50LUT"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "output_locs": "@Point"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.create_wsbin_coords",
+  "group": "Wind climates",
+  "inputs": {},
+  "outputs": [
+   {
+    "name": "wsbin_coords",
+    "types": [
+     "DataArray"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "bins": "40"
+    }
+   },
+   {
+    "args": {
+     "bins": "[0.0, 1.0, 2.0, 4.0]"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.extrapolate_to_height",
+  "group": "Wind climates",
+  "inputs": {
+   "wc_obj": [
+    "TSWC"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "tswc",
+    "types": [
+     "TSWC"
+    ],
+    "same": "wc_obj"
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "Only time series wind climates can be extrapolated.",
+  "probe": [
+   {
+    "args": {
+     "wc_obj": "@TSWC_2heights",
+     "height": "120.0"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.mean_power_density",
+  "group": "Wind",
+  "inputs": {
+   "wc_obj": [
+    "BWC",
+    "WWC",
+    "TSWC"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "mean_power_density",
+    "types": [
+     "DataArray"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "wc_obj": "@BWC"
+    }
+   },
+   {
+    "args": {
+     "wc_obj": "@WWC"
+    }
+   },
+   {
+    "args": {
+     "wc_obj": "@TSWC",
+     "bysector": "True"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.mean_wind_speed",
+  "group": "Wind",
+  "inputs": {
+   "wc_obj": [
+    "BWC",
+    "WWC",
+    "TSWC"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "mean_wind_speed",
+    "types": [
+     "DataArray"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "wc_obj": "@BWC"
+    }
+   },
+   {
+    "args": {
+     "wc_obj": "@WWC"
+    }
+   },
+   {
+    "args": {
+     "wc_obj": "@TSWC",
+     "bysector": "True"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.mean_ws_moment",
+  "group": "Wind",
+  "inputs": {
+   "wc_obj": [
+    "BWC",
+    "WWC",
+    "TSWC"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "wind_speed_moment",
+    "types": [
+     "DataArray"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "wc_obj": "@BWC",
+     "moment": "2"
+    }
+   },
+   {
+    "args": {
+     "wc_obj": "@WWC"
+    }
+   },
+   {
+    "args": {
+     "wc_obj": "@TSWC"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.tswc_from_dataframe",
+  "group": "Wind climates",
+  "inputs": {
+   "pd_df": [
+    "DataFrame"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "tswc",
+    "types": [
+     "TSWC"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "pd_df": "@DataFrame",
+     "west_east": "500000.0",
+     "south_north": "5900000.0",
+     "crs": "'EPSG:32629'"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.weibull_fit",
+  "group": "Weibull",
+  "inputs": {
+   "bwc": [
+    "BWC"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "wwc",
+    "types": [
+     "WWC"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "bwc": "@BWC"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.ws_cdf",
+  "group": "Wind",
+  "inputs": {
+   "wc_obj": [
+    "BWC",
+    "WWC",
+    "TSWC"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "wind_speed_cdf",
+    "types": [
+     "DataArray"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "wc_obj": "@BWC"
+    }
+   },
+   {
+    "args": {
+     "wc_obj": "@WWC",
+     "ws_bins": "20"
+    }
+   },
+   {
+    "args": {
+     "wc_obj": "@TSWC",
+     "bysector": "True"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.ws_freq_gt_mean",
+  "group": "Wind",
+  "inputs": {
+   "wc_obj": [
+    "BWC",
+    "WWC",
+    "TSWC"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "wind_speed_fgtm",
+    "types": [
+     "DataArray"
+    ]
+   }
+  ],
+  "fields": {},
+  "browser": "ok",
+  "note": "",
+  "probe": [
+   {
+    "args": {
+     "wc_obj": "@BWC"
+    }
+   },
+   {
+    "args": {
+     "wc_obj": "@WWC"
+    }
+   },
+   {
+    "args": {
+     "wc_obj": "@TSWC",
+     "bysector": "True"
+    }
+   }
+  ]
+ }
+]

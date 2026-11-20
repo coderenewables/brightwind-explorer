@@ -22,8 +22,22 @@ function h(tag, attrs, ...kids) {
 
 /* ---------- types ---------- */
 const TYPE_CLASS = { DataFrame: 'c-df', Series: 'c-series', Figure: 'c-fig', Path: 'c-path', Value: 'c-val', List: 'c-val', Dict: 'c-val' };
-const tClass = t => TYPE_CLASS[t] || (t === '*' ? 'c-val' : 'c-obj');
-const tLabel = t => t === '*' ? 'anything' : t.replace('Correl.', '').replace('OrdinaryLeastSquares', 'OLS').replace('OrthogonalLeastSquares', 'Orthogonal').replace('MultipleLinearRegression', 'MLR');
+// windkit's types come with catalog-windkit.json: {name: {parent, cat, label, help}}. A type is accepted
+// wherever one of its ancestors is, so a PWC feeds an input that takes a WWC and a BWC one that takes a Dataset.
+let TYPES = {};
+const CAT_CLASS = { wc: 'c-wc', loc: 'c-loc', map: 'c-map', wtg: 'c-wtg', xr: 'c-xr', df: 'c-df', fig: 'c-fig', plotly: 'c-fig', obj: 'c-obj' };
+const tClass = t => TYPE_CLASS[t] || (TYPES[t] && CAT_CLASS[TYPES[t].cat]) || (t === '*' ? 'c-val' : 'c-obj');
+const tLabel = t => t === '*' ? 'anything' : TYPES[t] ? TYPES[t].label : t.replace('Correl.', '').replace('OrdinaryLeastSquares', 'OLS').replace('OrthogonalLeastSquares', 'Orthogonal').replace('MultipleLinearRegression', 'MLR');
+function anc(t) { const out = [t]; for (let p = TYPES[t] && TYPES[t].parent; p && !out.includes(p); p = TYPES[p] && TYPES[p].parent) out.push(p); return out; }
+const isA = (t, list) => anc(t).some(a => list.includes(a));
+const WK_TYPE_HELP = [
+  ['TSWC', 'Wind climates: time series (TSWC), binned (BWC), Weibull (WWC), generalised (GWC) and more. A predicted climate (PWC) also fits a Weibull input.'],
+  ['Point', 'Locations to calculate at: point, stacked point, raster or cuboid. BBox is a bounding box.'],
+  ['RasterMap', 'Maps: raster maps, vector maps and land-cover tables.'],
+  ['WTG', 'Turbines: a power and thrust curve (WTG) or a layout (WindTurbines).'],
+  ['Dataset', 'Any xarray Dataset or DataArray, or a GeoDataFrame. Every wind climate is also a Dataset.'],
+  ['Plotly', 'An interactive plotly figure. Axes, from windkit\'s matplotlib plots, are figures too.'],
+];
 const TYPE_HELP = [
   ['DataFrame', 'A pandas table of timeseries columns, as returned by the load functions.'],
   ['Series', 'One column. Use Select column to take one from a DataFrame.'],
@@ -37,10 +51,42 @@ const typeChip = t => h('span', { class: 'ty ' + tClass(t), text: tLabel(t) });
 /* ---------- helper nodes (not brightwind functions) ---------- */
 const pyStr = s => "'" + String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "'";
 const RET_TYPES = ['Series', 'DataFrame', 'Value', 'List', 'Dict', 'Figure', 'Object'];
-function helperDefs(cat) {
-  const mk = d => Object.assign({ kind: 'helper', title: d.id, doc: d.summary, module: null, fields: [], inputs: [], outputs: [], kwargs: null }, d);
-  return [
-    mk({ id: 'Demo dataset', group: 'Sources', var: 'demo_path', inline: true, isArg: true, argBase: v => (v.dataset || 'demo_data') + '_path', summary: 'Path to one of the example files bundled with brightwind (bw.demo_datasets).',
+const XR = ['Dataset', 'DataArray'];
+const WK_RET_TYPES = ['Dataset', 'DataArray', 'TSWC', 'BWC', 'WWC', 'GWC', 'GeoDataFrame', 'Plotly'];
+// Narrowing selections (one height, one point) keep the wind climate type but not the spatial structure.
+const SEL_TYPES = ['TSWC', 'SurfaceFields', 'BWC', 'WWC', 'PWC', 'GWC', 'GeoWC', 'GEWC', 'PEWC', 'MetFields', 'SiteEffects', 'WTG', 'WindTurbines', 'RasterMap', 'Dataset', 'DataArray'];
+function helperDefs(cat, wk) {
+  const mk = d => Object.assign({ kind: 'helper', title: d.id, doc: d.summary, module: null, fields: [], inputs: [], outputs: [], kwargs: null, lib: null }, d);
+  const wkHelpers = !wk ? [] : [
+    mk({ id: 'Sample file', lib: 'wk', group: 'Sources', var: 'sample_path', inline: true, isArg: true, argBase: v => (v.file || 'sample').replace(/\W+/g, '_') + '_path',
+      summary: 'One of the small example files for windkit: a turbine .wtg, a binned wind climate .tab, an elevation raster and a roughness .map. The exported script downloads it once.',
+      fields: [{ name: 'file', mode: 'choice', choices: wk.samples.map(s => s.file), default: wk.samples[0].file, doc: wk.samples.map(s => `${s.file}: ${s.doc}`).join(' ') }],
+      outputs: [{ name: 'path', types: ['Path'] }], code: v => `sample_file(${pyStr(v.file || wk.samples[0].file)})` }),
+    mk({ id: 'Select variable', lib: 'wk', group: 'Helpers', var: 'da', inline: true, summary: "Take one variable of an xarray Dataset as a DataArray, for example tswc['wind_speed'].",
+      inputs: [{ name: 'ds', types: ['Dataset'], required: true }],
+      fields: [{ name: 'variable', mode: 'text', required: true, default: null, doc: 'The variable name, for example wind_speed, wsfreq, A or k.' }],
+      outputs: [{ name: 'da', types: ['DataArray'] }], code: (v, i) => `${i.ds}[${pyStr(v.variable || '')}]` }),
+    mk({ id: 'Select by coordinate', lib: 'wk', group: 'Helpers', var: 'selected', summary: 'Pick part of an xarray object by coordinate value with .sel(), for example height=80, or by position with .isel(), for example point=0.',
+      inputs: [{ name: 'obj', types: XR, required: true }],
+      fields: [{ name: 'method', mode: 'choice', choices: ['sel', 'isel'], default: 'sel', doc: 'sel picks by coordinate value, isel by position from 0.' },
+               { name: 'selection', mode: 'code', required: true, default: null, doc: 'Keyword arguments, for example height=80 or point=0, sector=slice(0, 6).' }],
+      outputs: [{ name: 'obj', same: 'obj', sameNarrow: true, types: SEL_TYPES }],
+      code: (v, i) => `${i.obj}.${v.method || 'sel'}(${String(v.selection || '').trim()})` }),
+    mk({ id: 'DataArray to Series', lib: 'wk', group: 'Helpers', var: 'series', inline: true, summary: 'Turn a DataArray into a pandas Series with .to_series(), for brightwind tools that take a column.',
+      inputs: [{ name: 'da', types: ['DataArray'], required: true }], outputs: [{ name: 'series', types: ['Series'] }], code: (v, i) => `${i.da}.to_series()` }),
+    mk({ id: 'Dataset to DataFrame', lib: 'wk', group: 'Helpers', var: 'df', summary: 'Turn an xarray Dataset into a pandas DataFrame with .to_dataframe().',
+      inputs: [{ name: 'ds', types: ['Dataset'], required: true }], outputs: [{ name: 'data', types: ['DataFrame'] }], code: (v, i) => `${i.ds}.to_dataframe()` }),
+    mk({ id: 'Save netCDF', lib: 'wk', group: 'Helpers', var: 'to_netcdf', summary: 'Write an xarray object to a netCDF file with .to_netcdf().',
+      inputs: [{ name: 'obj', types: XR, required: true }],
+      fields: [{ name: 'file_name', mode: 'text', required: true, default: null, doc: 'For example bwc.nc.' }],
+      stmt: true, code: (v, i) => `${i.obj}.to_netcdf(${pyStr(v.file_name || 'result.nc')})` }),
+    mk({ id: 'Save interactive figure', lib: 'wk', group: 'Helpers', var: 'write_html', summary: 'Save a plotly figure as a web page with fig.write_html().',
+      inputs: [{ name: 'figure', types: ['Plotly'], required: true }],
+      fields: [{ name: 'file_name', mode: 'text', required: true, default: null, doc: 'For example wind_rose.html.' }],
+      stmt: true, code: (v, i) => `${i.figure}.write_html(${pyStr(v.file_name || 'figure.html')}, include_plotlyjs='cdn')` }),
+  ];
+  return [...wkHelpers,
+    mk({ id: 'Demo dataset', lib: 'bw', group: 'Sources', var: 'demo_path', inline: true, isArg: true, argBase: v => (v.dataset || 'demo_data') + '_path', summary: 'Path to one of the example files bundled with brightwind (bw.demo_datasets).',
       fields: [{ name: 'dataset', mode: 'choice', choices: cat.demo_datasets, default: 'demo_data', doc: 'Which bundled file to use.' }],
       outputs: [{ name: 'path', types: ['Path'] }], code: v => 'bw.demo_datasets.' + (v.dataset || 'demo_data') }),
     mk({ id: 'File path', group: 'Sources', var: 'file_path', inline: true, isArg: true, summary: 'A file or folder on the machine that runs the exported script. Becomes an argument of run() in the function export.',
@@ -67,7 +113,7 @@ function helperDefs(cat) {
     mk({ id: 'Python expression', group: 'Helpers', var: 'result', summary: 'Any Python expression. Write {a} and {b} where the connected inputs go, for example {a} - {b}.',
       inputs: [{ name: 'a', types: ['*'] }, { name: 'b', types: ['*'] }],
       fields: [{ name: 'expression', mode: 'code', required: true, default: null, doc: 'Use {a} and {b} for the inputs.' },
-               { name: 'returns', mode: 'choice', choices: RET_TYPES, default: 'Series', doc: 'What the expression produces. This decides where the output can be wired.' }],
+               { name: 'returns', mode: 'choice', choices: wk ? [...RET_TYPES, ...WK_RET_TYPES] : RET_TYPES, default: 'Series', doc: 'What the expression produces. This decides where the output can be wired.' }],
       outputs: [{ name: 'result', typesFrom: 'returns', types: ['Series'] }],
       code: (v, i) => String(v.expression || '').replace(/\{a\}/g, i.a ?? 'None').replace(/\{b\}/g, i.b ?? 'None') }),
     mk({ id: 'Print', group: 'Helpers', var: 'print', summary: 'Print a result when the script runs.',
@@ -75,15 +121,22 @@ function helperDefs(cat) {
     mk({ id: 'Save figure', group: 'Helpers', var: 'savefig', summary: 'Save a matplotlib figure to an image file with fig.savefig().',
       inputs: [{ name: 'figure', types: ['Figure'], required: true }],
       fields: [{ name: 'file_name', mode: 'text', required: true, default: null, doc: 'For example monthly_means.png.' }, { name: 'dpi', mode: 'expr', default: '150', doc: 'Resolution in dots per inch.' }],
-      stmt: true, code: (v, i) => `${i.figure}.savefig(${pyStr(v.file_name || 'figure.png')}, dpi=${v.dpi || 150}, bbox_inches='tight')` }),
+      stmt: true, code: (v, i, ty) => `${i.figure}${(ty.figure || []).includes('Axes') ? '.figure' : ''}.savefig(${pyStr(v.file_name || 'figure.png')}, dpi=${v.dpi || 150}, bbox_inches='tight')` }),
   ];
 }
-const GROUP_ORDER = ['Sources', 'Load', 'Clean', 'Helpers', 'Transform', 'Statistics', 'Distributions', 'Turbulence', 'Shear', 'Correlation', 'Atmosphere', 'Plot', 'Station', 'BrightHub', 'Export', 'Utilities'];
+const BW_GROUPS = ['Load', 'Clean', 'Transform', 'Statistics', 'Distributions', 'Turbulence', 'Shear', 'Correlation', 'Atmosphere', 'Plot', 'Station', 'BrightHub', 'Export', 'Utilities'];
+let WK_GROUPS = [];
+const COMMON_GROUPS = ['Sources', 'Helpers'];
+const GROUP_ORDER = () => [...COMMON_GROUPS, ...BW_GROUPS, ...WK_GROUPS];
+const groupRank = d => { const i = GROUP_ORDER().indexOf(d.group); return (d.lib === 'wk' && COMMON_GROUPS.includes(d.group) ? 0.5 : 0) + (i < 0 ? 99 : i); };
+const LIBS = { bw: { name: 'brightwind' }, wk: { name: 'windkit' } };
+const libOf = d => d.lib || (d.kind === 'helper' ? null : 'bw');
+const gslug = g => g.replace(/[^A-Za-z]+/g, '-');
 const VAR_OVERRIDE = { 'LoadBrightHub.get_reanalysis': { station: 'reanalysis_station', data: 'reanalysis_data' } };
 
 /* ---------- state ---------- */
-let CAT = null, DEFS = {};
-const S = { nodes: [], edges: [], view: { x: 40, y: 60, k: 1 }, sel: null, peek: null, fmt: 'flat', opts: { show: true, print: true }, seq: 1 };
+let CAT = null, WKCAT = null, DEFS = {};
+const S = { nodes: [], edges: [], view: { x: 40, y: 60, k: 1 }, sel: null, peek: null, fmt: 'flat', opts: { show: true, print: true }, seq: 1, libs: ['bw'] };
 let pend = null;            // pending wire {node, port, dir, x, y, armed}
 const hist = { stack: [], at: -1 };
 const def = n => DEFS[n.t];
@@ -94,7 +147,7 @@ function commit() {
   hist.stack.length = hist.at + 1; hist.stack.push(snapshot()); if (hist.stack.length > 120) hist.stack.shift(); hist.at = hist.stack.length - 1;
   try { localStorage.setItem('bw-builder-v1', JSON.stringify({ nodes: S.nodes, edges: S.edges, seq: S.seq, view: S.view })); } catch (e) { /* storage unavailable */ }
 }
-function restore(json) { const d = JSON.parse(json); S.nodes = d.nodes; S.edges = d.edges; S.seq = d.seq; if (S.sel && S.sel.kind === 'node' && !nodeById(S.sel.id)) S.sel = null; if (S.sel && S.sel.kind === 'edge') S.sel = null; }
+function restore(json) { const d = JSON.parse(json); S.nodes = d.nodes; S.edges = d.edges; S.seq = d.seq; if (S.sel && S.sel.kind === 'node' && !nodeById(S.sel.id)) S.sel = null; if (S.sel && S.sel.kind === 'edge') S.sel = null; ensureLibs(); }
 function undo() { if (hist.at > 0) { hist.at--; restore(hist.stack[hist.at]); renderAll(); } }
 function redo() { if (hist.at < hist.stack.length - 1) { hist.at++; restore(hist.stack[hist.at]); renderAll(); } }
 
@@ -108,11 +161,16 @@ function outTypes(n, outName, seen = new Set()) {
   if (o.same && !seen.has(n.id)) {
     seen.add(n.id);
     const e = edgeInto(n.id, o.same);
-    if (e) { const src = nodeById(e.from[0]); const t = outTypes(src, e.from[1], seen).filter(x => o.types.includes(x)); if (t.length) return t; }
+    if (e) {
+      const src = nodeById(e.from[0]), st = outTypes(src, e.from[1], seen);
+      // sameNarrow: the closest listed ancestor (a Cuboid sliced to one height is no longer a Cuboid); otherwise keep the input's own type
+      const t = [...new Set(o.sameNarrow ? st.map(x => anc(x).find(a => o.types.includes(a))).filter(Boolean) : st.filter(x => isA(x, o.types)))];
+      if (t.length) return t;
+    }
   }
   return o.types;
 }
-const accepts = (inp, types) => inp.types.includes('*') || types.some(t => inp.types.includes(t));
+const accepts = (inp, types) => inp.types.includes('*') || types.some(t => isA(t, inp.types));
 function reaches(fromId, toId) { // is toId downstream of fromId
   const stack = [fromId], seen = new Set();
   while (stack.length) { const c = stack.pop(); if (c === toId) return true; if (seen.has(c)) continue; seen.add(c); for (const e of S.edges) if (e.from[0] === c) stack.push(e.to[0]); }
@@ -141,7 +199,7 @@ function addNode(t, x, y, init) {
   if (!d) return null;
   if (d.status === 'not_implemented') { toast(d.note || 'Not implemented in this version.'); return null; }
   const n = Object.assign({ id: 'n' + (S.seq++), t, x: Math.round(x), y: Math.round(y), v: {}, lit: {}, args: {} }, init || {});
-  for (const f of d.fields) if (f.mode === 'choice' && n.v[f.name] == null) n.v[f.name] = f.default;
+  for (const f of d.fields) if (f.mode === 'choice' && n.v[f.name] == null) n.v[f.name] = f.quoted ? choiceDefault(f) : f.default;
   S.nodes.push(n);
   return n;
 }
@@ -173,13 +231,16 @@ function topo() {
 }
 
 /* ---------- code generation ---------- */
+const unq = x => String(x ?? '').replace(/^(['"])(.*)\1$/, '$2');
+// windkit's string choices: start on the default when it is one of them, else on the first (required) or on "default"
+const choiceDefault = f => f.choices.includes(unq(f.default)) ? unq(f.default) : f.required ? f.choices[0] : '';
 function fieldPy(f, raw) { // -> python source or null when unset / equal to default
   if (f.mode === 'bool') { const def_ = f.default === 'True'; const val = raw == null ? def_ : !!raw; return val === def_ && !f.required ? null : (val ? 'True' : 'False'); }
   const s = String(raw ?? '').trim();
   if (!s) return null;
   if (f.mode === 'text') { if (s.startsWith('=')) return s.slice(1).trim() || null; const py = pyStr(s); return f.default && f.default.replace(/"/g, "'") === py ? null : py; }
   if (f.mode === 'list') return '[' + s.split(',').map(x => x.trim()).filter(Boolean).map(pyStr).join(', ') + ']';
-  if (f.mode === 'choice') return s;
+  if (f.mode === 'choice') { if (!f.quoted) return s; const py = pyStr(s); return f.default && f.default.replace(/"/g, "'") === py ? null : py; }
   return s === f.default ? null : s;
 }
 function flagOn(n, flagName) {
@@ -189,22 +250,24 @@ function flagOn(n, flagName) {
 }
 function isTuple(n) { const t = def(n).tuple; return !!t && (t.always || t.flags.some(f => flagOn(n, f))); }
 function generate(fmt, ctx = {}) {
-  const order = topo(), used = new Set(['bw', 'plt', 'np', 'pd', 'run', 'results', 'print']), names = new Map(), exprs = new Map(), issues = [];
+  const order = topo(), used = new Set(['bw', 'wk', 'plt', 'np', 'pd', 'xr', 'os', 'run', 'results', 'print', 'sample_file']), names = new Map(), exprs = new Map(), issues = [];
   const uniq = base => { base = (base || 'x').replace(/[^A-Za-z0-9_]/g, '_').replace(/^(\d)/, '_$1'); let nm = base, k = 2; while (used.has(nm)) nm = base + '_' + (k++); used.add(nm); return nm; };
   const args = [];          // run() arguments: {name, default}
   const steps = [];         // {node, lines:[...], echo: expr|null}
-  const figures = [];
+  const figures = [], plotlys = [];
   let anyFigure = false;
+  const libsUsed = new Set(order.map(n => libOf(def(n))).filter(Boolean));
   const key = (id, out) => id + '\u0000' + out;
   const consumed = (n, o) => edgesFrom(n.id, o).length > 0;
-  const PRINTABLE = t => !['Figure', 'Path'].includes(t);
+  const PRINTABLE = t => !isA(t, ['Figure', 'Path', 'Plotly']);
 
   for (const n of order) {
     const d = def(n), probs = nodeIssues(n);
     if (probs.length) issues.push({ id: n.id, title: d.title, probs });
     // inputs -> expressions
-    const inx = {};
+    const inx = {}, inty = {};
     for (const i of d.inputs) {
+      const ie = edgeInto(n.id, i.name); if (ie) inty[i.name] = outTypes(nodeById(ie.from[0]), ie.from[1]);
       const e = edgeInto(n.id, i.name);
       if (e) inx[i.name] = exprs.get(key(e.from[0], e.from[1])) ?? '...';
       else if ((n.lit[i.name] || '').trim()) inx[i.name] = n.lit[i.name].trim();
@@ -214,8 +277,9 @@ function generate(fmt, ctx = {}) {
     const base = n.var || (d.argBase ? d.argBase(n.v) : d.var);
 
     if (d.kind === 'helper') {
-      let code = d.code(n.v, inx);
+      let code = d.code(n.v, inx, inty);
       if (fmt === 'run' && d.id === 'File path') code = pyStr(ctx.paths && ctx.paths[n.id] || '');
+      if (fmt === 'run' && d.id === 'Sample file') code = pyStr('/samples/' + (n.v.file || d.fields[0].default));
       if (d.isArg && fmt === 'func') { const a = uniq(base); args.push({ name: a, def: code }); code = a; }
       if (d.stmt) { steps.push({ node: n, lines: [...todo, code] }); continue; }
       const o = d.outputs[0];
@@ -232,7 +296,7 @@ function generate(fmt, ctx = {}) {
     if (d.kind === 'attr') {
       const code = `${recv}.${d.call}`, o = d.outputs[0];
       exprs.set(key(n.id, o.name), code);
-      if (outTypes(n, o.name)[0] === 'Figure') anyFigure = true;
+      if (isA(outTypes(n, o.name)[0], ['Figure'])) anyFigure = true;
       const st = { node: n, lines: todo, leaf: consumed(n, o.name) ? [] : [[code, outTypes(n, o.name)[0]]] };
       if (st.lines.length || st.leaf.length) steps.push(st);
       continue;
@@ -276,8 +340,8 @@ function generate(fmt, ctx = {}) {
     };
     const leaf = [];
     const reg = o => { const nm = uniq(nameFor(o)); names.set(key(n.id, o.name), nm); exprs.set(key(n.id, o.name), nm);
-      const t = outTypes(n, o.name)[0]; if (t === 'Figure') { anyFigure = true; figures.push(nm); }
-      if (!consumed(n, o.name)) leaf.push([nm, t]); return nm; };
+      const t = outTypes(n, o.name)[0]; if (isA(t, ['Figure'])) { anyFigure = true; figures.push(nm); }
+      if (!consumed(n, o.name)) { leaf.push([nm, t]); if (t === 'Plotly') plotlys.push(nm); } return nm; };
     if (isTuple(n)) {
       const lhs = d.tuple.order.map(on => reg(d.outputs.find(o => o.name === on)));
       steps.push({ node: n, lines: [...todo, `${lhs.join(', ')} = ${call}`], leaf });
@@ -288,49 +352,62 @@ function generate(fmt, ctx = {}) {
     if (d.kind === 'constructor' && d.group === 'Shear') anyFigure = true;
   }
 
-  if (fmt === 'run') return { issues, steps: steps.map(st => ({ id: st.node.id, title: def(st.node).title, code: st.lines.filter(l => !l.startsWith('# TODO')).join('\n'), leaf: st.leaf || [] })) };
+  if (fmt === 'run') return { issues, libs: [...libsUsed], plotly: order.some(n => def(n).plotly), steps: steps.map(st => ({ id: st.node.id, title: def(st.node).title, code: st.lines.filter(l => !l.startsWith('# TODO')).join('\n'), leaf: st.leaf || [] })) };
   const body = [];
   const allText = () => steps.flatMap(s => s.lines).join('\n') + args.map(a => a.def).join('\n');
-  const imports = () => { const t = allText(), im = ['import brightwind as bw'];
-    if (/\bnp\./.test(t)) im.push('import numpy as np'); if (/\bpd\./.test(t)) im.push('import pandas as pd');
+  const libs = libsUsed.size ? [...libsUsed].sort() : S.libs.slice();
+  const usesPlotly = order.some(n => def(n).plotly), usesSample = order.some(n => n.t === 'Sample file');
+  const imports = () => { const t = allText(), im = [];
+    if (usesSample) im.push('import os', 'import urllib.request');
+    if (libs.includes('bw')) im.push('import brightwind as bw');
+    if (libs.includes('wk')) im.push('import windkit as wk');
+    if (usesPlotly) im.push("import plotly.subplots  # windkit's plotly helpers expect it loaded");
+    if (/\bnp\./.test(t)) im.push('import numpy as np'); if (/\bpd\./.test(t)) im.push('import pandas as pd'); if (/\bxr\./.test(t)) im.push('import xarray as xr');
     if (anyFigure && S.opts.show && fmt !== 'nb') im.push('import matplotlib.pyplot as plt'); return im; };
-  const head = [`# Built with Brightwind Workflow Builder for brightwind v${CAT.version}.`, '# Run it in a Python environment that has brightwind installed: pip install brightwind'];
+  const SAMPLE_FN = ['', '', 'def sample_file(name):', '    """Download one of the Workflow Builder\'s windkit sample files (once) and return its path."""',
+    "    path = os.path.join(os.path.expanduser('~'), '.bw-explorer-samples', name)", '    if not os.path.exists(path):', '        os.makedirs(os.path.dirname(path), exist_ok=True)',
+    "        urllib.request.urlretrieve('https://bw-explorer.coderenewables.com/py/samples/' + name, path)", '    return path'];
+  const libText = libs.map(l => l === 'bw' ? `brightwind v${CAT.version}` : `windkit v${WKCAT.version}`).join(' and ');
+  const pip = [...(libs.includes('bw') ? ['brightwind'] : []), ...(libs.includes('wk') ? ['windkit'] : []), ...(usesPlotly ? ['plotly'] : []), ...(libs.includes('wk') && anyFigure ? ['matplotlib'] : [])];
+  const head = [`# Built with Brightwind Workflow Builder for ${libText}.`, `# Run it in a Python environment that has ${libs.map(l => LIBS[l].name).join(' and ')} installed: pip install ${pip.join(' ')}`];
   const leafPrints = st => (S.opts.print ? (st.leaf || []).filter(([, t]) => PRINTABLE(t)).map(([e]) => `print(${e})`) : []);
+  const leafShows = st => (S.opts.show && fmt === 'flat' ? (st.leaf || []).filter(([, t]) => t === 'Plotly').map(([e]) => `${e}.show()`) : []);
+  const base = libs.length > 1 ? 'brightwind_windkit_workflow' : libs[0] === 'wk' ? 'windkit_workflow' : 'brightwind_workflow';
   const label = st => '# ' + def(st.node).title;
 
   if (fmt === 'nb') {
-    const cells = [{ cell_type: 'markdown', metadata: {}, source: [`# brightwind workflow\n`, `Built with Brightwind Workflow Builder for brightwind v${CAT.version}.`] },
-      { cell_type: 'code', metadata: {}, execution_count: null, outputs: [], source: imports().join('\n').split(/(?<=\n)/) }];
+    const cells = [{ cell_type: 'markdown', metadata: {}, source: [`# ${libs.map(l => LIBS[l].name).join(' and ')} workflow\n`, `Built with Brightwind Workflow Builder for ${libText}.`] },
+      { cell_type: 'code', metadata: {}, execution_count: null, outputs: [], source: [...imports(), ...(usesSample ? SAMPLE_FN : [])].join('\n').split(/(?<=\n)/) }];
     for (const st of steps) {
       const lines = [label(st), ...st.lines];
-      const echo = (st.leaf || []).filter(([, t]) => PRINTABLE(t)).map(([e]) => e);
+      const echo = (st.leaf || []).filter(([, t]) => PRINTABLE(t) || (t === 'Plotly' && S.opts.show)).map(([e]) => e);
       if (echo.length) lines.push(echo[echo.length - 1]);
       if (lines.length > 1) cells.push({ cell_type: 'code', metadata: {}, execution_count: null, outputs: [], source: lines.join('\n').split(/(?<=\n)/) });
     }
     const nb = { cells, metadata: { kernelspec: { display_name: 'Python 3', language: 'python', name: 'python3' }, language_info: { name: 'python' } }, nbformat: 4, nbformat_minor: 5 };
     const preview = cells.map((c, i) => `# %% [${c.cell_type === 'markdown' ? 'markdown' : 'cell ' + i}]\n` + (c.cell_type === 'markdown' ? c.source.join('').split('\n').map(l => '# ' + l).join('\n') : c.source.join(''))).join('\n\n');
-    return { text: JSON.stringify(nb, null, 1), preview, issues, filename: 'brightwind_workflow.ipynb' };
+    return { text: JSON.stringify(nb, null, 1), preview, issues, filename: base + '.ipynb' };
   }
-  for (const st of steps) { const lines = [...st.lines, ...leafPrints(st)]; if (lines.length) body.push('', label(st), ...lines); }
+  for (const st of steps) { const lines = [...st.lines, ...leafPrints(st), ...leafShows(st)]; if (lines.length) body.push('', label(st), ...lines); }
   if (!steps.length) body.push('', '# The canvas is empty. Add tools to build a pipeline.');
   let out;
   if (fmt === 'func') {
     const sig = args.map(a => `${a.name}=${a.def}`).join(', ');
     const res = [...names.values()];
     const ind = l => l.split('\n').map(x => (x ? '    ' + x : x)).join('\n');
-    out = [...head, '', ...imports(), '', '', `def run(${sig}):`, '    """Run the workflow and return its results by name."""',
+    out = [...head, '', ...imports(), ...(usesSample ? SAMPLE_FN : []), '', '', `def run(${sig}):`, '    """Run the workflow and return its results by name."""',
       ...(body.length ? body.slice(1).map(ind) : ['    pass']), '',
       '    return {' + (res.length ? '\n' + res.map(r => `        ${pyStr(r)}: ${r},`).join('\n') + '\n    }' : '}'), '', '',
-      "if __name__ == '__main__':", '    results = run()', ...(anyFigure && S.opts.show ? ['    plt.show()'] : [])];
+      "if __name__ == '__main__':", '    results = run()', ...(S.opts.show ? plotlys.map(x => `    results[${pyStr(x)}].show()`) : []), ...(anyFigure && S.opts.show ? ['    plt.show()'] : [])];
   } else {
-    out = [...head, '', ...imports(), ...body, ...(anyFigure && S.opts.show ? ['', 'plt.show()'] : [])];
+    out = [...head, '', ...imports(), ...(usesSample ? SAMPLE_FN : []), ...body, ...(anyFigure && S.opts.show ? ['', 'plt.show()'] : [])];
   }
   const text = out.join('\n') + '\n';
-  return { text, preview: text, issues, filename: fmt === 'func' ? 'brightwind_workflow_run.py' : 'brightwind_workflow.py' };
+  return { text, preview: text, issues, filename: fmt === 'func' ? base + '_run.py' : base + '.py' };
 }
 
 /* ---------- layout ---------- */
-function nodeHeight(n) { const d = def(n); return 50 + 24 * (d.inputs.length + d.outputs.length) + (paramSummary(n) ? 26 : 0); }
+function nodeHeight(n) { const d = def(n), ps = paramSummary(n); return 50 + 24 * (d.inputs.length + d.outputs.length) + (ps ? 13 + 13 * Math.ceil(Math.min(ps.length, 90) / 40) : 0); }
 function tidy() {
   const depth = new Map();
   for (const n of topo()) { let dmax = 0; for (const e of S.edges) if (e.to[0] === n.id) dmax = Math.max(dmax, (depth.get(e.from[0]) ?? 0) + 1); depth.set(n.id, dmax); }
@@ -367,15 +444,16 @@ function zoomAt(cx, cy, factor) {
 const toWorld = (cx, cy) => { const r = $('#canvas').getBoundingClientRect(); return { x: (cx - r.left - S.view.x) / S.view.k, y: (cy - r.top - S.view.y) / S.view.k }; };
 
 /* ---------- canvas rendering ---------- */
+const shortId = d => d.lib === 'wk' && d.title ? d.title : d.id.replace('Correl.', '');
 function shortTitle(d) {
-  if (d.kind === 'method' || d.kind === 'attr') { const i = d.id.lastIndexOf('.'); return { ov: d.id.slice(0, i).replace('Correl.', ''), tt: '.' + d.id.slice(i + 1) + (d.kind === 'method' ? '()' : '') }; }
-  return { ov: d.group, tt: d.id.replace('Correl.', '') };
+  if (d.kind === 'method' || d.kind === 'attr') { const id = shortId(d), i = id.lastIndexOf('.'); return { ov: id.slice(0, i), tt: '.' + id.slice(i + 1) + (d.kind === 'method' ? '()' : '') }; }
+  return { ov: (S.libs.length > 1 && d.lib === 'wk' ? 'windkit · ' : '') + d.group, tt: shortId(d) };
 }
 function paramSummary(n) {
   const d = def(n), bits = [];
   for (const f of d.fields) {
     if (f.flag) continue;
-    const py = f.mode === 'choice' ? n.v[f.name] : f.mode === 'list' || f.mode === 'code' ? (String(n.v[f.name] ?? '').trim() || null) : fieldPy(f, n.v[f.name]);
+    const py = f.mode === 'choice' && !f.quoted ? n.v[f.name] : f.mode === 'list' || f.mode === 'code' ? (String(n.v[f.name] ?? '').trim() || null) : fieldPy(f, n.v[f.name]);
     if (py != null) bits.push(d.kind === 'helper' && d.fields.length === 1 ? String(py) : `${f.name}=${py}`);
   }
   return bits.join(', ');
@@ -401,7 +479,7 @@ function renderCanvas() {
         h('span', { class: `port out ${tClass(ty[0])}${on ? ' full' : ''}`, 'data-node': n.id, 'data-port': o.name, 'data-dir': 'out', title: ty.map(tLabel).join(' or ') })));
     }
     const ps = paramSummary(n);
-    const el = h('div', { class: `node g-${d.group}${S.sel && S.sel.kind === 'node' && S.sel.id === n.id ? ' sel' : ''}${probs.length ? ' bad' : ''}${typeof RUNMARKS !== 'undefined' && RUNMARKS[n.id] ? ' run-' + RUNMARKS[n.id] : ''}`, 'data-id': n.id, style: `left:${n.x}px;top:${n.y}px` },
+    const el = h('div', { class: `node g-${gslug(d.group)}${d.lib === 'wk' ? ' lib-wk' : ''}${S.sel && S.sel.kind === 'node' && S.sel.id === n.id ? ' sel' : ''}${probs.length ? ' bad' : ''}${typeof RUNMARKS !== 'undefined' && RUNMARKS[n.id] ? ' run-' + RUNMARKS[n.id] : ''}`, 'data-id': n.id, style: `left:${n.x}px;top:${n.y}px` },
       h('div', { class: 'nh' }, h('div', { class: 'ov' }, t.ov), h('div', { class: 'tt', text: t.tt }),
         probs.length ? h('span', { class: 'iss', text: probs.length, title: probs.join('\n') }) : null),
       rows, ps ? h('div', { class: 'nparams', text: ps.length > 90 ? ps.slice(0, 88) + '…' : ps }) : null);
@@ -526,37 +604,58 @@ function setupCanvas() {
 }
 
 /* ---------- catalog ---------- */
-const openGroups = new Set(['Sources', 'Load', 'Helpers']);
+const openGroups = new Set(['Sources', 'Load', 'Helpers', 'wk:Wind climates']);
 function matches(d, q, tf) {
-  if (tf) { const [dir, ty] = tf.split(':'); const list = dir === 'in' ? d.inputs : d.outputs; if (!list.some(p => p.types.includes(ty))) return false; }
+  if (tf) {
+    const [dir, ty] = tf.split(':');
+    // Accepts T: an input that T can be wired into. Returns T: an output that is a T or a more specific type.
+    if (dir === 'in' ? !d.inputs.some(p => !p.types.includes('*') && isA(ty, p.types)) : !d.outputs.some(p => p.types.some(t => isA(t, [ty])))) return false;
+  }
   if (!q) return true;
   const hay = (d.id + ' ' + d.summary + ' ' + d.group + ' ' + (d.params || []).join(' ') + ' ' + d.doc).toLowerCase();
   return q.split(/\s+/).every(w => hay.includes(w));
 }
+const libOn = d => { const l = libOf(d); return !l || S.libs.includes(l); };
 function renderCatalog() {
   const q = $('#q').value.trim().toLowerCase(), tf = $('#tf').value, list = $('#catList');
   list.textContent = '';
-  let shown = 0;
-  for (const g of GROUP_ORDER) {
-    const items = Object.values(DEFS).filter(d => d.group === g && matches(d, q, tf));
-    if (!items.length) continue;
-    shown += items.length;
-    const det = h('details', { class: 'grp', open: q || tf ? true : openGroups.has(g) }, h('summary', {}, g, h('span', { class: 'n', text: items.length })));
-    det.addEventListener('toggle', () => { if (!$('#q').value && !$('#tf').value) det.open ? openGroups.add(g) : openGroups.delete(g); });
-    for (const d of items) {
-      det.append(h('button', { class: 'item' + (S.peek === d.id ? ' on' : '') + (d.status === 'not_implemented' ? ' off' : ''), 'data-def': d.id },
-        h('div', { class: 'nm' }, d.id.replace('Correl.', ''), d.status === 'deprecated' ? h('span', { class: 'flag warn', text: 'deprecated' }) : null, d.status === 'not_implemented' ? h('span', { class: 'flag bad', text: 'not implemented' }) : null),
-        h('div', { class: 'sm', text: d.summary })));
+  let shown = 0, total = 0, groups = 0;
+  const sections = [[null, COMMON_GROUPS], ...S.libs.map(l => [l, l === 'bw' ? BW_GROUPS : WK_GROUPS])];
+  for (const [lib, gs] of sections) {
+    const all = Object.values(DEFS).filter(d => libOn(d) && (lib ? libOf(d) === lib && !COMMON_GROUPS.includes(d.group) : COMMON_GROUPS.includes(d.group)));
+    total += all.length;
+    let head = lib && S.libs.length > 1 ? h('div', { class: 'lib-head lib-' + lib }, LIBS[lib].name, h('span', { class: 'n', text: 'v' + (lib === 'bw' ? CAT.version : WKCAT.version) })) : null;
+    for (const g of gs) {
+      const items = all.filter(d => d.group === g && matches(d, q, tf)).sort((a, b) => groupRank(a) - groupRank(b));
+      if (!items.length) continue;
+      if (head) { list.append(head); head = null; }
+      shown += items.length; groups++;
+      const key = (lib === 'wk' ? 'wk:' : '') + g;
+      const det = h('details', { class: 'grp', open: q || tf ? true : openGroups.has(key) }, h('summary', {}, g, h('span', { class: 'n', text: items.length })));
+      det.addEventListener('toggle', () => { if (!$('#q').value && !$('#tf').value) det.open ? openGroups.add(key) : openGroups.delete(key); });
+      for (const d of items) {
+        det.append(h('button', { class: 'item' + (S.peek === d.id ? ' on' : '') + (d.status === 'not_implemented' ? ' off' : ''), 'data-def': d.id },
+          h('div', { class: 'nm' }, shortId(d), d.status === 'deprecated' ? h('span', { class: 'flag warn', text: 'deprecated' }) : null, d.status === 'not_implemented' ? h('span', { class: 'flag bad', text: 'not implemented' }) : null,
+            d.blocked ? h('span', { class: 'flag', text: 'internet', title: d.note }) : null, d.plotly ? h('span', { class: 'flag', text: 'interactive' }) : null),
+          h('div', { class: 'sm', text: d.summary })));
+      }
+      list.append(det);
     }
-    list.append(det);
   }
-  const total = Object.keys(DEFS).length;
-  $('#catCount').textContent = shown === total ? `${total} tools in ${GROUP_ORDER.length} groups. Drag one onto the board.` : `${shown} of ${total} tools`;
+  $('#catCount').textContent = shown === total ? `${total} tools in ${groups} groups. Drag one onto the board.` : `${shown} of ${total} tools`;
+}
+const TF_TYPES = { bw: ['DataFrame', 'Series', 'Figure', 'Path', 'Value', 'List', 'Dict', 'Station'],
+  wk: ['TSWC', 'BWC', 'WWC', 'GWC', 'Locations', 'BBox', 'RasterMap', 'VectorMap', 'WTG', 'WindTurbines', 'Dataset', 'DataArray', 'GeoDataFrame', 'Plotly'] };
+function fillTypeFilter() {
+  const sel = $('#tf'), cur = sel.value; sel.textContent = '';
+  sel.append(h('option', { value: '', text: 'Any data type' }));
+  const ts = [...new Set(S.libs.flatMap(l => l === 'wk' ? ['DataFrame', 'Series', 'Figure', 'Path', 'Value', ...TF_TYPES.wk] : TF_TYPES.bw))];
+  for (const [dir, lab] of [['in', 'Accepts'], ['out', 'Returns']]) for (const t of ts) sel.append(h('option', { value: `${dir}:${t}`, text: `${lab} ${tLabel(t)}` }));
+  sel.value = [...sel.options].some(o => o.value === cur) ? cur : '';
 }
 function setupCatalog() {
   const sel = $('#tf');
-  sel.append(h('option', { value: '', text: 'Any data type' }));
-  for (const [dir, lab] of [['in', 'Accepts'], ['out', 'Returns']]) for (const t of ['DataFrame', 'Series', 'Figure', 'Path', 'Value', 'List', 'Dict', 'Station']) sel.append(h('option', { value: `${dir}:${t}`, text: `${lab} ${t}` }));
+  fillTypeFilter();
   $('#q').addEventListener('input', renderCatalog); sel.addEventListener('change', renderCatalog);
   const list = $('#catList');
   let dg = null;
@@ -596,7 +695,7 @@ function addAtCentre(id) {
 }
 
 /* ---------- inspector ---------- */
-const srcUrl = d => d.module ? `${CAT.repo}/blob/${CAT.commit}/brightwind/${d.module}#L${d.line}` : null;
+const srcUrl = d => d.lib === 'wk' ? WKCAT.docs : d.module ? `${CAT.repo}/blob/${CAT.commit}/brightwind/${d.module}#L${d.line}` : null;
 function signature(d) {
   if (d.kind === 'helper') return null;
   if (d.kind === 'attr') return `<${d.inputs[0].name}>.${d.call}`;
@@ -609,17 +708,21 @@ function docBlock(d) {
   return h('div', { class: 'sec' }, h('h3', {}, 'Documentation'),
     d.note ? h('p', { class: 'note' + (d.status === 'not_implemented' ? ' bad' : ''), text: d.note, style: 'margin-bottom:8px' }) : null,
     d.doc && d.doc !== d.summary ? h('details', {}, h('summary', { style: 'cursor:pointer;margin-bottom:6px' }, 'Full docstring'), h('pre', { class: 'doc', text: d.doc })) : null,
+    url && d.lib === 'wk' ? h('p', { style: 'margin-top:6px' }, `Source: ${d.module}, line ${d.line} · `, h('a', { href: url, target: '_blank', rel: 'noopener' }, 'windkit documentation')) :
     url ? h('p', { style: 'margin-top:6px' }, h('a', { href: url, target: '_blank', rel: 'noopener' }, `Source: brightwind/${d.module}, line ${d.line}`)) : null);
 }
 function nextSteps(types, limit = 8) {
-  return Object.values(DEFS).filter(d => d.status !== 'not_implemented' && d.inputs.some(i => !i.types.includes('*') && types.some(t => i.types.includes(t))))
-    .sort((a, b) => (a.kind === 'helper' ? -1 : 0) - (b.kind === 'helper' ? -1 : 0) || GROUP_ORDER.indexOf(a.group) - GROUP_ORDER.indexOf(b.group));
+  // tools that take this type at a specific input (not one that accepts anything or any Dataset)
+  const GENERIC = ['Dataset', 'DataArray', 'GeoDataFrame', 'Locations'];
+  const specific = i => !i.types.includes('*') && !i.self && types.some(t => i.types.some(x => anc(t).includes(x) && (x === t || !GENERIC.includes(x))));
+  return Object.values(DEFS).filter(d => libOn(d) && d.status !== 'not_implemented' && !d.blocked && d.inputs.some(i => specific(i) || (i.self && types.some(t => isA(t, i.types)))))
+    .sort((a, b) => (a.kind === 'helper' ? -1 : 0) - (b.kind === 'helper' ? -1 : 0) || (a.inputs.some(i => i.self) ? -1 : 0) - (b.inputs.some(i => i.self) ? -1 : 0) || groupRank(a) - groupRank(b));
 }
 function headBlock(d) {
   const sig = signature(d);
-  return [h('div', {}, h('div', { class: 'ov' }, d.group, h('span', { class: 'flag', text: d.kind === 'attr' ? 'attribute' : d.kind }),
+  return [h('div', {}, h('div', { class: 'ov' }, (d.lib === 'wk' ? 'windkit · ' : '') + d.group, h('span', { class: 'flag', text: d.kind === 'attr' ? 'attribute' : d.kind }),
       d.status === 'deprecated' ? h('span', { class: 'flag warn', text: 'deprecated' }) : null, d.status === 'not_implemented' ? h('span', { class: 'flag bad', text: 'not implemented' }) : null),
-    h('h2', { text: d.id })), h('p', { class: 'lead', text: d.summary }), sig ? h('div', { class: 'sig', text: sig }) : null];
+    h('h2', { text: d.lib === 'wk' ? d.id.replace(/^wk\./, 'windkit.') : d.id })), h('p', { class: 'lead', text: d.summary }), sig ? h('div', { class: 'sig', text: sig }) : null];
 }
 function renderDetails() {
   const box = $('#details'); box.textContent = '';
@@ -645,8 +748,8 @@ function renderDetails() {
         h('p', { class: 'lead' }, 'Select a node to set its parameters, or a tool in the list to read its documentation. Ports only connect when their data types match. ', h('a', { href: 'guide.html', target: '_blank', rel: 'noopener' }, 'Read the guide')),
         all.length ? h('div', { class: 'sec' }, h('h3', {}, 'To fix before exporting'), h('ul', { class: 'issues' }, ...all.map(([x, p]) => h('li', {}, h('a', { href: '#canvas', onclick: ev => { ev.preventDefault(); S.sel = { kind: 'node', id: x.id }; renderAll(); } }, def(x).title), ': ' + p.join('; ')))))
           : (S.nodes.length ? h('p', { class: 'note', style: 'border-left-color:var(--good)' }, 'Every required input is set. Open Python to export the pipeline.') : null),
-        h('div', { class: 'sec' }, h('h3', {}, 'Port colours'), h('div', { class: 'legend' }, ...TYPE_HELP.map(([t, txt]) => h('div', {}, t === 'Shear.Average' ? h('span', { class: 'ty c-obj', text: 'Object' }) : typeChip(t), h('span', {}, txt))))),
-        h('div', { class: 'sec' }, h('h3', {}, 'About'), h('p', { class: 'dc', style: 'font-size:12.5px;color:var(--muted)' }, `The tool list is read from the brightwind v${CAT.version} source (MIT licence, commit ${CAT.commit.slice(0, 7)}). Export the pipeline as Python, or press Run to execute it with brightwind in this browser. Your data is never uploaded. `, h('a', { href: CAT.repo, target: '_blank', rel: 'noopener' }, 'brightwind repository'), ' · ', h('a', { href: 'guide.html', target: '_blank', rel: 'noopener' }, 'How to use'), ' · ', h('a', { href: 'https://coderenewables.com', target: '_blank', rel: 'noopener' }, 'CodeRenewables'), ' · ', h('a', { href: 'https://github.com/coderenewables/brightwind-explorer', target: '_blank', rel: 'noopener' }, 'Source of this page'))));
+        h('div', { class: 'sec' }, h('h3', {}, 'Port colours'), h('div', { class: 'legend' }, ...[...(S.libs.includes('bw') || !WKCAT ? TYPE_HELP : TYPE_HELP.filter(([t]) => t !== 'Shear.Average')), ...(S.libs.includes('wk') ? WK_TYPE_HELP : [])].map(([t, txt]) => h('div', {}, t === 'Shear.Average' ? h('span', { class: 'ty c-obj', text: 'Object' }) : typeChip(t), h('span', {}, txt))))),
+        h('div', { class: 'sec' }, h('h3', {}, 'About'), h('p', { class: 'dc', style: 'font-size:12.5px;color:var(--muted)' }, `The tool list is read from the brightwind v${CAT.version} source (MIT licence, commit ${CAT.commit.slice(0, 7)})${WKCAT ? ` and from windkit v${WKCAT.version} by DTU Wind Energy (BSD 3-Clause licence)` : ''}. Export the pipeline as Python, or press Run to execute it in this browser. Your data is never uploaded. `, h('a', { href: CAT.repo, target: '_blank', rel: 'noopener' }, 'brightwind repository'), ' · ', WKCAT ? h('a', { href: WKCAT.docs, target: '_blank', rel: 'noopener' }, 'windkit documentation') : null, WKCAT ? ' · ' : null, h('a', { href: 'guide.html', target: '_blank', rel: 'noopener' }, 'How to use'), ' · ', h('a', { href: 'https://coderenewables.com', target: '_blank', rel: 'noopener' }, 'CodeRenewables'), ' · ', h('a', { href: 'https://github.com/coderenewables/brightwind-explorer', target: '_blank', rel: 'noopener' }, 'Source of this page'))));
     }
     return;
   }
@@ -682,7 +785,8 @@ function renderDetails() {
         const cur = forced ? true : n.v[f.name] == null ? f.default === 'True' : !!n.v[f.name];
         ctl = h('label', { class: 'chk' }, h('input', { type: 'checkbox', id, checked: cur, disabled: forced, onchange: ev => { n.v[f.name] = ev.target.checked; rerender(); renderDetails(); } }), forced ? 'On, because its output is connected' : `Default ${f.default}`);
       } else if (f.mode === 'choice') {
-        ctl = h('select', { id, onchange: ev => { n.v[f.name] = ev.target.value; if (d.outputs.some(o => o.typesFrom === f.name)) S.edges = S.edges.filter(e => !(e.from[0] === n.id && canConnectExisting(e))); commit(); renderAll(); } }, ...f.choices.map(c => h('option', { value: c, text: c, selected: (n.v[f.name] ?? f.default) === c })));
+        const extra = f.quoted && !f.required && !f.choices.includes(unq(f.default)) ? [h('option', { value: '', text: `default (${f.default})`, selected: !n.v[f.name] })] : [];
+        ctl = h('select', { id, onchange: ev => { n.v[f.name] = ev.target.value; if (d.outputs.some(o => o.typesFrom === f.name)) S.edges = S.edges.filter(e => !(e.from[0] === n.id && canConnectExisting(e))); commit(); renderAll(); } }, ...extra, ...f.choices.map(c => h('option', { value: c, text: c, selected: (n.v[f.name] ?? f.default) === c })));
       } else {
         const ph = f.mode === 'text' ? (f.default && f.default !== 'None' ? f.default.replace(/^'|'$/g, '') : 'text, no quotes needed') : f.mode === 'list' ? 'Spd80mN, Spd60mN' : f.mode === 'code' ? '{a} - {b}' : (f.default ?? 'Python value');
         ctl = h('input', { type: 'text', id, class: f.required && !String(n.v[f.name] ?? '').trim() ? 'miss' : '', value: n.v[f.name] ?? '', placeholder: ph,
@@ -706,8 +810,8 @@ function renderDetails() {
       const ty = outTypes(n, o.name), opts = nextSteps(ty), box2 = h('div', { class: 'next' });
       const fill = all => { box2.textContent = ''; for (const t of all ? opts : opts.slice(0, 8)) box2.append(h('button', { title: t.summary, onclick: () => {
           const nn = addNode(t.id, n.x + 300, n.y + edgesFrom(n.id).length * 70); if (!nn) return;
-          const inp = t.inputs.find(i => !i.types.includes('*') && ty.some(x => i.types.includes(x)) && true);
-          connect(n.id, o.name, nn.id, inp.name); S.sel = { kind: 'node', id: nn.id }; commit(); renderAll(); if (isNarrow()) setView('canvas'); } }, t.id.replace('Correl.', '')));
+          const inp = t.inputs.find(i => !i.types.includes('*') && ty.some(x => isA(x, i.types)));
+          connect(n.id, o.name, nn.id, inp.name); S.sel = { kind: 'node', id: nn.id }; commit(); renderAll(); if (isNarrow()) setView('canvas'); } }, shortId(t)));
         if (!all && opts.length > 8) box2.append(h('button', { onclick: () => fill(true) }, `+${opts.length - 8} more`)); };
       fill(false);
       sec.append(h('div', { class: 'fld' }, h('div', { class: 'lb' }, h('span', { class: 'k', text: o.name }), ...ty.map(typeChip)),
@@ -725,7 +829,7 @@ const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&
 function highlight(src) {
   return src.split('\n').map(line => {
     if (/^# %% \[/.test(line)) return `<span class="c cellmark">${esc(line)}</span>`;
-    return esc(line).replace(/(#.*$)|('(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*")|\b(import|as|def|return|if|None|True|False|pass|print)\b|\b(bw(?:\.\w+)+)/g,
+    return esc(line).replace(/(#.*$)|('(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*")|\b(import|as|def|return|if|None|True|False|pass|print)\b|\b((?:bw|wk)(?:\.\w+)+)/g,
       (m, c, s, k, f) => c ? `<span class="c">${c}</span>` : s ? `<span class="s">${s}</span>` : k ? `<span class="k">${k}</span>` : `<span class="f">${f}</span>`);
   }).join('\n');
 }
@@ -780,37 +884,119 @@ async function copyText(text, okMsg) {
 
 /* ---------- templates ---------- */
 const TEMPLATES = [
-  { name: 'Site overview: stats, monthly means, tab file',
+  { name: 'Site overview: stats, monthly means, tab file', libs: ['bw'],
     nodes: [['src', 'Demo dataset', { dataset: 'demo_data' }], ['load', 'load_csv'], ['stats', 'basic_stats'], ['spd', 'Select column', { column: 'Spd80mN' }], ['dir', 'Select column', { column: 'Dir78mS' }],
       ['mm', 'monthly_means'], ['ft', 'freq_table'], ['tab', 'export_tab_file', { height: '80', file_name: 'demo_site_80m' }, { lit: { lat: '53.0', long: '-7.5' } }]],
     edges: ['src.path>load.filepath_or_folder', 'load.data>stats.data', 'load.data>spd.data', 'load.data>dir.data', 'spd.series>mm.data', 'spd.series>ft.var_series', 'dir.series>ft.direction_series', 'ft.data>tab.freq_tab'] },
-  { name: 'Clean the data, then shear to hub height',
+  { name: 'Clean the data, then shear to hub height', libs: ['bw'],
     nodes: [['src', 'Demo dataset', { dataset: 'demo_data' }], ['load', 'load_csv'], ['cf', 'Demo dataset', { dataset: 'demo_cleaning_file' }], ['clean', 'apply_cleaning'],
       ['anems', 'Select columns', { columns: 'Spd80mN, Spd60mN, Spd40mN' }], ['shear', 'Shear.Average', { heights: '[80, 60, 40]' }], ['alpha', 'Shear.Average.alpha'], ['pr', 'Print'],
       ['top', 'Select column', { column: 'Spd80mN' }], ['apply', 'Shear.Average.apply', { height: '80', shear_to: '120' }, { var: 'wspd_120m' }], ['mm', 'monthly_means']],
     edges: ['src.path>load.filepath_or_folder', 'load.data>clean.data', 'cf.path>clean.cleaning_file_or_df', 'clean.data>anems.data', 'anems.data>shear.wspds', 'shear.shear>alpha.shear', 'alpha.alpha>pr.value',
       'clean.data>top.data', 'shear.shear>apply.shear', 'top.series>apply.wspds', 'apply.wspd>mm.data'] },
-  { name: 'Long-term correlation against MERRA-2',
+  { name: 'Long-term correlation against MERRA-2', libs: ['bw'],
     nodes: [['src', 'Demo dataset', { dataset: 'demo_data' }], ['load', 'load_csv'], ['msrc', 'Demo dataset', { dataset: 'demo_merra2_NE' }], ['mload', 'load_csv', {}, { var: 'm2_ne' }],
       ['tgt', 'Select column', { column: 'Spd80mN' }], ['ref', 'Select column', { column: 'WS50m_m/s' }],
       ['ols', 'Correl.OrdinaryLeastSquares', { averaging_prd: '1M', coverage_threshold: '0.95' }], ['run', 'Correl.OrdinaryLeastSquares.run'], ['plot', 'Correl.OrdinaryLeastSquares.plot'],
       ['syn', 'Correl.OrdinaryLeastSquares.synthesize', {}, { var: 'long_term_wspd' }], ['momm', 'momm', {}, { var: 'long_term_momm' }]],
     edges: ['src.path>load.filepath_or_folder', 'msrc.path>mload.filepath_or_folder', 'load.data>tgt.data', 'mload.data>ref.data', 'ref.series>ols.ref_spd', 'tgt.series>ols.target_spd', 'ols.model>run.model',
       'run.model>plot.model', 'run.model>syn.model', 'syn.data>momm.data'] },
-  { name: 'Turbulence intensity by speed, sector and time of day',
+  { name: 'Turbulence intensity by speed, sector and time of day', libs: ['bw'],
     nodes: [['src', 'Demo dataset', { dataset: 'demo_data' }], ['load', 'load_csv'], ['spd', 'Select column', { column: 'Spd80mN' }], ['std', 'Select column', { column: 'Spd80mNStd' }], ['dir', 'Select column', { column: 'Dir78mS' }],
       ['bs', 'TI.by_speed'], ['bsec', 'TI.by_sector'], ['t24', 'TI.twelve_by_24'], ['csv', 'export_csv', { file_name: 'ti_by_speed' }]],
     edges: ['src.path>load.filepath_or_folder', 'load.data>spd.data', 'load.data>std.data', 'load.data>dir.data', 'spd.series>bs.wspd', 'std.series>bs.wspd_std', 'spd.series>bsec.wspd', 'std.series>bsec.wspd_std', 'dir.series>bsec.wdir',
       'spd.series>t24.wspd', 'std.series>t24.wspd_std', 'bs.data>csv.data'] },
+  { name: 'windkit: wind climate at a site, Weibull fit and wind rose', libs: ['wk'],
+    nodes: [['pt', 'wk.spatial.create_point', { west_east: '[480000.0]', south_north: '[5882200.0]', height: '[80.0]', crs: 'EPSG:32629' }, { var: 'site' }],
+      ['ts', 'wk.create_tswc', { date_range: "pd.date_range('2021-01-01', '2022-01-01', freq='1h')" }], ['bwc', 'wk.bwc_from_tswc'], ['wwc', 'wk.weibull_fit'],
+      ['rose', 'wk.plot.wind_rose', { wind_speed_bins: "'IEC_II'" }], ['hist', 'wk.plot.histogram', { style: 'combined' }],
+      ['ws', 'wk.mean_wind_speed'], ['pd', 'wk.mean_power_density'], ['pws', 'Print'], ['ppd', 'Print']],
+    edges: ['pt.point>ts.output_locs', 'ts.tswc>bwc.ts', 'bwc.bwc>wwc.bwc', 'bwc.bwc>rose.ds', 'bwc.bwc>hist.ds', 'wwc.wwc>ws.wc_obj', 'wwc.wwc>pd.wc_obj', 'ws.mean_wind_speed>pws.value', 'pd.mean_power_density>ppd.value'] },
+  { name: 'windkit: read a .tab wind climate and a .wtg turbine', libs: ['wk'],
+    nodes: [['tabf', 'Sample file', { file: 'demo_mast_80m.tab' }], ['bwc', 'wk.read_bwc'], ['wwc', 'wk.weibull_fit'], ['rose', 'wk.plot.wind_rose'], ['ws', 'wk.mean_wind_speed', { bysector: true }], ['pws', 'Print'],
+      ['wtgf', 'Sample file', { file: 'demo_turbine_3MW.wtg' }], ['wtg', 'wk.read_wtg'], ['curves', 'wk.plot.power_ct_curves'], ['pw', 'wk.wtg_power', { ws: '[4.0, 8.0, 12.0, 16.0]' }], ['ppw', 'Print']],
+    edges: ['tabf.path>bwc.filename', 'bwc.bwc>wwc.bwc', 'bwc.bwc>rose.ds', 'wwc.wwc>ws.wc_obj', 'ws.mean_wind_speed>pws.value', 'wtgf.path>wtg.wtg_file', 'wtg.wtg>curves.ds', 'wtg.wtg>pw.wtg', 'pw.power>ppw.value'] },
+  { name: 'windkit: terrain and roughness maps', libs: ['wk'],
+    nodes: [['tif', 'Sample file', { file: 'demo_elevation.tif' }], ['dem', 'wk.read_elevation_map', {}, { var: 'elevation' }], ['rplot', 'wk.plot.raster_plot', { plot_title: 'Elevation (m)' }],
+      ['mapf', 'Sample file', { file: 'demo_elevation.map' }], ['lines', 'wk.read_elevation_map', {}, { var: 'contours' }], ['eplot', 'wk.plot.elevation_map'],
+      ['rouf', 'Sample file', { file: 'demo_roughness.map' }], ['rou', 'wk.read_roughness_map'], ['lplot', 'wk.plot.landcover_map'], ['bbox', 'wk.spatial.BBox.from_ds'], ['pb', 'Print']],
+    edges: ['tif.path>dem.filename', 'dem.elevation_map>rplot.da', 'mapf.path>lines.filename', 'lines.elevation_map>eplot.gdf', 'rouf.path>rou.filename', 'rou.roughness_map>lplot.gdf', 'dem.elevation_map>bbox.ds', 'bbox.bbox>pb.value'] },
+  { name: 'windkit: long-term correction with linear regression MCP', libs: ['wk'],
+    nodes: [['pt', 'wk.spatial.create_point', { west_east: '[480000.0]', south_north: '[5882200.0]', height: '[80.0]', crs: 'EPSG:32629' }, { var: 'site' }],
+      ['pair', 'wk.create_tswc_pair', { date_range: "pd.date_range('2020-01-01', '2021-01-01', freq='1h')" }, { var: 'reference' }],
+      ['mcp', 'wk.ltc.LinRegMCP'], ['fit', 'wk.ltc.LinRegMCP.fit'], ['pred', 'wk.ltc.LinRegMCP.predict', {}, { var: 'predicted' }],
+      ['scores', 'wk.ltc.calc_scores', { name: 'linreg' }], ['ps', 'Print'], ['bwc', 'wk.bwc_from_tswc'], ['rose', 'wk.plot.wind_rose']],
+    edges: ['pt.point>pair.output_locs', 'pair.tswc_1>fit.ds_ref', 'pair.tswc_2>fit.ds_target', 'mcp.model>fit.model', 'fit.model>pred.model', 'pair.tswc_1>pred.ds_ref',
+      'pair.tswc_2>scores.ds_target', 'pred.tswc>scores.ds_pred', 'scores.scores>ps.value', 'pred.tswc>bwc.ts', 'bwc.bwc>rose.ds'] },
+  { name: 'brightwind + windkit: mast data to a WAsP .tab file', libs: ['bw', 'wk'],
+    nodes: [['src', 'Demo dataset', { dataset: 'demo_data' }], ['load', 'load_csv'], ['cf', 'Demo dataset', { dataset: 'demo_cleaning_file' }], ['clean', 'apply_cleaning'],
+      ['cols', 'Select columns', { columns: 'Spd80mN, Dir78mS' }],
+      ['ts', 'wk.tswc_from_dataframe', { west_east: '-9.26877', south_north: '53.08896', crs: "'EPSG:4326'", height_to_columns: "{80.0: ('Spd80mN', 'Dir78mS')}" }, { var: 'tswc' }],
+      ['bwc', 'wk.bwc_from_tswc'], ['tab', 'wk.bwc_to_file', { filename: 'mast_80m.tab' }], ['rose', 'wk.plot.wind_rose', { wind_speed_bins: "'IEC_II'" }],
+      ['wwc', 'wk.weibull_fit'], ['pd', 'wk.mean_power_density', { bysector: true }], ['ppd', 'Print'], ['spd', 'Select column', { column: 'Spd80mN' }], ['mm', 'monthly_means']],
+    edges: ['src.path>load.filepath_or_folder', 'load.data>clean.data', 'cf.path>clean.cleaning_file_or_df', 'clean.data>cols.data', 'cols.data>ts.pd_df', 'ts.tswc>bwc.ts', 'bwc.bwc>tab.bwc', 'bwc.bwc>rose.ds',
+      'bwc.bwc>wwc.bwc', 'wwc.wwc>pd.wc_obj', 'pd.mean_power_density>ppd.value', 'clean.data>spd.data', 'spd.series>mm.data'] },
 ];
+const sameSet = (a, b) => a.length === b.length && a.every(x => b.includes(x));
+function fillTemplates() {
+  const sel = $('#tplSel'); sel.textContent = '';
+  sel.append(h('option', { value: '', text: 'Examples…' }));
+  TEMPLATES.forEach((t, i) => { if (t.libs.every(l => S.libs.includes(l))) sel.append(h('option', { value: i, text: t.name })); });
+}
 function loadTemplate(i) {
-  const t = TEMPLATES[i]; S.nodes = []; S.edges = []; S.sel = null; S.peek = null; pend = null;
+  const t = TEMPLATES[i];
+  if (t.libs.some(l => !S.libs.includes(l))) setLibs([...S.libs, ...t.libs]);
+  S.nodes = []; S.edges = []; S.sel = null; S.peek = null; pend = null;
   const ids = {};
   for (const [key, defId, v, extra] of t.nodes) ids[key] = addNode(defId, 0, 0, Object.assign({ v: { ...(v || {}) } }, extra || {})).id;
   for (const e of t.edges) { const [a, b] = e.split('>'), [an, ao] = a.split('.'), [bn, bi] = b.split('.'); if (!connect(ids[an], ao, ids[bn], bi)) console.warn('template edge failed', e); }
   measureAndTidy(); commit(); renderAll(); fit();
 }
 function measureAndTidy() { tidy(); }
+
+/* ---------- libraries ---------- */
+function setLibs(libs) {
+  S.libs = ['bw', 'wk'].filter(l => libs.includes(l) && (l === 'bw' || WKCAT));
+  if (!S.libs.length) S.libs = ['bw'];
+  try { localStorage.setItem('bw-builder-libs', JSON.stringify(S.libs)); } catch (e) { /* storage unavailable */ }
+  $('#ver').textContent = S.libs.map(l => l === 'bw' ? 'brightwind v' + CAT.version : 'windkit v' + WKCAT.version).join(' · ');
+  document.body.dataset.libs = S.libs.join(' ');
+  renderLibs(); fillTypeFilter(); fillTemplates(); renderCatalog();
+  if (S.peek && DEFS[S.peek] && !libOn(DEFS[S.peek])) S.peek = null;
+}
+function libsInUse() { return new Set(S.nodes.map(n => libOf(def(n))).filter(Boolean)); }
+function ensureLibs() { const need = [...libsInUse()].filter(l => !S.libs.includes(l)); if (need.length) setLibs([...S.libs, ...need]); }
+function renderLibs() {
+  const box = $('#libs'); if (!box) return; box.textContent = '';
+  box.append(h('span', { class: 'lb', text: 'Libraries' }));
+  for (const l of ['bw', 'wk']) {
+    const on = S.libs.includes(l);
+    box.append(h('button', { class: 'lib-btn lib-' + l, 'aria-pressed': String(on), disabled: l === 'wk' && !WKCAT,
+      title: on ? `Hide the ${LIBS[l].name} tools` : `Show the ${LIBS[l].name} tools`,
+      onclick: () => {
+        if (on && S.libs.length === 1) { toast('Keep at least one library switched on.'); return; }
+        if (on && libsInUse().has(l)) { toast(`The board uses ${LIBS[l].name} tools. Remove them first, or keep ${LIBS[l].name} on.`); return; }
+        setLibs(on ? S.libs.filter(x => x !== l) : [...S.libs, l]); renderAll();
+      } }, LIBS[l].name));
+  }
+  box.append(h('button', { class: 'lib-more', title: 'What each library is for', 'aria-label': 'Choose libraries', onclick: () => chooseLibs(false) }, '?'));
+}
+function chooseLibs(first) {
+  dialog('What do you want to build with?', (d, close) => {
+    const pick = libs => {
+      setLibs(libs); close();
+      if (first || !S.nodes.length) { const t = TEMPLATES.findIndex(x => sameSet(x.libs, S.libs)); if (t >= 0) loadTemplate(t); }
+      renderAll();
+    };
+    const card = (libs, title, ver, text) => h('button', { class: 'lib-card' + (sameSet(libs, S.libs) && !first ? ' on' : ''), onclick: () => pick(libs) },
+      h('strong', {}, title), ver ? h('span', { class: 'v', text: ver }) : null, h('span', { class: 'tx', text }));
+    d.append(h('p', { text: 'Choose a library, or both. Only its tools appear in the list, and the board, export and Run use it. You can change this at any time with the Libraries buttons above the tool list.' }),
+      h('div', { class: 'lib-choice' },
+        card(['bw'], 'brightwind', 'v' + CAT.version, 'Measured wind data: load mast and lidar files, clean, shear, turbulence intensity, long-term correlation and export.'),
+        WKCAT ? card(['wk'], 'windkit', 'v' + WKCAT.version + ' · DTU Wind Energy', 'Wind climates and maps: time series, binned and Weibull wind climates, terrain and roughness maps, turbines and WAsP files.') : null,
+        WKCAT ? card(['bw', 'wk'], 'Both', '', 'Load and clean measurements with brightwind, then build windkit wind climates and WAsP files from them.') : null));
+  });
+}
 
 /* ---------- zip (stored, no compression) ---------- */
 const CRC_T = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
@@ -835,19 +1021,23 @@ function zipStore(files) {
 
 /* ---------- boot ---------- */
 async function boot() {
-  try { CAT = await (await fetch('catalog.json')).json(); }
-  catch (e) { $('#details').append(h('div', { class: 'ins' }, h('p', { class: 'note bad', text: 'The tool catalog (catalog.json) could not be loaded. Reload the page to try again.' }))); return; }
-  for (const d of [...helperDefs(CAT), ...CAT.nodes]) DEFS[d.id] = d;
-  $('#ver').textContent = 'brightwind v' + CAT.version;
-  TEMPLATES.forEach((t, i) => $('#tplSel').append(h('option', { value: i, text: t.name })));
-  setupCatalog(); setupCanvas(); renderCatalog();
+  const [bwRes, wkRes] = await Promise.allSettled([fetch('catalog.json').then(r => r.json()), fetch('catalog-windkit.json').then(r => r.json())]);
+  if (bwRes.status !== 'fulfilled') { $('#details').append(h('div', { class: 'ins' }, h('p', { class: 'note bad', text: 'The tool catalog (catalog.json) could not be loaded. Reload the page to try again.' }))); return; }
+  CAT = bwRes.value;
+  if (wkRes.status === 'fulfilled') { WKCAT = wkRes.value; TYPES = WKCAT.types; WK_GROUPS = WKCAT.groups.filter(g => !COMMON_GROUPS.includes(g)); }
+  for (const d of [...helperDefs(CAT, WKCAT), ...CAT.nodes, ...(WKCAT ? WKCAT.nodes : [])]) DEFS[d.id] = d;
+  let savedLibs = null;
+  try { savedLibs = JSON.parse(localStorage.getItem('bw-builder-libs') || 'null'); } catch (e) { /* ignore */ }
+  setupCatalog(); setupCanvas();
+  setLibs(Array.isArray(savedLibs) ? savedLibs : ['bw']);
 
   let loaded = false;
   try { const saved = JSON.parse(localStorage.getItem('bw-builder-v1') || 'null');
     if (saved && saved.nodes && saved.nodes.length && saved.nodes.every(n => DEFS[n.t])) { S.nodes = saved.nodes; S.edges = saved.edges; S.seq = saved.seq; if (saved.view) S.view = saved.view; loaded = true; } } catch (e) { /* ignore */ }
   const startView = (location.hash || '').slice(1);
   setView(['canvas', 'code', 'run', 'tools', 'details'].includes(startView) ? startView : 'canvas', true);
-  if (loaded) { commit(); applyView(); renderAll(); } else loadTemplate(0);
+  if (loaded) { ensureLibs(); commit(); applyView(); renderAll(); } else loadTemplate(TEMPLATES.findIndex(t => sameSet(t.libs, S.libs)));
+  if (!Array.isArray(savedLibs) && WKCAT && window.self === window.top && !/[?&]nochooser\b/.test(location.search)) chooseLibs(!loaded);
 
   $('#tplSel').addEventListener('change', ev => { if (ev.target.value !== '') { loadTemplate(+ev.target.value); ev.target.value = ''; if (isNarrow()) setView('canvas'); } });
   $('#undoBtn').addEventListener('click', undo); $('#redoBtn').addEventListener('click', redo);
@@ -865,11 +1055,11 @@ async function boot() {
   $('#clearBtn').addEventListener('click', () => { if (!S.nodes.length) return; dialog('Clear the canvas?', (d, close) => d.append(h('p', { text: 'This removes every node and connection. Undo brings them back.' }),
     h('div', { class: 'acts' }, h('button', { class: 'btn', onclick: close }, 'Keep'), h('button', { class: 'btn danger', onclick: () => { S.nodes = []; S.edges = []; S.sel = null; commit(); renderAll(); close(); } }, 'Clear canvas')))); });
   $('#jsonBtn').addEventListener('click', () => dialog('Save or load a pipeline', (d, close) => {
-    const ta = h('textarea', { id: 'json-ta', 'aria-label': 'Pipeline JSON' }); ta.value = JSON.stringify({ app: 'brightwind-workflow-builder', brightwind: CAT.version, nodes: S.nodes, edges: S.edges, seq: S.seq });
+    const ta = h('textarea', { id: 'json-ta', 'aria-label': 'Pipeline JSON' }); ta.value = JSON.stringify({ app: 'brightwind-workflow-builder', libs: S.libs, brightwind: CAT.version, ...(WKCAT ? { windkit: WKCAT.version } : {}), nodes: S.nodes, edges: S.edges, seq: S.seq });
     d.append(h('p', { text: 'This text is the whole pipeline. Copy it somewhere safe to keep it, or paste a saved one here and load it.' }), ta,
       h('div', { class: 'acts' }, h('button', { class: 'btn', onclick: close }, 'Close'), h('button', { class: 'btn', onclick: () => copyText(ta.value, 'Pipeline copied.') }, 'Copy'),
         h('button', { class: 'btn primary', onclick: () => { try { const p = JSON.parse(ta.value); if (!Array.isArray(p.nodes) || !p.nodes.every(n => DEFS[n.t])) throw new Error('unknown tool');
-          S.nodes = p.nodes; S.edges = (p.edges || []).filter(e => nodeById(e.from[0]) && nodeById(e.to[0])); S.seq = p.seq || 1000; S.sel = null; commit(); renderAll(); fit(); close(); }
+          S.nodes = p.nodes; S.edges = (p.edges || []).filter(e => nodeById(e.from[0]) && nodeById(e.to[0])); S.seq = p.seq || 1000; S.sel = null; ensureLibs(); commit(); renderAll(); fit(); close(); }
           catch (e) { toast('That text is not a pipeline saved from this page.'); } } }, 'Load pasted pipeline'))); }));
   window.addEventListener('hashchange', () => { const v = location.hash.slice(1); if (['canvas', 'code', 'run', 'tools', 'details'].includes(v)) setView(v, true); });
   window.addEventListener('resize', () => { setView(document.body.dataset.view, true); });
@@ -899,7 +1089,7 @@ async function boot() {
       dl.addEventListener('click', async () => { try { await dlc.save({ filename: 'brightwind_workflow.zip', data: new Blob([bundle()]) }); }
         catch (e) { if (!e || e.code !== 'declined') toast('The file could not be saved here. Use Copy instead.'); } }); }).catch(() => {});
   }
-  window.__bw = { RUN, get RUNMARKS() { return RUNMARKS; }, runStart, zipStore, S, DEFS, generate, loadTemplate, TEMPLATES, addNode, connect, canConnect, nodeIssues, renderAll, commit, tidy, fit };
+  window.__bw = { RUN, get RUNMARKS() { return RUNMARKS; }, runStart, zipStore, S, DEFS, generate, loadTemplate, TEMPLATES, addNode, connect, canConnect, nodeIssues, renderAll, commit, tidy, fit, setLibs, chooseLibs, accepts, outTypes, isA, get WKCAT() { return WKCAT; } };
   if (typeof setupAssistant === 'function') setupAssistant();
 }
 boot();

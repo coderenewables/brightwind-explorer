@@ -1,0 +1,815 @@
+[
+ {
+  "path": "wk.ltc.LinRegMCP",
+  "group": "Long-term",
+  "inputs": {},
+  "outputs": [
+   {
+    "name": "model",
+    "types": [
+     "wk.ltc.LinRegMCP"
+    ]
+   }
+  ],
+  "browser": "ok",
+  "note": "Wire it to .fit with the reference and target time series, then .predict with the long-term reference.",
+  "probe": [
+   {
+    "args": {}
+   }
+  ]
+ },
+ {
+  "path": "wk.ltc.LinRegMCP.fit",
+  "group": "Long-term",
+  "self": [
+   "wk.ltc.LinRegMCP"
+  ],
+  "mutates": true,
+  "inputs": {
+   "ds_ref": [
+    "TSWC"
+   ],
+   "ds_target": [
+    "TSWC"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "model",
+    "types": [
+     "wk.ltc.LinRegMCP (fitted)"
+    ]
+   }
+  ],
+  "browser": "ok",
+  "summary": "Fit the reference to the target, sector by sector, over their concurrent period.",
+  "probe": [
+   {
+    "args": {
+     "__self__": "wk.ltc.LinRegMCP()",
+     "ds_ref": "wk.create_tswc_pair(S['Point'])[0]",
+     "ds_target": "wk.create_tswc_pair(S['Point'])[1]"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.ltc.LinRegMCP.predict",
+  "group": "Long-term",
+  "self": [
+   "wk.ltc.LinRegMCP (fitted)"
+  ],
+  "hide": [
+   "return_std"
+  ],
+  "inputs": {
+   "ds_ref": [
+    "TSWC"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "tswc",
+    "types": [
+     "TSWC"
+    ]
+   }
+  ],
+  "browser": "ok",
+  "summary": "Predict the target's wind speed and direction from a (long-term) reference time series.",
+  "probe": [
+   {
+    "args": {
+     "__self__": "(lambda r, t: wk.ltc.LinRegMCP().fit(r, t))(*wk.create_tswc_pair(S['Point']))",
+     "ds_ref": "wk.create_tswc_pair(S['Point'])[0]"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.ltc.LinRegMCP.predict_with_noise",
+  "group": "Long-term",
+  "self": [
+   "wk.ltc.LinRegMCP (fitted)"
+  ],
+  "inputs": {
+   "ds_ref": [
+    "TSWC"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "tswc",
+    "types": [
+     "TSWC"
+    ]
+   }
+  ],
+  "browser": "ok",
+  "probe": [
+   {
+    "args": {
+     "__self__": "(lambda r, t: wk.ltc.LinRegMCP().fit(r, t))(*wk.create_tswc_pair(S['Point']))",
+     "ds_ref": "wk.create_tswc_pair(S['Point'])[0]"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.ltc.VarRatMCP",
+  "group": "Long-term",
+  "inputs": {},
+  "outputs": [
+   {
+    "name": "model",
+    "types": [
+     "wk.ltc.VarRatMCP"
+    ]
+   }
+  ],
+  "browser": "ok",
+  "note": "Wire it to .fit with the reference and target time series, then .predict with the long-term reference.",
+  "probe": [
+   {
+    "args": {}
+   }
+  ]
+ },
+ {
+  "path": "wk.ltc.VarRatMCP.fit",
+  "group": "Long-term",
+  "self": [
+   "wk.ltc.VarRatMCP"
+  ],
+  "mutates": true,
+  "inputs": {
+   "ds_ref": [
+    "TSWC"
+   ],
+   "ds_target": [
+    "TSWC"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "model",
+    "types": [
+     "wk.ltc.VarRatMCP (fitted)"
+    ]
+   }
+  ],
+  "browser": "ok",
+  "summary": "Fit the reference to the target, sector by sector, over their concurrent period.",
+  "probe": [
+   {
+    "args": {
+     "__self__": "wk.ltc.VarRatMCP()",
+     "ds_ref": "wk.create_tswc_pair(S['Point'])[0]",
+     "ds_target": "wk.create_tswc_pair(S['Point'])[1]"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.ltc.VarRatMCP.predict",
+  "group": "Long-term",
+  "self": [
+   "wk.ltc.VarRatMCP (fitted)"
+  ],
+  "hide": [
+   "return_std"
+  ],
+  "inputs": {
+   "ds_ref": [
+    "TSWC"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "tswc",
+    "types": [
+     "TSWC"
+    ]
+   }
+  ],
+  "browser": "ok",
+  "summary": "Predict the target's wind speed and direction from a (long-term) reference time series.",
+  "probe": [
+   {
+    "args": {
+     "__self__": "(lambda r, t: wk.ltc.VarRatMCP().fit(r, t))(*wk.create_tswc_pair(S['Point']))",
+     "ds_ref": "wk.create_tswc_pair(S['Point'])[0]"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.spatial.BBox.from_cornerpts",
+  "group": "Spatial",
+  "inputs": {},
+  "outputs": [
+   {
+    "name": "bbox",
+    "types": [
+     "BBox"
+    ]
+   }
+  ],
+  "browser": "ok",
+  "probe": [
+   {
+    "args": {}
+   }
+  ]
+ },
+ {
+  "path": "wk.spatial.BBox.from_bounds",
+  "group": "Spatial",
+  "inputs": {},
+  "outputs": [
+   {
+    "name": "bbox",
+    "types": [
+     "BBox"
+    ]
+   }
+  ],
+  "browser": "ok",
+  "probe": [
+   {
+    "args": {
+     "minx": "9.0",
+     "miny": "55.0",
+     "maxx": "10.0",
+     "maxy": "56.0"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.spatial.BBox.from_point_and_buffer",
+  "group": "Spatial",
+  "inputs": {},
+  "outputs": [
+   {
+    "name": "bbox",
+    "types": [
+     "BBox"
+    ]
+   }
+  ],
+  "browser": "ok",
+  "probe": [
+   {
+    "args": {
+     "x": "10.0",
+     "y": "56.0",
+     "buffer": "0.1"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.spatial.BBox.utm_bbox_from_geographic_coordinate",
+  "group": "Spatial",
+  "inputs": {},
+  "outputs": [
+   {
+    "name": "bbox",
+    "types": [
+     "BBox"
+    ]
+   }
+  ],
+  "browser": "ok",
+  "probe": [
+   {
+    "args": {
+     "longitude": "10.0",
+     "latitude": "56.0"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.spatial.BBox.from_ds",
+  "group": "Spatial",
+  "inputs": {
+   "ds": [
+    "Dataset",
+    "DataArray"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "bbox",
+    "types": [
+     "BBox"
+    ]
+   }
+  ],
+  "browser": "ok",
+  "probe": [
+   {
+    "args": {
+     "ds": "@RasterMap"
+    }
+   },
+   {
+    "args": {
+     "ds": "@Raster"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.spatial.BBox.buffer",
+  "group": "Spatial",
+  "self": [
+   "BBox"
+  ],
+  "inputs": {},
+  "outputs": [
+   {
+    "name": "bbox",
+    "types": [
+     "BBox"
+    ]
+   }
+  ],
+  "browser": "ok",
+  "probe": [
+   {
+    "args": {
+     "__self__": "@BBox",
+     "distance": "100.0"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.spatial.BBox.reproject",
+  "group": "Spatial",
+  "self": [
+   "BBox"
+  ],
+  "inputs": {},
+  "outputs": [
+   {
+    "name": "bbox",
+    "types": [
+     "BBox"
+    ]
+   }
+  ],
+  "browser": "ok",
+  "fields": {
+   "to_crs": {
+    "mode": "text"
+   }
+  },
+  "probe": [
+   {
+    "args": {
+     "__self__": "@BBox",
+     "to_crs": "'EPSG:4326'"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.spatial.BBox.reproject_to_utm",
+  "group": "Spatial",
+  "self": [
+   "BBox"
+  ],
+  "inputs": {},
+  "outputs": [
+   {
+    "name": "bbox",
+    "types": [
+     "BBox"
+    ]
+   }
+  ],
+  "browser": "ok",
+  "probe": [
+   {
+    "args": {
+     "__self__": "S['BBox'].reproject_to_geographic()"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.spatial.BBox.reproject_to_geographic",
+  "group": "Spatial",
+  "self": [
+   "BBox"
+  ],
+  "inputs": {},
+  "outputs": [
+   {
+    "name": "bbox",
+    "types": [
+     "BBox"
+    ]
+   }
+  ],
+  "browser": "ok",
+  "probe": [
+   {
+    "args": {
+     "__self__": "@BBox"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.spatial.BBox.bounds",
+  "group": "Spatial",
+  "self": [
+   "BBox"
+  ],
+  "inputs": {},
+  "outputs": [
+   {
+    "name": "minx",
+    "types": [
+     "Value"
+    ]
+   },
+   {
+    "name": "miny",
+    "types": [
+     "Value"
+    ]
+   },
+   {
+    "name": "maxx",
+    "types": [
+     "Value"
+    ]
+   },
+   {
+    "name": "maxy",
+    "types": [
+     "Value"
+    ]
+   }
+  ],
+  "browser": "ok",
+  "summary": "The bounds of the box as (minx, miny, maxx, maxy).",
+  "probe": [
+   {
+    "args": {
+     "__self__": "@BBox"
+    }
+   }
+  ],
+  "tuple": true
+ },
+ {
+  "path": "wk.spatial.BBox.to_grid",
+  "group": "Spatial",
+  "self": [
+   "BBox"
+  ],
+  "inputs": {},
+  "outputs": [
+   {
+    "name": "grid",
+    "types": [
+     "Raster",
+     "Cuboid"
+    ]
+   }
+  ],
+  "browser": "ok",
+  "note": "One height gives a Raster, several heights a Cuboid. Use it as output locations.",
+  "probe": [
+   {
+    "args": {
+     "__self__": "@BBox",
+     "spacing": "250.0",
+     "heights": "[50.0, 100.0]"
+    }
+   },
+   {
+    "args": {
+     "__self__": "@BBox",
+     "spacing": "250.0",
+     "heights": "80.0"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.spatial.BBox.plot",
+  "group": "Plots",
+  "self": [
+   "BBox"
+  ],
+  "inputs": {},
+  "outputs": [
+   {
+    "name": "axes",
+    "types": [
+     "Axes"
+    ]
+   }
+  ],
+  "browser": "ok",
+  "probe": [
+   {
+    "args": {
+     "__self__": "@BBox"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.LandCoverTable.to_json",
+  "group": "Read & write",
+  "self": [
+   "LandCoverTable"
+  ],
+  "inputs": {},
+  "fields": {
+   "filename": {
+    "mode": "text"
+   }
+  },
+  "outputs": [],
+  "browser": "ok",
+  "probe": [
+   {
+    "args": {
+     "__self__": "@LandCoverTable",
+     "filename": "TMP + '/lct.json'"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.LandCoverTable.read_json",
+  "group": "Read & write",
+  "inputs": {
+   "filename": [
+    "Path"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "lctable",
+    "types": [
+     "LandCoverTable"
+    ]
+   }
+  ],
+  "browser": "ok",
+  "probe": [
+   {
+    "args": {
+     "filename": "TMP + '/lct.json'"
+    }
+   }
+  ]
+ },
+ {
+  "path": "wk.Workspace.read_wwh",
+  "group": "WAsP workspace",
+  "inputs": {
+   "path": [
+    "Path"
+   ]
+  },
+  "outputs": [
+   {
+    "name": "workspace",
+    "types": [
+     "Workspace"
+    ]
+   }
+  ],
+  "browser": "ok",
+  "note": "Reads a WAsP workspace (.wwh). No sample workspace is bundled, so these nodes are checked against windkit's documentation only.",
+  "skip_probe": "No sample WAsP workspace file is available."
+ },
+ {
+  "path": "wk.Workspace.get_ids",
+  "group": "WAsP workspace",
+  "self": [
+   "Workspace"
+  ],
+  "inputs": {},
+  "fields": {
+   "object_description": {
+    "mode": "text"
+   }
+  },
+  "outputs": [
+   {
+    "name": "ids",
+    "types": [
+     "List"
+    ]
+   }
+  ],
+  "browser": "ok",
+  "skip_probe": "No sample WAsP workspace file is available."
+ },
+ {
+  "path": "wk.Workspace.get_owc",
+  "group": "WAsP workspace",
+  "self": [
+   "Workspace"
+  ],
+  "inputs": {},
+  "outputs": [
+   {
+    "name": "bwc",
+    "types": [
+     "BWC"
+    ]
+   }
+  ],
+  "browser": "ok",
+  "skip_probe": "No sample WAsP workspace file is available."
+ },
+ {
+  "path": "wk.Workspace.get_owc_weibull_fit",
+  "group": "WAsP workspace",
+  "self": [
+   "Workspace"
+  ],
+  "inputs": {},
+  "outputs": [
+   {
+    "name": "wwc",
+    "types": [
+     "WWC"
+    ]
+   }
+  ],
+  "browser": "ok",
+  "skip_probe": "No sample WAsP workspace file is available."
+ },
+ {
+  "path": "wk.Workspace.get_gwc",
+  "group": "WAsP workspace",
+  "self": [
+   "Workspace"
+  ],
+  "inputs": {},
+  "outputs": [
+   {
+    "name": "gwc",
+    "types": [
+     "GWC"
+    ]
+   }
+  ],
+  "browser": "ok",
+  "skip_probe": "No sample WAsP workspace file is available."
+ },
+ {
+  "path": "wk.Workspace.get_wwc",
+  "group": "WAsP workspace",
+  "self": [
+   "Workspace"
+  ],
+  "inputs": {},
+  "outputs": [
+   {
+    "name": "wwc",
+    "types": [
+     "WWC"
+    ]
+   }
+  ],
+  "browser": "ok",
+  "skip_probe": "No sample WAsP workspace file is available."
+ },
+ {
+  "path": "wk.Workspace.get_site_effects",
+  "group": "WAsP workspace",
+  "self": [
+   "Workspace"
+  ],
+  "inputs": {},
+  "outputs": [
+   {
+    "name": "site_effects",
+    "types": [
+     "SiteEffects"
+    ]
+   }
+  ],
+  "browser": "ok",
+  "skip_probe": "No sample WAsP workspace file is available."
+ },
+ {
+  "path": "wk.Workspace.get_aep",
+  "group": "WAsP workspace",
+  "self": [
+   "Workspace"
+  ],
+  "inputs": {},
+  "outputs": [
+   {
+    "name": "aep",
+    "types": [
+     "Dataset"
+    ]
+   }
+  ],
+  "browser": "ok",
+  "skip_probe": "No sample WAsP workspace file is available."
+ },
+ {
+  "path": "wk.Workspace.get_wtg",
+  "group": "WAsP workspace",
+  "self": [
+   "Workspace"
+  ],
+  "inputs": {},
+  "fields": {
+   "regulation_type": {
+    "mode": "choice",
+    "choices": [
+     "pitch",
+     "stall"
+    ]
+   }
+  },
+  "outputs": [
+   {
+    "name": "wtg",
+    "types": [
+     "WTG"
+    ]
+   }
+  ],
+  "browser": "ok",
+  "skip_probe": "No sample WAsP workspace file is available."
+ },
+ {
+  "path": "wk.Workspace.get_turbines",
+  "group": "WAsP workspace",
+  "self": [
+   "Workspace"
+  ],
+  "inputs": {},
+  "outputs": [
+   {
+    "name": "turbines",
+    "types": [
+     "DataArray"
+    ]
+   }
+  ],
+  "browser": "ok",
+  "skip_probe": "No sample WAsP workspace file is available."
+ },
+ {
+  "path": "wk.Workspace.get_elevation_map",
+  "group": "WAsP workspace",
+  "self": [
+   "Workspace"
+  ],
+  "inputs": {},
+  "outputs": [
+   {
+    "name": "map",
+    "types": [
+     "VectorMap"
+    ]
+   }
+  ],
+  "browser": "ok",
+  "skip_probe": "No sample WAsP workspace file is available."
+ },
+ {
+  "path": "wk.Workspace.get_roughness_map",
+  "group": "WAsP workspace",
+  "self": [
+   "Workspace"
+  ],
+  "hide": [
+   "convert_to_landcover"
+  ],
+  "inputs": {},
+  "outputs": [
+   {
+    "name": "map",
+    "types": [
+     "VectorMap"
+    ]
+   }
+  ],
+  "browser": "ok",
+  "skip_probe": "No sample WAsP workspace file is available."
+ }
+]

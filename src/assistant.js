@@ -18,12 +18,23 @@ const AI = {
   busy: null,         // AbortController while a build runs
 };
 const AI_STORE = 'bw-ai-v1';
-const EXAMPLE_PROMPTS = [
-  'Monthly means and a frequency rose of the 80 m north anemometer on the demo mast',
-  'Average shear from the 40, 60 and 80 m anemometers, then scale the 80 m speed to a 120 m hub height',
-  'Correlate the 80 m speed with MERRA-2 NE using monthly ordinary least squares and synthesize the long-term series',
-  'Apply the demo cleaning file, then turbulence intensity by speed and by sector, and export the TI table to csv',
-];
+const EXAMPLE_PROMPTS = {
+  bw: [
+    'Monthly means and a frequency rose of the 80 m north anemometer on the demo mast',
+    'Average shear from the 40, 60 and 80 m anemometers, then scale the 80 m speed to a 120 m hub height',
+    'Correlate the 80 m speed with MERRA-2 NE using monthly ordinary least squares and synthesize the long-term series',
+    'Apply the demo cleaning file, then turbulence intensity by speed and by sector, and export the TI table to csv',
+  ],
+  wk: [
+    'Read the sample .tab wind climate, fit a Weibull per sector and show the wind rose and mean power density',
+    'Plot the power and thrust curves of the sample .wtg turbine and its power at 6, 9 and 12 m/s',
+    'Make a 2 km by 2 km raster of points 100 m apart at 80 m around 480000, 5882000 in EPSG:32629 and plot it',
+  ],
+  both: [
+    'Clean the demo mast data, turn the 80 m speed and 78 m direction into a windkit time series, and write a WAsP .tab file with a wind rose',
+  ],
+};
+const examplePrompts = () => [...(S.libs.includes('bw') && S.libs.includes('wk') ? EXAMPLE_PROMPTS.both : []), ...S.libs.flatMap(l => EXAMPLE_PROMPTS[l]).slice(0, 5)];
 
 /* ---------- settings ---------- */
 function aiLoad() {
@@ -44,16 +55,17 @@ const aiBase = () => (AI.settings.provider === 'openai' ? 'https://api.openai.co
 /* ---------- prompt ---------- */
 function aiCatalogText() {
   const lines = [];
-  for (const g of GROUP_ORDER) {
-    const defs = Object.values(DEFS).filter(d => d.group === g && d.status !== 'not_implemented');
+  const sections = [[null, COMMON_GROUPS], ...S.libs.map(l => [l, l === 'bw' ? BW_GROUPS : WK_GROUPS])];
+  for (const [lib, gs] of sections) for (const g of gs) {
+    const defs = Object.values(DEFS).filter(d => d.group === g && libOn(d) && d.status !== 'not_implemented' && (lib ? libOf(d) === lib : true) && !(lib && COMMON_GROUPS.includes(g)));
     if (!defs.length) continue;
-    lines.push(`\n# ${g}`);
+    lines.push(`\n# ${lib ? LIBS[lib].name + ': ' : ''}${g}`);
     for (const d of defs) {
-      let s = d.summary || ''; if (s.length > 170) s = s.slice(0, 167) + '...';
+      let s = d.summary || ''; const max = d.lib === 'wk' ? 130 : 170; if (s.length > max) s = s.slice(0, max - 3) + '...';
       lines.push(`## ${d.id} [${d.kind}${d.status === 'deprecated' ? ', deprecated' : ''}] ${s}`);
       if (d.inputs.length) lines.push('  in: ' + d.inputs.map(i => `${i.name}${i.required ? '*' : ''}:${i.types.map(t => t === '*' ? 'any' : t).join('|')}${i.self ? '(object)' : ''}`).join(', '));
       const fs = d.fields.filter(f => !f.flag).map(f => {
-        if (f.mode === 'choice') return `${f.name}${f.required ? '*' : ''} one of ${f.choices.join('/')}`;
+        if (f.mode === 'choice') return `${f.name}${f.required ? '*' : ''} one of ${f.choices.join('/')}${f.quoted ? ' (quoted string)' : ''}`;
         if (f.mode === 'bool') return `${f.name}=${f.default ?? 'False'}`;
         return `${f.name}${f.required ? '*' : ''}${f.default != null && f.default !== 'None' ? '=' + (f.default.length > 40 ? f.default.slice(0, 37) + '...' : f.default) : ''}`;
       });
@@ -61,17 +73,35 @@ function aiCatalogText() {
       if (fs.length) lines.push('  params: ' + fs.join(', '));
       if (d.outputs.length) lines.push('  out: ' + d.outputs.map(o => `${o.name}:${o.types.join('|')}${o.flag ? ` (only with ${o.flag}=True; wiring it sets that)` : ''}`).join(', '));
       if (d.note) lines.push('  note: ' + d.note);
+      if (d.blocked) lines.push('  needs internet: avoid unless the user asks for it');
     }
   }
   return lines.join('\n');
 }
+function aiWindkitText() {
+  if (!S.libs.includes('wk')) return '';
+  const tree = Object.entries(TYPES).filter(([, v]) => v.parent).map(([t, v]) => `${t} < ${v.parent}`).join(', ');
+  return `
+windkit (tool ids start with "wk.")
+- windkit's data are xarray Datasets and DataArrays with a spatial structure. A type also fits any input that accepts one of its parents: ${tree}. So a PWC fits a WWC input, and every wind climate fits a Dataset input. Locations is only a parent: make locations with wk.spatial.create_point, create_stacked_point, create_raster or create_cuboid, or wk.spatial.BBox.to_grid.
+- Coordinates are in the units of the crs: metres for a projected crs such as 'EPSG:32629' (UTM 29N), degrees for 'EPSG:4326' (west_east is longitude, south_north latitude). create_point takes lists: west_east [x], south_north [y], height [h].
+- "Sample file" {"file": "'demo_mast_80m.tab'"} gives the path of a bundled example file: ${(WKCAT.samples || []).map(x => `${x.file} (${x.doc.replace(/\.$/, '')})`).join('; ')}. Read them with wk.read_bwc, wk.read_wtg, wk.read_elevation_map or wk.read_roughness_map.
+- With no files, windkit can make synthetic data: wk.create_tswc (time series), wk.create_bwc, wk.create_wwc and wk.create_tswc_pair (a reference and a target for long-term correction) all take output_locs from create_point.
+- Classes work like brightwind's: wk.ltc.LinRegMCP -> wk.ltc.LinRegMCP.fit (ds_ref, ds_target) -> wk.ltc.LinRegMCP.predict (ds_ref). Workspace methods need wk.Workspace.read_wwh first.
+- windkit helpers: "Select variable" {"variable": "'wind_speed'"} takes one variable of a Dataset; "Select by coordinate" {"method": "'sel'", "selection": "height=80"}; "DataArray to Series" and "Dataset to DataFrame" turn xarray into pandas; "Save netCDF" {"file_name": "'bwc.nc'"}; "Save interactive figure" {"file_name": "'rose.html'"} for plotly figures.
+- wk.plot functions return interactive plotly figures or matplotlib axes; both are shown when the script runs.
+- A WAsP .tab file (wk.bwc_to_file) needs geographic coordinates (EPSG:4326).${S.libs.includes('bw') ? `
+- From brightwind to windkit: load and clean with brightwind, keep the speed and direction columns with "Select columns", then wk.tswc_from_dataframe with west_east (longitude), south_north (latitude), crs "'EPSG:4326'" and height_to_columns, for example "{80.0: ('Spd80mN', 'Dir78mS')}". The demo mast is at about longitude -9.27, latitude 53.09. Back to brightwind: "Select variable" then "DataArray to Series".` : ''}
+`;
+}
 function aiSystemPrompt() {
-  return `You build wind resource analysis pipelines for the Brightwind Workflow Builder, a visual editor for the brightwind Python library v${CAT.version}. The user describes an analysis; you answer by calling the build_pipeline tool with a graph of nodes and edges. The app turns that graph into a Python script, so every node must be a tool from the catalog below, wired with matching types.
+  const libText = S.libs.map(l => l === 'bw' ? `the brightwind Python library v${CAT.version}` : `the windkit Python library v${WKCAT.version} (DTU Wind Energy)`).join(' and ');
+  return `You build wind resource analysis pipelines for the Brightwind Workflow Builder, a visual editor for ${libText}. The user describes an analysis; you answer by calling the build_pipeline tool with a graph of nodes and edges. The app turns that graph into a Python script, so every node must be a tool from the catalog below, wired with matching types.
 
 How graphs work
 - A node is one tool from the catalog, named by its exact id in "tool". Give each node a short unique "key" such as "load" or "spd80".
 - An edge connects an output port to an input port: {"from": "key.output_name", "to": "key.input_name"}. Each input takes at most one edge. No loops.
-- Types must match. An input lists the types it accepts; "any" accepts every type. brightwind functions that take a Series need a "Select column" node between the DataFrame and the function.
+- Types must match. An input lists the types it accepts; "any" accepts every type.${S.libs.includes('bw') ? ' brightwind functions that take a Series need a "Select column" node between the DataFrame and the function.' : ''}
 - Required inputs and params are marked *. A required input must be wired, or given a Python literal in the node's "inputs", for example {"lat": "53.4"}.
 - Methods and attributes are separate nodes that take the object on their "(object)" input. A correlation is: constructor -> .run -> .plot / .synthesize / .params, and only the output of .run (the "fitted" type) reaches the later steps. A shear class works the same way: Shear.Average -> Shear.Average.apply or .alpha.
 - Some outputs, such as the data table of monthly_means or dist, only exist when return_data=True. Wiring that output turns the flag on, so do not set it yourself.
@@ -80,13 +110,14 @@ How graphs work
 Param values
 - Every value in "params" and "inputs" is Python source code as a string: strings quoted ("'1M'", "'Spd80mN'"), numbers ("80"), booleans ("True"), lists ("[80, 60, 40]"), None ("None").
 - Only set params that are required or that the request needs to differ from the default.
-- Helper nodes: "Demo dataset" {"dataset": "'demo_data'"}; "File path" {"path": "'C:/data/mast.csv'"}; "Select column" {"column": "'Spd80mN'"}; "Select columns" {"columns": "['Spd80mN', 'Spd60mN']"}; "Slice by date" {"date_from": "'2016-06-01'", "date_to": "'2017-05-31'"}; "Python expression" {"expression": "{a} * 1.02", "returns": "'Series'"}; "List" collects inputs a..d into a list, for example the reference speeds of Correl.MultipleLinearRegression.
+- Helper nodes: ${S.libs.includes('bw') ? `"Demo dataset" {"dataset": "'demo_data'"}; ` : ''}"File path" {"path": "'C:/data/mast.csv'"}; "Select column" {"column": "'Spd80mN'"}; "Select columns" {"columns": "['Spd80mN', 'Spd60mN']"}; "Slice by date" {"date_from": "'2016-06-01'", "date_to": "'2017-05-31'"}; "Python expression" {"expression": "{a} * 1.02", "returns": "'Series'"}; "List" collects inputs a..d into a list, for example the reference speeds of Correl.MultipleLinearRegression.
 
-Data
+${aiWindkitText()}${S.libs.includes('bw') ? `Data (brightwind)
 - When the user does not name their own files, use the bundled demo data: "Demo dataset" -> load_csv.
 - demo_data columns: Spd80mN, Spd80mS, Spd60mN, Spd60mS, Spd40mN, Spd40mS (mean speeds, m/s, at 80/60/40 m, north and south booms), Spd80mNStd, Spd80mSStd, Spd60mNStd, Spd60mSStd, Spd40mNStd, Spd40mSStd (standard deviations), Spd80mNMax ... Spd40mSMax (gusts), Dir78mS, Dir58mS, Dir38mS (directions at 78/58/38 m), Dir78mSStd, Dir58mSStd, Dir38mSStd, T2m (deg C), RH2m (%), P2m (hPa), PrcpTot, BattMin. 10-minute data, 2016 to 2017.
 - demo_merra2_NE, demo_merra2_NW, demo_merra2_SE, demo_merra2_SW (MERRA-2 reanalysis nodes, hourly, 2000 to 2017) have columns WS50m_m/s, WD50m_deg, T2M_degC, PS_hPa.
 - demo_cleaning_file is a cleaning log for demo_data, for apply_cleaning.
+` : ''}
 - With the user's own file, use a "File path" node. If they did not give column names, use clear placeholders such as 'WS_80m' and say so in the summary.
 
 Style
@@ -183,6 +214,7 @@ function aiApply(plan) { // builds the plan on the board; returns {problems, bui
       continue;
     }
     if (d.status === 'not_implemented') { problems.push(`Node "${key}": ${d.id} is not implemented in brightwind v${CAT.version}.`); continue; }
+    if (!libOn(d)) { problems.push(`Node "${key}": ${d.id} is a ${LIBS[libOf(d)].name} tool, and only ${S.libs.map(l => LIBS[l].name).join(' and ')} is switched on. Use tools from the catalog.`); continue; }
     const n = addNode(d.id, 0, 0);
     keyToId[key] = n.id;
     if (pn.var && /^[A-Za-z_]\w*$/.test(String(pn.var).trim())) n.var = String(pn.var).trim();
@@ -384,8 +416,13 @@ function aiRenderState() {
   $('#aiPrompt').disabled = busy;
   $('#aiEditRow').hidden = !S.nodes.length;
 }
+function aiExamples() { // the examples follow the libraries that are switched on
+  const ex = $('#aiExamples'); if (!ex) return; ex.textContent = '';
+  for (const t of examplePrompts()) ex.append(h('button', { type: 'button', class: 'chip', text: t, onclick: () => { $('#aiPrompt').value = t; $('#aiEdit').checked = false; $('#aiPrompt').focus(); } }));
+}
 function aiOpen(open) {
   const panel = $('#ai'); panel.hidden = !open;
+  if (open) aiExamples();
   $('#aiBtn').setAttribute('aria-expanded', open);
   if (open) { aiRenderState(); const ready = !$('#aiGo').disabled; $('#aiSetup').open = !ready; (ready ? $('#aiPrompt') : $('#aiKey')).focus(); }
 }
@@ -425,7 +462,6 @@ function setupAssistant() {
   });
   $('#aiPrompt').addEventListener('keydown', ev => { if (ev.key === 'Enter' && (ev.ctrlKey || ev.metaKey)) { ev.preventDefault(); $('#aiForm').requestSubmit(); } });
   $('#aiStop').addEventListener('click', () => AI.busy && AI.busy.abort());
-  const ex = $('#aiExamples');
-  for (const t of EXAMPLE_PROMPTS) ex.append(h('button', { type: 'button', class: 'chip', text: t, onclick: () => { $('#aiPrompt').value = t; $('#aiEdit').checked = false; $('#aiPrompt').focus(); } }));
+  aiExamples();
   window.__bw.ai = { AI, aiApply, aiBoardAsPlan, aiSystemPrompt, aiBuild };
 }

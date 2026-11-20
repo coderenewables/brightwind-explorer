@@ -21,6 +21,7 @@
   --good: #1f7a4d;
   --bad: #b3261e;
   --t-df: #1b68ad; --t-series: #0d8266; --t-fig: #9c3590; --t-path: #86680a; --t-val: #56646f; --t-obj: #6546c0;
+  --t-wc: #00808c; --t-loc: #64760c; --t-map: #8a5526; --t-wtg: #b82d64; --t-xr: #4a5788;
   --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --f-display: "IBM Plex Sans Condensed", "IBM Plex Sans", system-ui, sans-serif;
   --f-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
@@ -30,14 +31,14 @@
     color-scheme: dark;
     --bg: #0e161c; --panel: #141e26; --card: #1a2630; --ink: #e5ecf1; --muted: #93a4b1; --line: #2c3b47;
     --accent: #ff7d42; --good: #5fd39a; --bad: #ff8a80;
-    --t-df: #62aeea; --t-series: #45cba8; --t-fig: #dc86cf; --t-path: #dcb746; --t-val: #a3b3bf; --t-obj: #ab95f2;
+    --t-df: #62aeea; --t-series: #45cba8; --t-fig: #dc86cf; --t-path: #dcb746; --t-val: #a3b3bf; --t-obj: #ab95f2; --t-wc: #4fd0dc; --t-loc: #bccf4e; --t-map: #e0a26a; --t-wtg: #f483b0; --t-xr: #a3b2ec;
   }
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
   --bg: #0e161c; --panel: #141e26; --card: #1a2630; --ink: #e5ecf1; --muted: #93a4b1; --line: #2c3b47;
   --accent: #ff7d42; --good: #5fd39a; --bad: #ff8a80;
-  --t-df: #62aeea; --t-series: #45cba8; --t-fig: #dc86cf; --t-path: #dcb746; --t-val: #a3b3bf; --t-obj: #ab95f2;
+  --t-df: #62aeea; --t-series: #45cba8; --t-fig: #dc86cf; --t-path: #dcb746; --t-val: #a3b3bf; --t-obj: #ab95f2; --t-wc: #4fd0dc; --t-loc: #bccf4e; --t-map: #e0a26a; --t-wtg: #f483b0; --t-xr: #a3b2ec;
 }
 * { box-sizing: border-box; }
 html { scroll-padding-top: 70px; }
@@ -95,6 +96,8 @@ td:first-child { white-space: nowrap; }
 .ty { display: inline-flex; align-items: center; gap: 5px; font: 500 12px var(--f-mono); padding: 0 6px; border-radius: 3px; border: 1px solid var(--tc); color: var(--tc); white-space: nowrap; }
 .ty::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--tc); }
 .c-df { --tc: var(--t-df); } .c-series { --tc: var(--t-series); } .c-fig { --tc: var(--t-fig); } .c-path { --tc: var(--t-path); } .c-val { --tc: var(--t-val); } .c-obj { --tc: var(--t-obj); }
+.c-wc { --tc: var(--t-wc); } .c-loc { --tc: var(--t-loc); } .c-map { --tc: var(--t-map); } .c-wtg { --tc: var(--t-wtg); } .c-xr { --tc: var(--t-xr); }
+.dim { color: var(--muted); font-size: 12px; }
 
 .steps { counter-reset: st; list-style: none; padding: 0; }
 .steps > li { counter-increment: st; position: relative; padding: 0 0 8px 38px; }
@@ -129,12 +132,14 @@ footer { max-width: 740px; color: var(--muted); font-size: 14px; padding-top: 18
   <h2>Contents</h2>
   <ol>
     <li><a href="#start">Quick start</a></li>
+    <li><a href="#libs">brightwind, windkit or both</a></li>
     <li><a href="#screen">The screen</a></li>
     <li><a href="#find">Finding tools</a></li>
     <li><a href="#wire">Wiring a pipeline</a></li>
     <li><a href="#types">Port types</a></li>
     <li><a href="#params">Inputs and parameters</a></li>
     <li><a href="#objects">Objects and methods</a></li>
+    <li><a href="#windkit">Working with windkit</a></li>
     <li><a href="#helpers">Helper nodes</a></li>
     <li><a href="#examples">Examples</a></li>
     <li><a href="#export">Exporting Python</a></li>
@@ -149,27 +154,48 @@ footer { max-width: 740px; color: var(--muted); font-size: 14px; padding-top: 18
 <main>
 <div class="hero">
   <p class="ov">How to use</p>
-  <h1>Explore brightwind, wire an analysis, take home a script</h1>
-  <p>The Brightwind Workflow Builder lays out every public tool in the <a href="https://github.com/brightwind-dev/brightwind">brightwind</a> wind resource assessment library (v2.8.0) as a node you can drop on a board and wire to others. When the pipeline is ready, it writes the Python for you.</p>
-  <p>When the pipeline is ready, export it as Python, or press <strong>Run</strong> to execute it with brightwind right here in the browser. Either way your data stays on your computer: nothing is uploaded to a server.</p>
+  <h1>Explore brightwind and windkit, wire an analysis, take home a script</h1>
+  <p>The Brightwind Workflow Builder lays out every public tool in two open-source wind resource libraries as nodes you can drop on a board and wire to others: <a href="https://github.com/brightwind-dev/brightwind">brightwind</a> (v2.8.0), for measured mast and lidar data, and <a href="https://docs.wasp.dk/windkit">windkit</a> (v2.2.0, DTU Wind Energy), for wind climates, maps and turbines. Use either one, or both in the same pipeline.</p>
+  <p>When the pipeline is ready, export it as Python, or press <strong>Run</strong> to execute it right here in the browser. Either way your data stays on your computer: nothing is uploaded to a server.</p>
 </div>
 
 <section id="start">
   <h2><span class="n">01</span>Quick start</h2>
   <ol class="steps">
-    <li>Open the <a href="./">builder</a>. The first visit opens an example: a site overview of the demo mast that ends in a WAsP tab file.</li>
+    <li>Open the <a href="./">builder</a>. The first visit asks which library you want to build with, <a href="#libs">brightwind, windkit or both</a>, and opens an example for it.</li>
     <li>Pick another example from <strong>Examples…</strong> in the top bar, or press <strong>Clear</strong> to start empty.</li>
-    <li>Drag a tool from the list on the left onto the board. Start with <code>Demo dataset</code> or <code>File path</code>, then <code>load_csv</code>.</li>
+    <li>Drag a tool from the list on the left onto the board. For brightwind, start with <code>Demo dataset</code> or <code>File path</code>, then <code>load_csv</code>; for windkit, with <code>Sample file</code> and a <code>read_</code> tool, or <code>spatial.create_point</code>.</li>
     <li>Drag from an output port (right edge of a node) to an input port (left edge of another). Only matching types connect.</li>
     <li>Click a node to set its parameters in the panel on the right. Red badges mark inputs that still need a value.</li>
     <li>Switch to <strong>Python</strong> at the top right, choose a format, then <strong>Copy</strong> or <strong>Download</strong>.</li>
-    <li>Run it: press <strong>Run</strong> to execute it in the browser, or <code>pip install brightwind</code> and <code>python brightwind_workflow.py</code> on your own machine.</li>
+    <li>Run it: press <strong>Run</strong> to execute it in the browser, or install the libraries the script names on its second line (for example <code>pip install brightwind windkit</code>) and run it on your own machine.</li>
   </ol>
   <p>Prefer to describe the analysis in words? <a href="#ai">Build with AI</a> wires the board from a prompt, using your own API key.</p>
 </section>
 
+<section id="libs">
+  <h2><span class="n">02</span>brightwind, windkit or both</h2>
+  <figure>
+    <img src="guide/libraries.jpg" width="1360" height="780" alt="The dialog that asks which library to build with: brightwind, windkit or both, each with a one-line description." loading="lazy">
+    <figcaption>The first visit asks which library to use. The <strong>Libraries</strong> buttons above the tool list change it later.</figcaption>
+  </figure>
+  <div class="tbl"><table>
+    <thead><tr><th>Library</th><th>Good for</th><th>Its data</th></tr></thead>
+    <tbody>
+      <tr><td><strong>brightwind</strong> 2.8.0<br><span class="dim">MIT, BrightWind</span></td><td>Measured wind data: load mast, lidar and logger files, clean them, shear, turbulence intensity, long-term correlation, WAsP <code>.tab</code> export.</td><td>pandas tables and columns</td></tr>
+      <tr><td><strong>windkit</strong> 2.2.0<br><span class="dim">BSD 3-Clause, DTU Wind Energy</span></td><td>Wind climates (time series, binned, Weibull, generalised), spatial structures and map projections, elevation and roughness maps, turbine curves and layouts, WAsP files (<code>.tab</code>, <code>.wtg</code>, <code>.map</code>, <code>.lib</code>, <code>.wwh</code>).</td><td>xarray Datasets and geopandas tables</td></tr>
+    </tbody>
+  </table></div>
+  <ul>
+    <li>Only the tools of the libraries you switch on appear in the list, the examples, the type filter and the AI assistant. With both on, the list has a section for each.</li>
+    <li>A library whose tools are on the board can't be switched off; remove those nodes first. Loading an example or a saved pipeline switches on what it needs.</li>
+    <li>The exported script imports only the libraries it uses, and the <strong>Run</strong> view loads windkit and its map libraries only when a pipeline uses windkit, so a brightwind-only run stays as small as before.</li>
+    <li>To go from brightwind to windkit, keep a speed and a direction column with <code>Select columns</code> and wire the table into <code>tswc_from_dataframe</code>, giving the mast position and the column for each height, for example <code>{80.0: ('Spd80mN', 'Dir78mS')}</code>. To go back, take a variable with <code>Select variable</code> and turn it into a column with <code>DataArray to Series</code>.</li>
+  </ul>
+</section>
+
 <section id="screen">
-  <h2><span class="n">02</span>The screen</h2>
+  <h2><span class="n">03</span>The screen</h2>
   <figure>
     <img src="guide/overview.jpg" width="1360" height="780" alt="The builder with the tool list on the left, a shear pipeline on the board in the middle, and the Shear.Average node's parameters on the right." loading="lazy">
     <figcaption>The cleaning and shear example, with the <code>Shear.Average</code> node selected.</figcaption>
@@ -178,28 +204,29 @@ footer { max-width: 740px; color: var(--muted); font-size: 14px; padding-top: 18
     <thead><tr><th>Area</th><th>What it does</th></tr></thead>
     <tbody>
       <tr><td>Top bar</td><td>Examples, Undo and Redo, Save / load, Clear, a status pill (<em>Ready to export</em> or the number of nodes to fix), this guide, Build with AI, and the Canvas / Python switch.</td></tr>
-      <tr><td>Tools (left)</td><td>The catalog: 153 brightwind tools plus 9 helpers, grouped and searchable. Click one to read its documentation; drag it to add it.</td></tr>
+      <tr><td>Tools (left)</td><td>The catalog: 153 brightwind tools, 200 windkit tools and 16 helpers, grouped and searchable. The <strong>Libraries</strong> buttons on top choose which appear. Click a tool to read its documentation; drag it to add it.</td></tr>
       <tr><td>Board (middle)</td><td>Your pipeline. Pan by dragging empty space, zoom with the mouse wheel, a pinch, or the <kbd>−</kbd> <kbd>+</kbd> buttons. <strong>Tidy</strong> lays nodes out left to right in run order; <strong>Fit</strong> brings everything into view.</td></tr>
       <tr><td>Details (right)</td><td>Shows the selected node's inputs, parameters, outputs and full docstring. With nothing selected, it lists what still needs fixing and explains the port colours.</td></tr>
       <tr><td>Python</td><td>The generated code, updated live, in three formats.</td></tr>
-      <tr><td>Run</td><td>Executes the pipeline with brightwind in the browser and shows each step's tables, plots and messages.</td></tr>
+      <tr><td>Run</td><td>Executes the pipeline in the browser and shows each step's tables, plots, interactive figures and messages.</td></tr>
     </tbody>
   </table></div>
 </section>
 
 <section id="find">
-  <h2><span class="n">03</span>Finding tools</h2>
-  <p>Tools are grouped the way an analysis usually runs: Sources, Load, Clean, Helpers, Transform, Statistics, Distributions, Turbulence, Shear, Correlation, Atmosphere, Plot, Station, BrightHub, Export and Utilities.</p>
+  <h2><span class="n">04</span>Finding tools</h2>
+  <p>Tools are grouped the way an analysis usually runs. Sources and Helpers come first; then brightwind's Load, Clean, Transform, Statistics, Distributions, Turbulence, Shear, Correlation, Atmosphere, Plot, Station, BrightHub, Export and Utilities; then windkit's Wind climates, Wind, Weibull, Long-term, Spatial, Topography, Wind farm, Read &amp; write, WAsP workspace, Checks, Plots and Data download.</p>
   <ul>
     <li><strong>Search</strong> matches tool names, summaries, parameter names and docstrings. Several words narrow the list: <code>sector ratio</code>, <code>tab file</code>, <code>coverage</code>.</li>
-    <li><strong>Data type filter</strong> lists tools that accept or return a type. <em>Accepts Series</em> shows everything you can do with one column; <em>Returns Figure</em> shows every plot.</li>
-    <li><strong>Click a tool</strong> to read it without adding it: signature, each input with the types it accepts, parameters with defaults, outputs, the full docstring, and a link to the exact line in the brightwind source.</li>
+    <li><strong>Data type filter</strong> lists tools that accept or return a type. <em>Accepts Series</em> shows everything you can do with one column; <em>Returns Figure</em> shows every plot; <em>Accepts BWC</em> everything you can do with a binned wind climate.</li>
+    <li><strong>Click a tool</strong> to read it without adding it: signature, each input with the types it accepts, parameters with defaults, outputs and the full docstring, with a link to the exact line in the brightwind source or to the windkit documentation.</li>
+    <li>windkit tools that download data from the internet (ERA5, map services, tutorial data) carry an <em>internet</em> tag, and its plotly plots an <em>interactive</em> tag.</li>
     <li>Tags warn you about two kinds of tool. <em>Deprecated</em> tools still work but are going away; the <code>LoadBrightdata</code> functions are deprecated in favour of <code>LoadBrightHub</code>. <em>Not implemented</em> tools are listed for completeness but can't be added, because brightwind 2.8.0 raises <code>NotImplementedError</code> for them (<code>Correl.SVR</code> and <code>MultipleLinearRegression.plot</code>).</li>
   </ul>
 </section>
 
 <section id="wire">
-  <h2><span class="n">04</span>Wiring a pipeline</h2>
+  <h2><span class="n">05</span>Wiring a pipeline</h2>
   <h3>Adding nodes</h3>
   <ul>
     <li><strong>Drag</strong> a tool from the list onto the board.</li>
@@ -225,7 +252,7 @@ footer { max-width: 740px; color: var(--muted); font-size: 14px; padding-top: 18
 </section>
 
 <section id="types">
-  <h2><span class="n">05</span>Port types</h2>
+  <h2><span class="n">06</span>Port types</h2>
   <p>Each port is coloured by the kind of value it carries. Connections are strict: a wire is only allowed when the output's type is one the input accepts. This catches most mistakes before the script ever runs.</p>
   <div class="tbl"><table>
     <thead><tr><th>Type</th><th>Meaning</th><th>Typical source</th></tr></thead>
@@ -235,15 +262,16 @@ footer { max-width: 740px; color: var(--muted); font-size: 14px; padding-top: 18
       <tr><td><span class="ty c-fig">Figure</span></td><td>A matplotlib plot.</td><td>every plot function, the <code>plot</code> output of analyse functions</td></tr>
       <tr><td><span class="ty c-path">Path</span></td><td>A file or folder path.</td><td><code>File path</code>, <code>Demo dataset</code></td></tr>
       <tr><td><span class="ty c-val">Value</span></td><td>A number or text. Lists and dicts share this colour.</td><td><code>Shear.Average.alpha</code>, <code>momm</code>, <code>List</code></td></tr>
-      <tr><td><span class="ty c-obj">Object</span></td><td>A brightwind object: a shear result, a correlation model, a measurement station.</td><td><code>Shear.TimeSeries</code>, <code>Correl.OrdinaryLeastSquares</code>, <code>MeasurementStation</code></td></tr>
+      <tr><td><span class="ty c-obj">Object</span></td><td>A brightwind object: a shear result, a correlation model, a measurement station. Also windkit's long-term correction models.</td><td><code>Shear.TimeSeries</code>, <code>Correl.OrdinaryLeastSquares</code>, <code>ltc.LinRegMCP</code></td></tr>
     </tbody>
   </table></div>
+  <p>windkit adds its own types, described in <a href="#windkit">Working with windkit</a>: wind climates (<span class="ty c-wc">TSWC</span> <span class="ty c-wc">BWC</span> <span class="ty c-wc">WWC</span> …), locations (<span class="ty c-loc">Point</span> <span class="ty c-loc">Raster</span> …), maps (<span class="ty c-map">RasterMap</span> <span class="ty c-map">VectorMap</span>), turbines (<span class="ty c-wtg">WTG</span> <span class="ty c-wtg">WindTurbines</span>), general xarray and geopandas data (<span class="ty c-xr">Dataset</span> <span class="ty c-xr">DataArray</span> <span class="ty c-xr">GeoDataFrame</span>), and figures (<span class="ty c-fig">Axes</span> <span class="ty c-fig">Plotly</span>).</p>
   <p>Some outputs follow their input. <code>offset_timestamps</code>, for example, returns a Series when given a Series and a DataFrame when given a DataFrame. Its output port changes type as you wire it.</p>
   <div class="note"><strong>Most common fix</strong><p>Many brightwind functions take one column, so their input accepts only a Series. Put a <code>Select column</code> node between the loaded DataFrame and the function, and type the column name into it.</p></div>
 </section>
 
 <section id="params">
-  <h2><span class="n">06</span>Inputs and parameters</h2>
+  <h2><span class="n">07</span>Inputs and parameters</h2>
   <figure>
     <img src="guide/inspector.jpg" width="1360" height="780" alt="The details panel for export_tab_file, showing its connected input, typed values for lat and long, and parameters." loading="lazy">
     <figcaption>The details panel for <code>export_tab_file</code>: one wired input, two typed values, and its parameters.</figcaption>
@@ -275,7 +303,7 @@ footer { max-width: 740px; color: var(--muted); font-size: 14px; padding-top: 18
 </section>
 
 <section id="objects">
-  <h2><span class="n">07</span>Objects and methods</h2>
+  <h2><span class="n">08</span>Objects and methods</h2>
   <p>Some brightwind tools are classes. The builder splits each into a constructor node and separate nodes for its methods and attributes. A method or attribute node takes the object on its first input.</p>
   <h3>Shear</h3>
   <p><code>Shear.TimeSeries</code>, <code>Shear.TimeOfDay</code>, <code>Shear.Average</code> and <code>Shear.BySector</code> calculate shear from a DataFrame of anemometers and a list of heights. From the object:</p>
@@ -292,9 +320,41 @@ footer { max-width: 740px; color: var(--muted); font-size: 14px; padding-top: 18
   <p><code>MeasurementStation</code> reads an IEA Task 43 WRA data model (a file path or a dict). Its attributes give the name, location, the <code>measurements</code> object, and tables of properties. <code>apply_device_orientation_offset</code> and the slope and offset adjustments can take it, or its measurements, as input.</p>
 </section>
 
+<section id="windkit">
+  <h2><span class="n">09</span>Working with windkit</h2>
+  <figure>
+    <img src="guide/windkit.jpg" width="1360" height="780" alt="A pipeline that cleans the demo mast with brightwind, then builds a windkit time series wind climate with tswc_from_dataframe, whose parameters are open on the right." loading="lazy">
+    <figcaption>The <em>brightwind + windkit</em> example: cleaned mast data becomes a windkit time series, then a binned wind climate, a WAsP <code>.tab</code> file and a wind rose.</figcaption>
+  </figure>
+  <h3>Types and how they fit together</h3>
+  <p>windkit keeps its data in xarray Datasets with a known structure, and the builder gives each structure its own type. A type also fits any input that accepts one of its parents, so typing stays strict without getting in the way:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Type</th><th>What it is</th><th>Fits inputs for</th></tr></thead>
+    <tbody>
+      <tr><td><span class="ty c-wc">TSWC</span></td><td>Time series wind climate: speed and direction over time</td><td>Dataset. <span class="ty c-wc">SurfaceFields</span> (with surface fluxes) fits TSWC.</td></tr>
+      <tr><td><span class="ty c-wc">BWC</span></td><td>Binned wind climate: a speed and direction histogram per sector</td><td>Dataset</td></tr>
+      <tr><td><span class="ty c-wc">WWC</span></td><td>Weibull wind climate: A, k and frequency per sector</td><td>Dataset. <span class="ty c-wc">PWC</span> (predicted, with combined A, k and power density) fits WWC.</td></tr>
+      <tr><td><span class="ty c-wc">GWC</span> and others</td><td>Generalised, geostrophic and extreme wind climates, met fields, site effects</td><td>Dataset</td></tr>
+      <tr><td><span class="ty c-loc">Point</span> <span class="ty c-loc">StackedPoint</span> <span class="ty c-loc">Raster</span> <span class="ty c-loc">Cuboid</span></td><td>Where to calculate. Inputs called <code>output_locs</code> take any of these.</td><td>Locations, Dataset</td></tr>
+      <tr><td><span class="ty c-loc">BBox</span></td><td>A bounding box with its CRS</td><td>BBox</td></tr>
+      <tr><td><span class="ty c-map">RasterMap</span> <span class="ty c-map">VectorMap</span> <span class="ty c-map">LandCoverTable</span></td><td>Elevation, roughness and land-cover maps, and the table from land-cover class to roughness</td><td>DataArray, GeoDataFrame, Dict</td></tr>
+      <tr><td><span class="ty c-wtg">WTG</span> <span class="ty c-wtg">WindTurbines</span></td><td>A turbine's power and thrust curves; a wind farm layout</td><td>Dataset</td></tr>
+      <tr><td><span class="ty c-fig">Axes</span> <span class="ty c-fig">Plotly</span></td><td>windkit's matplotlib plots return axes, its other plots interactive plotly figures</td><td>Axes fits Figure, so <code>Save figure</code> takes it. Plotly figures go to <code>Save interactive figure</code>.</td></tr>
+    </tbody>
+  </table></div>
+  <p>Tools such as <code>spatial.clip</code> or <code>spatial.reproject</code> accept any Dataset and give back the same type they were given, so a clipped BWC is still a BWC on the board.</p>
+  <h3>Locations and coordinate systems</h3>
+  <p>windkit always works in a coordinate reference system. <code>spatial.create_point</code>, <code>create_raster</code> and the other constructors take coordinates in the units of the <code>crs</code> you give: metres for a projected system such as <code>EPSG:32629</code> (UTM zone 29N), degrees for <code>EPSG:4326</code>, where <code>west_east</code> is longitude and <code>south_north</code> latitude. They take lists, for example <code>[480000.0]</code>. A WAsP <code>.tab</code> file stores longitude and latitude, so <code>bwc_to_file</code> needs a wind climate in <code>EPSG:4326</code>.</p>
+  <h3>Sample files</h3>
+  <p>The <code>Sample file</code> helper offers five small files to try windkit's readers on: a synthetic 3 MW turbine (<code>.wtg</code>), the binned wind climate of brightwind's demo mast at 80 m (<code>.tab</code>), a synthetic hill as an elevation raster (<code>.tif</code>) and as contour lines (<code>.map</code>), and roughness change lines around a forest (<code>.map</code>). The exported script downloads the file it needs once, to <code>~/.bw-explorer-samples</code>. For your own files, use <code>File path</code>.</p>
+  <h3>Objects and WAsP workspaces</h3>
+  <p>windkit's classes work like brightwind's: <code>ltc.LinRegMCP</code> → <code>.fit</code> with the reference and target time series → <code>.predict</code> with the long-term reference. <code>Workspace.read_wwh</code> opens a WAsP workspace, and its <code>get_</code> methods take out the wind climates, maps, turbines and results stored in it. <code>spatial.BBox</code> has constructors and methods of the same kind.</p>
+  <div class="note"><strong>How the windkit catalog was checked</strong><p>Every windkit tool on the list was called on sample data of the types its ports claim, natively and again in the browser's Python, and its result checked against the declared output type. The exceptions are the tools that need the internet (ERA5, map downloads, tutorial data), the WAsP workspace readers, for which no sample workspace is bundled, and two readers for file formats no sample produces (<code>read_cfdres</code>, <code>read_mfwwc</code>). <code>plot.plot_wind_turbine_locations</code> is left out because it fails in windkit 2.2.0.</p></div>
+</section>
+
 <section id="helpers">
-  <h2><span class="n">08</span>Helper nodes</h2>
-  <p>Helpers are small pieces of plain Python that make brightwind tools fit together. They are not brightwind functions.</p>
+  <h2><span class="n">10</span>Helper nodes</h2>
+  <p>Helpers are small pieces of plain Python that make the library tools fit together. They are not brightwind or windkit functions. The windkit ones appear when windkit is switched on.</p>
   <div class="tbl"><table>
     <thead><tr><th>Helper</th><th>Writes</th><th>Use it to</th></tr></thead>
     <tbody>
@@ -306,14 +366,21 @@ footer { max-width: 740px; color: var(--muted); font-size: 14px; padding-top: 18
       <tr><td><code>List</code></td><td><code>[a, b, c]</code></td><td>collect up to four inputs into a list</td></tr>
       <tr><td><code>Python expression</code></td><td>your expression with <code>{a}</code> and <code>{b}</code> filled in</td><td>anything else, such as <code>{a} - {b}</code>. Choose what it returns so its output can be wired.</td></tr>
       <tr><td><code>Print</code></td><td><code>print(value)</code></td><td>print a result that is also wired elsewhere</td></tr>
-      <tr><td><code>Save figure</code></td><td><code>fig.savefig('rose.png', dpi=150, …)</code></td><td>write a plot to an image file</td></tr>
+      <tr><td><code>Save figure</code></td><td><code>fig.savefig('rose.png', dpi=150, …)</code></td><td>write a plot to an image file (from windkit's axes too)</td></tr>
+      <tr><td><code>Sample file</code></td><td><code>sample_file('demo_turbine_3MW.wtg')</code></td><td>windkit: try a reader on a bundled example file</td></tr>
+      <tr><td><code>Select variable</code></td><td><code>tswc['wind_speed']</code></td><td>windkit: take one variable of a Dataset as a DataArray</td></tr>
+      <tr><td><code>Select by coordinate</code></td><td><code>bwc.sel(height=80)</code></td><td>windkit: pick one height, point or sector, by value (<code>sel</code>) or position (<code>isel</code>)</td></tr>
+      <tr><td><code>DataArray to Series</code></td><td><code>da.to_series()</code></td><td>pass a windkit result to a brightwind tool that takes a column</td></tr>
+      <tr><td><code>Dataset to DataFrame</code></td><td><code>ds.to_dataframe()</code></td><td>turn a windkit Dataset into a pandas table</td></tr>
+      <tr><td><code>Save netCDF</code></td><td><code>ds.to_netcdf('bwc.nc')</code></td><td>windkit: write any xarray result to a netCDF file</td></tr>
+      <tr><td><code>Save interactive figure</code></td><td><code>fig.write_html('rose.html', …)</code></td><td>windkit: save a plotly figure as a web page</td></tr>
     </tbody>
   </table></div>
 </section>
 
 <section id="examples">
-  <h2><span class="n">09</span>Examples</h2>
-  <p>Load any of these from <strong>Examples…</strong>. They use the demo data, so the exported scripts run as they are. Loading an example replaces the board; <strong>Undo</strong> brings your work back.</p>
+  <h2><span class="n">11</span>Examples</h2>
+  <p>Load any of these from <strong>Examples…</strong>; the list shows the ones for the libraries you have switched on. They use demo data or sample files, so the exported scripts run as they are. Loading an example replaces the board; <strong>Undo</strong> brings your work back.</p>
   <dl class="faq">
     <dt>Site overview: stats, monthly means, tab file</dt>
     <dd>Loads the demo mast, prints basic statistics, plots monthly means of the 80 m speed, builds a frequency table against the 78 m vane and exports a WAsP <code>.tab</code> file.</dd>
@@ -323,11 +390,21 @@ footer { max-width: 740px; color: var(--muted); font-size: 14px; padding-top: 18
     <dd>Correlates the 80 m speed with the MERRA-2 NE node using monthly ordinary least squares, plots the fit, synthesizes the long-term series and reports its mean of monthly means.</dd>
     <dt>Turbulence intensity by speed, sector and time of day</dt>
     <dd>TI by wind speed bin, by direction sector and as a 12×24 plot, with the by-speed table exported to CSV.</dd>
+    <dt>windkit: wind climate at a site, Weibull fit and wind rose</dt>
+    <dd>Makes a synthetic year of hourly wind at a point, bins it into a wind climate, fits Weibull distributions, shows an interactive wind rose and histogram, and prints the mean wind speed and power density.</dd>
+    <dt>windkit: read a .tab wind climate and a .wtg turbine</dt>
+    <dd>Reads the sample wind climate and turbine files, fits Weibull distributions per sector, shows the wind rose and the power and thrust curves, and prints the power at four wind speeds.</dd>
+    <dt>windkit: terrain and roughness maps</dt>
+    <dd>Reads the sample elevation raster and contour map and the roughness map, plots each one, and prints the bounding box of the raster.</dd>
+    <dt>windkit: long-term correction with linear regression MCP</dt>
+    <dd>Makes a correlated reference and target time series, fits <code>ltc.LinRegMCP</code>, predicts the target from the reference, scores the prediction and shows the predicted wind rose.</dd>
+    <dt>brightwind + windkit: mast data to a WAsP .tab file</dt>
+    <dd>Loads and cleans the demo mast with brightwind, plots monthly means, turns the 80 m speed and direction into a windkit time series, writes a WAsP <code>.tab</code> file and shows the wind rose and the power density per sector.</dd>
   </dl>
 </section>
 
 <section id="export">
-  <h2><span class="n">10</span>Exporting Python</h2>
+  <h2><span class="n">12</span>Exporting Python</h2>
   <figure>
     <img src="guide/python.jpg" width="1360" height="780" alt="The Python view with format buttons, export options and the generated flat script." loading="lazy">
     <figcaption>The Python view for the site overview example.</figcaption>
@@ -352,12 +429,12 @@ python brightwind_workflow.py</code></pre>
 </section>
 
 <section id="run">
-  <h2><span class="n">11</span>Running in the browser</h2>
+  <h2><span class="n">13</span>Running in the browser</h2>
   <figure>
     <img src="guide/run.jpg" width="1360" height="780" alt="The Run view showing finished steps: load_csv, a statistics table from basic_stats, and the start of the monthly means plot." loading="lazy">
     <figcaption>The site overview example after a run. Each step lists its tables, plots and messages; the nodes on the board are outlined green.</figcaption>
   </figure>
-  <p><strong>Run</strong> executes the pipeline with the real brightwind library, without installing anything. The page starts a copy of Python inside your browser tab (<a href="https://pyodide.org">Pyodide</a>, Python compiled to WebAssembly), installs brightwind 2.8.0 into it, and runs your pipeline one node at a time.</p>
+  <p><strong>Run</strong> executes the pipeline with the real libraries, without installing anything. The page starts a copy of Python inside your browser tab (<a href="https://pyodide.org">Pyodide</a>, Python compiled to WebAssembly), installs brightwind 2.8.0, windkit 2.2.0 or both into it, whichever the pipeline uses, and runs your pipeline one node at a time.</p>
   <h3>How to run</h3>
   <ol class="steps">
     <li>Open <strong>Run</strong> in the top bar, or press <strong>Run in browser</strong> in the Python view.</li>
@@ -367,25 +444,30 @@ python brightwind_workflow.py</code></pre>
   <h3>What you see</h3>
   <ul>
     <li><strong>Tables</strong> show the first 200 rows. <strong>Download CSV</strong> gives the full table.</li>
-    <li><strong>Plots</strong> appear as images, with <strong>Download PNG</strong>.</li>
+    <li><strong>Plots</strong> appear as images, with <strong>Download PNG</strong>. windkit's plotly figures are interactive: hover, zoom and toggle the legend.</li>
+    <li><strong>xarray results</strong>, such as a wind climate or a mean wind speed, show their summary, with <strong>Download netCDF</strong> and <strong>Download CSV</strong>. Map tables show their columns and the coordinate system.</li>
     <li><strong>Messages</strong> that brightwind prints, such as fitted correlation parameters or export confirmations, appear under their step.</li>
     <li><strong>Files the pipeline wrote</strong>, such as a WAsP <code>.tab</code> file from <code>export_tab_file</code> or an image from <code>Save figure</code>, are listed at the end for download.</li>
     <li><strong>Code</strong> under each step shows exactly what ran.</li>
   </ul>
+  <figure>
+    <img src="guide/windkit-run.jpg" width="1360" height="780" alt="The Run view of the windkit example: finished steps above an interactive wind rose of a binned wind climate, with wind speed classes in the legend." loading="lazy">
+    <figcaption>windkit's plots are interactive in the Run view: this wind rose comes from the first windkit example.</figcaption>
+  </figure>
   <p>If a step fails, the run stops there, the node is selected on the board, and the error explains what went wrong. A <code>KeyError</code> usually means a column name doesn't match your data. After you change the board, old results are marked as out of date until you run again.</p>
   <h3>Speed, size and privacy</h3>
   <ul>
-    <li>The first run downloads Python and numpy, pandas, scipy and matplotlib, about 30 MB in all. It takes a little while; your browser keeps the files, so later visits start much faster. Within a visit, Python stays loaded between runs.</li>
-    <li>The demo datasets are fetched only when a pipeline uses them, 2 to 8 MB each.</li>
+    <li>The first run downloads Python and numpy, pandas, scipy and matplotlib, about 30 MB in all. The first pipeline that uses windkit adds about 40 MB more (xarray, geopandas, rasterio, netCDF4, pyproj and windkit), and the first interactive plot about 10 MB (plotly). It takes a little while; your browser keeps the files, so later visits start much faster. Within a visit, Python stays loaded between runs.</li>
+    <li>The demo datasets are fetched only when a pipeline uses them, 2 to 8 MB each; the windkit sample files are a few kB.</li>
     <li>Your files are read by the browser and passed to Python in the same tab. They are never uploaded.</li>
     <li>Calculations run a little slower than on your own machine, and the browser limits memory. A few years of 10-minute mast data is fine; very large datasets may be better run from the exported script.</li>
     <li><strong>Stop</strong> ends the run and restarts Python on the next one.</li>
   </ul>
-  <div class="note warn"><strong>Not available in the browser</strong><p>The <code>LoadBrightHub</code> and <code>LoadBrightdata</code> tools need network access and credentials, and <code>plot_meas_station_on_gmap</code> needs Google Maps, so pipelines with these nodes can only be run from the exported script. Results come from the same brightwind 2.8.0 code as a local install; the versions of pandas and numpy may differ slightly from yours.</p></div>
+  <div class="note warn"><strong>Not available in the browser</strong><p>The <code>LoadBrightHub</code> and <code>LoadBrightdata</code> tools need network access and credentials, <code>plot_meas_station_on_gmap</code> needs Google Maps, and windkit's Data download tools (<code>get_era5</code>, <code>get_raster_map</code>, <code>get_vector_map</code>, the tutorial data) need outside services, so pipelines with these nodes can only be run from the exported script. Results come from the same brightwind and windkit code as a local install; the versions of pandas, numpy and xarray may differ slightly from yours.</p></div>
 </section>
 
 <section id="save">
-  <h2><span class="n">12</span>Saving pipelines</h2>
+  <h2><span class="n">14</span>Saving pipelines</h2>
   <ul>
     <li>The board saves itself in this browser after every change and comes back when you return. It isn't shared with other browsers or devices.</li>
     <li><strong>Save / load</strong> shows the whole pipeline as JSON text. Copy it to keep it, to send it to a colleague, or to move it between devices. Paste one in and press <strong>Load pasted pipeline</strong> to restore it.</li>
@@ -394,7 +476,7 @@ python brightwind_workflow.py</code></pre>
 </section>
 
 <section id="ai">
-  <h2><span class="n">13</span>Build with AI</h2>
+  <h2><span class="n">15</span>Build with AI</h2>
   <div class="cols">
     <div>
       <p><strong>Build with AI</strong> turns a description such as <em>“correlate the 80 m speed with MERRA-2 using monthly least squares and synthesize the long-term series”</em> into a wired pipeline on the board. It uses a model from your own account with your own API key, so the site has no AI costs and no server in between.</p>
@@ -462,7 +544,7 @@ python brightwind_workflow.py</code></pre>
 </section>
 
 <section id="keys">
-  <h2><span class="n">14</span>Keyboard and touch</h2>
+  <h2><span class="n">16</span>Keyboard and touch</h2>
   <div class="tbl"><table>
     <thead><tr><th>Action</th><th>Mouse and keyboard</th><th>Touch</th></tr></thead>
     <tbody>
@@ -480,7 +562,7 @@ python brightwind_workflow.py</code></pre>
 </section>
 
 <section id="faq">
-  <h2><span class="n">15</span>Troubleshooting</h2>
+  <h2><span class="n">17</span>Troubleshooting</h2>
   <dl class="faq">
     <dt>A port won't connect</dt>
     <dd>The types don't match; the message says what the input accepts. The usual fix is a <code>Select column</code> between a DataFrame and a function that takes a Series. For correlations, connect from <code>.run</code>, not from the constructor.</dd>
@@ -491,11 +573,17 @@ python brightwind_workflow.py</code></pre>
     <dt>Plots don't appear</dt>
     <dd>Keep <strong>Show figures with plt.show()</strong> ticked for scripts. In a notebook, figures display without it. On a headless server, add a <code>Save figure</code> node instead.</dd>
     <dt>Run is slow to start, or says Python could not start</dt>
-    <dd>The first run downloads about 30 MB. On a slow or filtered connection (some company networks block the cdn.jsdelivr.net download), use the exported script instead, or try again on another network.</dd>
+    <dd>The first run downloads about 30 MB, and about 40 MB more the first time windkit is used. On a slow or filtered connection (some company networks block the cdn.jsdelivr.net download), use the exported script instead, or try again on another network.</dd>
     <dt>BrightHub nodes fail</dt>
     <dd>They need a BrightHub account and network access when the script runs. brightwind reads the credentials from environment variables: an API key as <code>BRIGHTHUB_CLIENT_ID</code> and <code>BRIGHTHUB_CLIENT_SECRET</code>, or <code>BRIGHTHUB_EMAIL</code> and <code>BRIGHTHUB_PASSWORD</code>. Set them before running the script.</dd>
     <dt><code>plot_meas_station_on_gmap</code> fails</dt>
     <dd>It needs the optional <code>gmaps</code> package and a Google Maps API key.</dd>
+    <dt>A windkit tool says the input does not have the right structure</dt>
+    <dd>windkit checks its inputs, for example that a binned wind climate has <code>wsfreq</code> and <code>wdfreq</code>. Wire the output of the tool that makes that type, and check the type shown on the wire.</dd>
+    <dt>Coordinates or CRS errors in windkit</dt>
+    <dd>Check that the coordinates are in the units of the <code>crs</code>: metres for UTM, degrees for <code>EPSG:4326</code>. Writing a <code>.tab</code> file needs <code>EPSG:4326</code>.</dd>
+    <dt>I can't find the windkit tools</dt>
+    <dd>Switch windkit on with the <strong>Libraries</strong> buttons above the tool list.</dd>
     <dt>My board disappeared</dt>
     <dd>Pipelines are saved in the browser you built them in. Private windows and cleared site data lose them. Use <strong>Save / load</strong> to keep a copy.</dd>
     <dt>A brightwind function is missing</dt>
@@ -504,11 +592,12 @@ python brightwind_workflow.py</code></pre>
 </section>
 
 <section id="about">
-  <h2><span class="n">16</span>About</h2>
-  <p>The catalog is read from the brightwind v2.8.0 source without importing it: every signature, default and docstring. Port types and groups are assigned on top of that. Every signature has been checked against the installed package, and the example pipelines run end to end.</p>
+  <h2><span class="n">18</span>About</h2>
+  <p>The brightwind catalog is read from the brightwind v2.8.0 source without importing it: every signature, default and docstring. Port types and groups are assigned on top of that. Every signature has been checked against the installed package, and the example pipelines run end to end.</p>
+  <p>The windkit catalog is read from the installed windkit v2.2.0 package: signatures from the functions themselves and documentation from their numpydoc docstrings. Each tool's port types were then curated and tested by calling it on sample data of every type, as described in <a href="#windkit">Working with windkit</a>. windkit is developed by DTU Wind Energy and published under the BSD 3-Clause licence.</p>
   <p>The builder is one of the free tools at <a href="https://coderenewables.com">CodeRenewables</a>, alongside WattOdds, WindNudge, SolarNudge and LossStack.</p>
-  <p>Source, catalog scripts and instructions for updating to a new brightwind release: <a href="https://github.com/coderenewables/brightwind-explorer">github.com/coderenewables/brightwind-explorer</a>. brightwind itself: <a href="https://github.com/brightwind-dev/brightwind">github.com/brightwind-dev/brightwind</a> (MIT licence).</p>
-  <footer>A <a href="https://coderenewables.com">CodeRenewables</a> tool by Nithish Seenivasagam. Not affiliated with the brightwind project. Check generated code before relying on its results.</footer>
+  <p>Source, catalog scripts and instructions for updating to a new brightwind release: <a href="https://github.com/coderenewables/brightwind-explorer">github.com/coderenewables/brightwind-explorer</a>. brightwind itself: <a href="https://github.com/brightwind-dev/brightwind">github.com/brightwind-dev/brightwind</a> (MIT licence). windkit: <a href="https://docs.wasp.dk/windkit">docs.wasp.dk/windkit</a> and <a href="https://pypi.org/project/windkit/">PyPI</a> (BSD 3-Clause licence).</p>
+  <footer>A <a href="https://coderenewables.com">CodeRenewables</a> tool by Nithish Seenivasagam. Not affiliated with the brightwind project or DTU Wind Energy. Check generated code before relying on its results.</footer>
 </section>
 </main>
 </div>

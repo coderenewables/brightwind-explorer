@@ -13,7 +13,8 @@ from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
-BASE = sys.argv[1] if len(sys.argv) > 1 else 'http://127.0.0.1:8787/'
+BASE = (sys.argv[1] if len(sys.argv) > 1 else 'http://127.0.0.1:8787/') + '?nochooser'
+TPL = lambda name: f"__bw.loadTemplate(__bw.TEMPLATES.findIndex(t => t.name.startsWith({json.dumps(name)})))"
 OUT = Path(__file__).resolve().parent.parent / 'public' / 'guide'
 OUT.mkdir(exist_ok=True)
 AI_PLAN = {
@@ -51,6 +52,7 @@ with sync_playwright() as p:
     page.goto(BASE)
     page.wait_for_function('window.__bw && window.__bw.ai')
     page.evaluate('localStorage.clear()')
+    page.evaluate("__bw.setLibs(['bw'])")
     page.evaluate('__bw.loadTemplate(1)')
     page.click('.node:has(.tt:text-is("Shear.Average")) .nh')
     shot(page, 'overview')
@@ -79,6 +81,24 @@ with sync_playwright() as p:
     page.evaluate("document.querySelector('#runBody').scrollTop = 0")
     shot(page, 'run')
     page.click('#vCanvas')
+
+    # windkit: the library choice, a mixed pipeline, and an interactive figure from a run
+    page.evaluate('__bw.chooseLibs(true)')
+    shot(page, 'libraries')
+    page.keyboard.press('Escape')
+    page.evaluate(TPL('brightwind + windkit'))
+    page.evaluate("__bw.S.view = {x: -560, y: 40, k: 0.82}; document.querySelector('#world').style.transform = 'translate(-560px, 40px) scale(0.82)'")
+    page.click('.node:has(.tt:text-is("tswc_from_dataframe")) .nh')
+    shot(page, 'windkit')
+    page.evaluate(TPL('windkit: wind climate'))
+    page.click('#vRun')
+    page.click('#runGo')
+    page.wait_for_function('!__bw.RUN.busy && __bw.RUN.results.length', timeout=600000)
+    page.wait_for_function('document.querySelector(".rs-plotly .main-svg")', timeout=60000)
+    page.evaluate("document.querySelector('.rs-plotly').closest('.run-step').scrollIntoView({block: 'start'})")
+    shot(page, 'windkit-run')
+    page.click('#vCanvas')
+    page.evaluate("__bw.setLibs(['bw'])")
 
     page.route('**/api.anthropic.com/**', lambda route: route.fulfill(status=200, headers={'access-control-allow-origin': '*'}, json={
         'id': 'm', 'type': 'message', 'role': 'assistant', 'stop_reason': 'tool_use',

@@ -182,6 +182,7 @@ function canConnect(srcId, outName, dstId, inName) {
   if (srcId === dstId) return 'A node cannot feed itself.';
   const inp = def(t).inputs.find(i => i.name === inName), types = outTypes(s, outName);
   if (!inp) return 'No such input.';
+  if (!def(s).outputs.some(o => o.name === outName)) return `${def(s).title} has no output called ${outName}.`;
   if (!accepts(inp, types)) return `${def(t).title} · ${inName} accepts ${inp.types.map(tLabel).join(' or ')}. This output is ${types.map(tLabel).join(' or ')}.`;
   if (reaches(dstId, srcId)) return 'That connection would create a loop.';
   return null;

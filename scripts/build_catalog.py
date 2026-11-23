@@ -130,7 +130,8 @@ F(TR, 'scale_wind_speed', 'Transform', 'wspd_scaled', [('wspd', same('spd'))])
 F(TR, 'offset_wind_direction', 'Transform', 'wdir_offset', [('wdir', same('wdir'))], ports={'wdir': [DF, S, VAL]})
 F(TR, 'apply_wind_vane_deadband_offset', 'Transform', 'data_adj', [('data', same('data')), ('results', [DF], 'return_results_table')],
   ports={'data': DATA, 'measurements': [MEAS, LIST, DICT]}, fields_only=('return_results_table',), tuple_=dict(flags=['return_results_table'], order=['data', 'results']))
-F(TR, 'selective_avg', 'Transform', 'wspd_sel_avg', [('wspd', [S])])
+F(TR, 'selective_avg', 'Transform', 'wspd_sel_avg', [('wspd', [LIST])],
+  note="Returns a plain list without timestamps, not a Series. To use it as a time series, wire it to Python expression with pd.Series({a}, index={b}.index, name='Spd80m_avg') and {b} one of the input speeds, returning Series.")
 F(TR, 'offset_timestamps', 'Transform', 'data_shifted', [('data', same('data'))], ports={'data': DATA})
 F(TR, 'apply_device_orientation_offset', 'Transform', 'data_adj', [('data', same('data')), ('results', [DF], 'return_results_table')],
   ports={'data': DATA, 'measurement_station': [STN]}, tuple_=dict(flags=['return_results_table'], order=['data', 'results']))
@@ -158,7 +159,8 @@ ti = find_cls(A, 'TI')
 def TI(name, var, outs, **kw):
     f = next(m for m in ti['methods'] if m['name'] == name)
     return make('TI.' + name, 'bw.TI.' + name, f, A, 'Turbulence', var, outs, **kw)
-TI('calc', 'ti', [('ti', [S])], ports={'wspd': [S], 'wspd_std': [S]})
+TI('calc', 'ti', [('ti', [S])], ports={'wspd': [S], 'wspd_std': [S]},
+   note="The returned Series has no name, which monthly_means and coverage need. Name it first with Python expression {a}.rename('TI80m'), returning Series.")
 TI('by_speed', 'ti_by_speed', plot_data(), ports={'IEC_class': [DF]}, tuple_=RD)
 TI('by_sector', 'ti_by_sector', plot_data(), tuple_=RD)
 TI('twelve_by_24', 'ti_12x24', [('data', [DF]), ('plot', [FIG], 'return_data')], ports={'wspd': [S], 'wspd_std': [S]},
@@ -317,6 +319,12 @@ FALLBACK = {
  'Correl.SpeedSort.get_result_table': 'A table of the fitted SpeedSort parameters for each direction sector.',
  'Correl.SimpleSpeedRatio.show_params': 'Print the fitted speed ratio parameters.',
 }
+# get_table returns a pandas Styler (a formatted table for notebooks), not a DataFrame.
+for n in NODES:
+    if n['id'] in ('MeasurementStation.get_table', 'measurements.get_table'):
+        n['outputs'] = [dict(name='table', types=[OBJ])]
+        n['note'] = ('Returns a formatted table (a pandas Styler), which shows as a table in a notebook. For the table itself, '
+                     'wire it to Python expression with {a}.data, returning DataFrame.')
 for n in NODES:
     if not n['summary']:
         n['summary'] = FALLBACK.get(n['id'], '')

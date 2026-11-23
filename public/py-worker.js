@@ -19,7 +19,9 @@ const PYODIDE_URL = `https://cdn.jsdelivr.net/pyodide/v${PYODIDE_VERSION}/full/`
 const SITE = self.location.href.replace(/[^/]*$/, '');
 const BASE_PACKAGES = ['numpy', 'pandas', 'scipy', 'matplotlib', 'requests', 'python-dateutil', 'six', 'packaging', 'micropip'];   // requests brings urllib3, which works in a worker
 const LIBS = {
-  bw: { name: 'brightwind 2.8.0', packages: ['jsonschema'], wheels: ['py/brightwind-2.8.0-py3-none-any.whl', 'py/colormap-1.3.0-py3-none-any.whl'] },
+  // jinja2: brightwind's station tables are pandas Stylers; openpyxl: load_excel (300 kB)
+  bw: { name: 'brightwind 2.8.0', packages: ['jsonschema', 'jinja2'], wheels: ['py/brightwind-2.8.0-py3-none-any.whl', 'py/colormap-1.3.0-py3-none-any.whl',
+    'py/openpyxl-3.1.5-py2.py3-none-any.whl', 'py/et_xmlfile-2.0.0-py3-none-any.whl'] },
   // h5py is left out on purpose: loaded next to netCDF4 its HDF5 library clashes with netCDF4's, and windkit reads netCDF through netCDF4.
   wk: { name: 'windkit 2.2.0', packages: ['xarray', 'geopandas', 'shapely', 'rasterio', 'netcdf4', 'lxml', 'fiona', 'pyyaml', 'platformdirs', 'attrs'],
         wheels: ['py/windkit-2.2.0-py3-none-any.whl', 'py/rioxarray-0.20.0-py3-none-any.whl'], after: ['py/affine-3.0.1-py3-none-any.whl'] },
@@ -122,6 +124,8 @@ def _bw_render(obj, name, seen):
                 return r
         except Exception:
             pass
+    if type(obj).__name__ == 'Styler' and isinstance(getattr(obj, 'data', None), pd.DataFrame):
+        obj = obj.data   # a formatted table (brightwind's station tables): show the table itself
     if isinstance(obj, pd.Series):
         obj = obj.to_frame()
     if isinstance(obj, pd.DataFrame):
@@ -226,7 +230,38 @@ const IMPORT = {
 sys.modules.setdefault('gmaps', types.ModuleType('gmaps'))   # optional Google Maps plotting; no browser build
 with warnings.catch_warnings():
     warnings.simplefilter('ignore')
-    import brightwind`,
+    import brightwind
+
+# MeasurementStation downloads the IEA Task 43 data model schema from a GitHub release, which a web page
+# may not read (no CORS). brightwind ships the v1.0 and v1.2 schemas, so use those; for another version,
+# try the download and otherwise use the nearest bundled schema without validating against it.
+import os as _os, json as _json
+import brightwind.load.station as _st
+from brightwind.utils import utils as _bwu
+_SCHEMA_DIR = _os.path.join(_os.path.dirname(brightwind.__file__), 'demo_datasets')
+_SCHEMAS = {(1, 0): 'iea43_wra_data_model.schema_v1_0.json', (1, 2): 'iea43_wra_data_model.schema_v1_2.json'}
+_get_schema_web = _st.MeasurementStation._get_schema
+def _get_schema(dm):
+    ver = str(dm.get('version', ''))
+    try:
+        mm = tuple(int(x) for x in ver.split('-')[0].split('.')[:2])
+    except ValueError:
+        mm = None
+    if mm in _SCHEMAS:
+        with open(_os.path.join(_SCHEMA_DIR, _SCHEMAS[mm])) as f:
+            schema = _json.load(f)
+        if _bwu.validate_json(dm, schema) is False:
+            raise ValueError('There is a problem with the validity of the supplied WRA Data Model. Please check the errors above.')
+        return schema
+    try:
+        return _get_schema_web(dm)
+    except Exception:
+        near = max(k for k in _SCHEMAS if mm is None or k <= mm) if mm and any(k <= mm for k in _SCHEMAS) else max(_SCHEMAS)
+        print(f'Note: the schema for data model version {ver} could not be downloaded here, so the bundled '
+              f'v{near[0]}.{near[1]} schema is used without validating the data model against it.')
+        with open(_os.path.join(_SCHEMA_DIR, _SCHEMAS[near])) as f:
+            return _json.load(f)
+_st.MeasurementStation._get_schema = staticmethod(_get_schema)`,
   wk: `import warnings
 with warnings.catch_warnings():
     warnings.simplefilter('ignore')

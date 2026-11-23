@@ -6,6 +6,7 @@ Writes public/py/:
   demo/<file>.gz                       each large demo dataset, gzip-compressed, fetched only when a pipeline uses it
   windkit-<ver>-py3-none-any.whl       windkit, loaded only when a pipeline uses windkit tools
   rioxarray-0.20.0, affine-3.0.1       windkit dependencies Pyodide does not ship (or ships too old: affine 2.4)
+  openpyxl-3.1.5, et_xmlfile-2.0.0     for brightwind's load_excel; Pyodide does not ship openpyxl
   plotly-<ver>-py3-none-any.whl        plotly without its bundled JavaScript and datasets, for windkit's interactive plots
   plotly.min.js                        the plotly JavaScript, which the page loads to draw those figures
 The windkit sample files in public/py/samples/ come from scripts/windkit/make_samples.py.
@@ -27,7 +28,8 @@ from pathlib import Path
 VERSION = sys.argv[1] if len(sys.argv) > 1 else '2.8.0'
 COLORMAP = '1.3.0'
 WINDKIT = '2.2.0'
-EXTRA = ['rioxarray==0.20.0', 'affine==3.0.1']   # rioxarray 0.20 is the last release that works with Pyodide 0.29's rasterio 1.4
+EXTRA = ['rioxarray==0.20.0', 'affine==3.0.1']
+EXCEL = ['openpyxl==3.1.5', 'et_xmlfile==2.0.0']   # for bw.load_excel; Pyodide does not ship openpyxl   # rioxarray 0.20 is the last release that works with Pyodide 0.29's rasterio 1.4
 PLOTLY = '6.3.1'
 LARGE = 1_000_000          # demo files above this size are served separately
 OUT = Path(__file__).resolve().parent.parent / 'public' / 'py'
@@ -42,7 +44,7 @@ def main():
     try:
         for req in (f'brightwind=={VERSION}', f'colormap=={COLORMAP}'):
             subprocess.run([sys.executable, '-m', 'pip', 'download', '-q', '--no-deps', '--only-binary', ':all:', '-d', str(tmp), req], check=True)
-        for req in (f'windkit=={WINDKIT}', *EXTRA, f'plotly=={PLOTLY}'):
+        for req in (f'windkit=={WINDKIT}', *EXTRA, *EXCEL, f'plotly=={PLOTLY}'):
             subprocess.run([sys.executable, '-m', 'pip', 'download', '-q', '--no-deps', '--only-binary', ':all:', '-d', str(tmp), req], check=True)
         samples = OUT / 'samples'
         keep = Path(tempfile.mkdtemp())
@@ -78,7 +80,7 @@ def main():
         cm = next(tmp.glob('colormap-*.whl'))
         shutil.copy(cm, OUT / cm.name)
 
-        for pat in (f'windkit-{WINDKIT}-*.whl', 'rioxarray-*.whl', 'affine-*.whl'):
+        for pat in (f'windkit-{WINDKIT}-*.whl', 'rioxarray-*.whl', 'affine-*.whl', 'openpyxl-*.whl', 'et_xmlfile-*.whl'):
             w = next(tmp.glob(pat))
             shutil.copy(w, OUT / w.name)
             print(f'{w.name}: {w.stat().st_size / 1e3:.0f} kB')

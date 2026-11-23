@@ -815,7 +815,12 @@ function generate(fmt, ctx = {}) {
     const reg = o => { const nm = uniq(nameFor(o)); names.set(key(n.id, o.name), nm); exprs.set(key(n.id, o.name), nm);
       const t = outTypes(n, o.name)[0]; if (isA(t, ['Figure'])) { anyFigure = true; figures.push(nm); }
       if (!consumed(n, o.name)) { leaf.push([nm, t]); if (t === 'Plotly') plotlys.push(nm); } return nm; };
-    if (isTuple(n)) {
+    if (d.attrs) { // one object, each output an attribute of it: tutorial = wk.load_tutorial_data(...); tutorial.bwc
+      const nm = uniq(base); names.set(key(n.id, '__obj'), nm);
+      for (const o of d.outputs) { const ex = `${nm}.${o.name}`; exprs.set(key(n.id, o.name), ex);
+        const t = outTypes(n, o.name)[0]; if (isA(t, ['Figure'])) anyFigure = true; if (!consumed(n, o.name)) { leaf.push([ex, t]); if (t === 'Plotly') plotlys.push(ex); } }
+      steps.push({ node: n, lines: [...todo, `${nm} = ${call}`], leaf });
+    } else if (isTuple(n)) {
       const lhs = d.tuple.order.map(on => reg(d.outputs.find(o => o.name === on)));
       steps.push({ node: n, lines: [...todo, `${lhs.join(', ')} = ${call}`], leaf });
     } else {
@@ -1109,7 +1114,7 @@ function renderCatalog() {
       for (const d of items) {
         det.append(h('button', { class: 'item' + (S.peek === d.id ? ' on' : '') + (d.status === 'not_implemented' ? ' off' : ''), 'data-def': d.id },
           h('div', { class: 'nm' }, shortId(d), d.status === 'deprecated' ? h('span', { class: 'flag warn', text: 'deprecated' }) : null, d.status === 'not_implemented' ? h('span', { class: 'flag bad', text: 'not implemented' }) : null,
-            d.blocked ? h('span', { class: 'flag', text: 'internet', title: d.note }) : null, d.plotly ? h('span', { class: 'flag', text: 'interactive' }) : null),
+            d.blocked ? h('span', { class: 'flag', text: 'internet', title: d.note }) : d.net ? h('span', { class: 'flag', text: 'downloads', title: d.note }) : null, d.plotly ? h('span', { class: 'flag', text: 'interactive' }) : null),
           h('div', { class: 'sm', text: d.summary })));
       }
       list.append(det);
@@ -1401,6 +1406,10 @@ const TEMPLATES = [
       ['scores', 'wk.ltc.calc_scores', { name: 'linreg' }], ['ps', 'Print'], ['bwc', 'wk.bwc_from_tswc'], ['rose', 'wk.plot.wind_rose']],
     edges: ['pt.point>pair.output_locs', 'pair.tswc_1>fit.ds_ref', 'pair.tswc_2>fit.ds_target', 'mcp.model>fit.model', 'fit.model>pred.model', 'pair.tswc_1>pred.ds_ref',
       'pair.tswc_2>scores.ds_target', 'pred.tswc>scores.ds_pred', 'scores.scores>ps.value', 'pred.tswc>bwc.ts', 'bwc.bwc>rose.ds'] },
+  { name: 'windkit: Serra Santa Luzia tutorial site (downloads 4.6 MB)', libs: ['wk'],
+    nodes: [['tut', 'wk.load_tutorial_data'], ['rose', 'wk.plot.wind_rose', { wind_speed_bins: "'IEC_II'" }], ['wwc', 'wk.weibull_fit'], ['ws', 'wk.mean_wind_speed', { bysector: true }], ['pws', 'Print'],
+      ['curves', 'wk.plot.power_ct_curves'], ['pt', 'Print'], ['emap', 'wk.plot.elevation_map']],
+    edges: ['tut.bwc>rose.ds', 'tut.bwc>wwc.bwc', 'wwc.wwc>ws.wc_obj', 'ws.mean_wind_speed>pws.value', 'tut.wtg>curves.ds', 'tut.turbines>pt.value', 'tut.elev>emap.gdf'] },
   { name: 'brightwind + windkit: mast data to a WAsP .tab file', libs: ['bw', 'wk'],
     nodes: [['src', 'Demo dataset', { dataset: 'demo_data' }], ['load', 'load_csv'], ['cf', 'Demo dataset', { dataset: 'demo_cleaning_file' }], ['clean', 'apply_cleaning'],
       ['cols', 'Select columns', { columns: 'Spd80mN, Dir78mS' }],

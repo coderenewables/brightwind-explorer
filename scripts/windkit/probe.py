@@ -114,6 +114,11 @@ def fresh(obj):
 def run_probe(e, call, S, TMP):
     fn = resolve(e['path'])
     env = {'np': np, 'pd': pd, 'xr': xr, 'wk': wk, 'S': S, 'TMP': TMP}
+    if e.get('setup'):   # stand-ins for the network: the spec patches what the function downloads
+        try:
+            exec(e['setup'], env)
+        except Exception as ex:
+            return f'setup failed: {type(ex).__name__}: {ex}'
     kwargs = {}
     for k, v in call.get('args', {}).items():
         if isinstance(v, str) and v.startswith('@'):
@@ -151,6 +156,14 @@ def run_probe(e, call, S, TMP):
     flag_on = any(bool(kwargs.get(o['flag'])) for o in flagged)
     if not outs:
         return None if res is None or isinstance(res, (bool, np.bool_)) else f'declared no outputs but returned {samples.classify(res)}'
+    if e.get('attrs'):   # an object whose attributes are the outputs, e.g. load_tutorial_data's SimpleNamespace
+        for o in outs:
+            if not hasattr(res, o['name']):
+                return f'result has no attribute {o["name"]!r}'
+            t = samples.classify(getattr(res, o['name']))
+            if not matches(t, o['types']):
+                return f'output {o["name"]!r} is {t}, declared {o["types"]}'
+        return None
     if e.get('tuple') or (flagged and flag_on):
         order = e.get('order') or [o['name'] for o in outs]
         expect = [next(o for o in outs if o['name'] == n) for n in order]

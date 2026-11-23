@@ -57,6 +57,7 @@ SHARED = {'DataFrame', 'Series', 'Value', 'List', 'Dict', 'Path', 'Figure'}   # 
 
 GROUP_ORDER = ['Sources', 'Wind climates', 'Wind', 'Weibull', 'Long-term', 'Spatial', 'Topography', 'Wind farm',
                'Read & write', 'WAsP workspace', 'Checks', 'Plots', 'Data download']
+NETWORK = {'wk.get_vector_map', 'wk.get_tutorial_data', 'wk.load_tutorial_data'}
 BLOCKED_NOTE = 'Needs internet access to an outside service; the browser runner skips it. Run the exported script instead.'
 
 
@@ -164,6 +165,10 @@ def make(spec):
         n['note'] = spec['note']
     if spec.get('mutates'):
         n['mutates'] = True
+    if spec.get('attrs'):
+        n['attrs'] = True   # the outputs are attributes of the returned object: tutorial.bwc, tutorial.wtg, ...
+    if spec.get('setup') or spec['path'] in NETWORK:
+        n['net'] = True     # downloads at run time; in the browser through the relay or a CORS-enabled URL
     b = spec.get('browser', 'ok')
     if b == 'blocked':
         n['blocked'] = True

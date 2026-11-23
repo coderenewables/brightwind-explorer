@@ -72,9 +72,33 @@
   "inputs": {},
   "outputs": [
    {
-    "name": "data",
+    "name": "bwc",
     "types": [
-     "Dict"
+     "BWC"
+    ]
+   },
+   {
+    "name": "wtg",
+    "types": [
+     "WTG"
+    ]
+   },
+   {
+    "name": "turbines",
+    "types": [
+     "WindTurbines"
+    ]
+   },
+   {
+    "name": "elev",
+    "types": [
+     "VectorMap"
+    ]
+   },
+   {
+    "name": "rgh",
+    "types": [
+     "VectorMap"
     ]
    }
   ],
@@ -86,9 +110,18 @@
     ]
    }
   },
-  "browser": "blocked",
-  "note": "Needs internet access; not available in the browser runner. Returns a SimpleNamespace of datasets, which the Dict port type only approximates.",
-  "skip_probe": "Downloads tutorial data from the internet; cannot be probed offline."
+  "browser": "ok",
+  "note": "Downloads the Serra Santa Luzia example (4.6 MB, a 15-turbine site in Portugal) from Zenodo and loads its wind climate, turbine, layout and maps.",
+  "attrs": true,
+  "var": "tutorial",
+  "setup": "import offline; offline.fake_zenodo(wk, S, TMP)",
+  "probe": [
+   {
+    "args": {
+     "name": "'serra_santa_luzia'"
+    }
+   }
+  ]
  },
  {
   "path": "wk.loss_table_summary",

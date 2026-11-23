@@ -92,6 +92,9 @@ def classify(obj):
         return f'wk.ltc.{type(obj).__name__}' + (' (fitted)' if getattr(obj, 'sector_edges', None) is not None else '')
     if isinstance(obj, wk.Workspace):
         return 'Workspace'
+    import pathlib
+    if isinstance(obj, pathlib.PurePath):
+        return 'Path'
     import enum, pyproj
     if isinstance(obj, (enum.Enum, pyproj.CRS)):
         return 'Value'

@@ -1,11 +1,15 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  // Static site: everything in ./public is served as-is, no Worker script.
+  // Static site: everything in ./public is served as-is. The only script is a small relay
+  // (worker/index.js) for data APIs that a web page may not call directly; only /relay/* reaches it.
   "name": "brightwind-explorer",
   "compatibility_date": "2026-11-01",
+  "main": "worker/index.js",
   "assets": {
     "directory": "./public",
-    "not_found_handling": "single-page-application"
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/relay/*"]
   },
   "routes": [
     { "pattern": "bw-explorer.coderenewables.com", "custom_domain": true }

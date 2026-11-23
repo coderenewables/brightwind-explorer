@@ -17,7 +17,7 @@
 const PYODIDE_VERSION = '0.29.5';
 const PYODIDE_URL = `https://cdn.jsdelivr.net/pyodide/v${PYODIDE_VERSION}/full/`;
 const SITE = self.location.href.replace(/[^/]*$/, '');
-const BASE_PACKAGES = ['numpy', 'pandas', 'scipy', 'matplotlib', 'requests', 'python-dateutil', 'six', 'packaging', 'micropip'];
+const BASE_PACKAGES = ['numpy', 'pandas', 'scipy', 'matplotlib', 'requests', 'python-dateutil', 'six', 'packaging', 'micropip'];   // requests brings urllib3, which works in a worker
 const LIBS = {
   bw: { name: 'brightwind 2.8.0', packages: ['jsonschema'], wheels: ['py/brightwind-2.8.0-py3-none-any.whl', 'py/colormap-1.3.0-py3-none-any.whl'] },
   // h5py is left out on purpose: loaded next to netCDF4 its HDF5 library clashes with netCDF4's, and windkit reads netCDF through netCDF4.
@@ -234,6 +234,38 @@ with warnings.catch_warnings():
   plotly: `import plotly.subplots, plotly.graph_objects`,
 };
 
+// windkit's downloads, adapted to a web page. requests works in this worker as it is (urllib3 2.5 sends
+// browser requests from Pyodide), but a page can only read sites that allow it (CORS):
+//  - tutorial data: windkit pings google.com first and then uses Zenodo's ?download=1 link, which do not
+//    allow it; Zenodo's API link for the same file does.
+//  - GWA map API (get_vector_map): does not allow it, so it goes through this site's relay (worker/index.js).
+//  - The tutorial maps are read with engine='pyogrio', which Pyodide does not have; fiona reads them.
+const WEB_ADAPTER = String.raw`
+import re, sys, types, requests, pathlib
+import geopandas as _gpd
+import windkit.tutorial_data as _td
+import windkit.integrations._gwa_map_api as _gwa
+
+_td._check_internet_connection = lambda: None
+_rec = re.search(r'records/(\d+)/files/', _td._ZENODO_BASE_URL).group(1)
+def _download_tutorial_data(zip_path):
+    _td._download_file(f'https://zenodo.org/api/records/{_rec}/files/{zip_path.name}/content', zip_path)
+_td._download_tutorial_data = _download_tutorial_data
+
+_relayed = types.ModuleType('requests')
+_relayed.__dict__.update(requests.__dict__)
+_relayed.get = lambda url, *a, **k: requests.get(url.replace('https://api.globalwindatlas.info/', _bw_site + 'relay/gwa/'), *a, **k)
+_gwa.requests = _relayed
+
+try:
+    import pyogrio
+except ImportError:
+    _read_file = _gpd.read_file
+    def _read_file_fiona(*a, engine=None, **k):
+        return _read_file(*a, engine='fiona' if engine in (None, 'pyogrio') else engine, **k)
+    _gpd.read_file = _read_file_fiona
+`;
+
 async function loadPackages(list, label) {
   status(`Loading ${label}…`);
   await py.loadPackage(list, { messageCallback: m => { if (/^Loading /.test(m)) status(m + '…'); }, errorCallback: () => {} });
@@ -265,6 +297,7 @@ async function ensure(need) {
     if (L.after) await installWheels(L.after, true);   // affine 3, over the affine 2.4 that rasterio brings
     status(`Importing ${L.name.split(' ')[0]}…`);
     await py.runPythonAsync(IMPORT[lib]);
+    if (lib === 'wk') { py.globals.set('_bw_site', SITE); await py.runPythonAsync(WEB_ADAPTER); }
     loaded.add(lib);
   }
   py.globals.set('_bw_libs_now', py.toPy([...loaded]));

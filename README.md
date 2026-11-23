@@ -4,7 +4,7 @@ A browser tool for exploring two open-source wind resource libraries, [brightwin
 
 Live at **https://bw-explorer.coderenewables.com**, one of the tools at [CodeRenewables](https://coderenewables.com).
 
-The page is a static site. The catalogs of tools are built from the libraries ahead of time; pipelines are exported as Python, or run inside the browser through [Pyodide](https://pyodide.org). Data is never uploaded.
+The page is a static site, plus a small relay for one map API (see Notes). The catalogs of tools are built from the libraries ahead of time; pipelines are exported as Python, or run inside the browser through [Pyodide](https://pyodide.org). Data is never uploaded.
 
 ## What it does
 
@@ -12,7 +12,7 @@ The page is a static site. The catalogs of tools are built from the libraries ah
 - **Catalog**: every public `bw.*` function, class and method in brightwind 2.8.0 (153 tools in 14 groups), 200 windkit 2.2.0 functions, classes and methods (`wk.*`, `wk.spatial`, `wk.weibull`, `wk.ltc`, `wk.plot`, in 12 groups), and 16 helper nodes such as *Select column*, *File path*, *Demo dataset*, *Sample file* and *Select variable*. Each entry shows the signature, parameter docs, the full docstring and a link to the source line or the windkit documentation.
 - **Board**: drag tools onto the canvas and wire outputs to inputs. Ports are typed (DataFrame, Series, Figure, Path, Value, object types such as `Shear.Average` or a fitted correlation model, and windkit's structures: wind climates such as `TSWC`, `BWC` and `WWC`, locations, raster and vector maps, turbines, xarray and geopandas data, plotly figures), and only compatible ports connect. windkit types form a hierarchy, so a `PWC` fits a `WWC` input and every wind climate fits a `Dataset` input. Selecting a node suggests the tools that accept its output.
 - **Export**: functions that return `(plot, data)` when `return_data=True` are unpacked automatically when their data output is wired. Unconnected results are printed and figures shown. Parameters can be promoted to arguments of `run()`.
-- **Examples**: brightwind: site overview with a WAsP tab file, cleaning plus shear extrapolation, long-term correlation against MERRA-2, and turbulence intensity. windkit: a wind climate with Weibull fit and wind rose, reading `.tab` and `.wtg` files, terrain and roughness maps, and long-term correction with `LinRegMCP`. Both: mast data cleaned with brightwind and written as a WAsP `.tab` file by windkit.
+- **Examples**: brightwind: site overview with a WAsP tab file, cleaning plus shear extrapolation, long-term correlation against MERRA-2, and turbulence intensity. windkit: a wind climate with Weibull fit and wind rose, reading `.tab` and `.wtg` files, the Serra Santa Luzia tutorial site, terrain and roughness maps, and long-term correction with `LinRegMCP`. Both: mast data cleaned with brightwind and written as a WAsP `.tab` file by windkit.
 
 - **Run in the browser**: the Run view executes the pipeline with brightwind 2.8.0 and windkit 2.2.0 on Pyodide 0.29.5 in a Web Worker, one node at a time. It shows tables, plots, interactive plotly figures, xarray summaries (with netCDF and CSV downloads) and printed output per step, marks nodes green or red, reads the user's own files through file pickers, and offers downloads for anything the pipeline writes. Each library and its dependencies load only when a pipeline first uses them.
 - **Build with AI**: describe an analysis and a model wires it on the board, using your own Anthropic, OpenAI or OpenAI-compatible API key. The browser calls the provider directly; the key never touches this site. Problems the builder finds in the model's graph go back to the model to fix, up to three rounds.
@@ -29,6 +29,7 @@ public/            the deployed site (index.html is generated; guide.html, guide
   py/                slim brightwind wheel, colormap wheel, gzip-compressed demo datasets, windkit, rioxarray and affine wheels,
                      a slim plotly wheel and plotly.min.js (built by scripts/build_py_assets.py)
   py/samples/        small windkit example files (built by scripts/windkit/make_samples.py)
+worker/index.js      relay for data APIs a web page may not call directly (only /relay/* reaches it)
 src/               page source: head.html (markup and styles), app.js, runner.js (Run view), assistant.js (Build with AI)
 scripts/
   build_site.py        src/ -> public/index.html
@@ -87,10 +88,11 @@ The script extracts the API from the installed windkit, calls every curated tool
 - windkit needs xarray, geopandas, rasterio, netCDF4, pyproj, lxml and fiona from Pyodide, plus rioxarray 0.20.0 (the last release that works with Pyodide's rasterio 1.4) and affine 3.0.1 (installed over the affine 2.4 that rasterio brings) from this site. pyproj is loaded on its own before rasterio, fiona and netCDF4; loaded together with them it crashes. h5py is not loaded, because its HDF5 library clashes with netCDF4's.
 - plotly comes from a slim wheel on this site, and the page fetches `plotly.min.js` the first time a run returns an interactive figure. windkit's `plot.single_curve` uses `plotly.subplots` without importing it, so the runner and the exported scripts import it whenever a pipeline has plotly plots.
 - Every windkit spec probe also passes inside Pyodide, so the browser's library versions return the same types.
+- windkit's downloads in the browser: `requests` works in the worker as it is (urllib3 2.5 has a Pyodide backend), but a page can only read sites that allow it (CORS). Tutorial data comes from Zenodo's API file link, which allows it; the worker swaps it in for windkit's `?download=1` link and skips windkit's connection check against google.com. The Global Wind Atlas map API does not allow it, so `get_vector_map` goes through `worker/index.js`, a relay on this site that forwards only that one endpoint (GET, no credentials) and caches answers for a day. The tutorial maps are GeoPackages that windkit reads with pyogrio, which Pyodide lacks, so the worker falls back to fiona. `scripts/windkit/offline.py` stands in for both services in the probe.
 
 ## Deploy
 
-The site is a Cloudflare Worker that serves `public/` as static assets, with `bw-explorer.coderenewables.com` attached as a custom domain in `wrangler.jsonc`. The repository is connected to Cloudflare Workers Builds, so every push to `main` deploys. To deploy by hand: `npx wrangler deploy`.
+The site is a Cloudflare Worker that serves `public/` as static assets and runs `worker/index.js` for `/relay/*` only, with `bw-explorer.coderenewables.com` attached as a custom domain in `wrangler.jsonc`. The repository is connected to Cloudflare Workers Builds, so every push to `main` deploys. To deploy by hand: `npx wrangler deploy`.
 
 ## Licence
 
